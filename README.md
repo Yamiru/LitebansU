@@ -51,6 +51,12 @@
    chmod 644 /var/www/html/litebans/.htaccess
    ```
 
+3. **create** .htaccess https://github.com/Yamiru/LitebansU/blob/main/.htaccess
+   ```
+   nano .htaccess
+   ```
+
+
 ## 📋 Requirements
 
 ### Server Requirements
