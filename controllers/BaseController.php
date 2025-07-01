@@ -6,8 +6,8 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       1.0
- *  Author:        Yamiru <yamiru@yamiru.com>
+ *  Version:       2.0
+ *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
@@ -37,11 +37,26 @@ abstract class BaseController
         $data['lang'] = $this->lang;
         $data['theme'] = $this->theme;
         $data['config'] = $this->config;
+        $data['controller'] = $this;
         
         extract($data);
         
+        // Check if template is in admin directory
+        if (strpos($template, 'admin/') === 0) {
+            $templatePath = __DIR__ . "/../templates/{$template}.php";
+        } else {
+            $templatePath = __DIR__ . "/../templates/{$template}.php";
+        }
+        
+        // Always include header and footer
         include __DIR__ . "/../templates/header.php";
-        include __DIR__ . "/../templates/{$template}.php";
+        
+        if (file_exists($templatePath)) {
+            include $templatePath;
+        } else {
+            echo '<div class="alert alert-danger">Template not found: ' . htmlspecialchars($template) . '</div>';
+        }
+        
         include __DIR__ . "/../templates/footer.php";
     }
     
@@ -55,6 +70,12 @@ abstract class BaseController
     
     protected function redirect(string $url, int $code = 302): void
     {
+        // Ensure URL doesn't have duplicate base paths
+        $basePath = $this->config['base_path'] ?? '';
+        if ($basePath && strpos($url, $basePath . '/' . $basePath) !== false) {
+            $url = str_replace($basePath . '/' . $basePath, $basePath, $url);
+        }
+        
         header("Location: {$url}", true, $code);
         exit;
     }
@@ -83,7 +104,7 @@ abstract class BaseController
         return ($this->getPage() - 1) * $this->getLimit();
     }
     
-    protected function formatDate(int $timestamp): string
+    public function formatDate(int $timestamp): string
     {
         $timezone = new DateTimeZone($this->config['timezone'] ?? 'UTC');
         $date = new DateTime('@' . intval($timestamp / 1000));
@@ -103,18 +124,22 @@ abstract class BaseController
             return $this->lang->get('punishment.expired');
         }
         
+        // Calculate time remaining (not total duration)
         $diff = intval(($until - $now) / 1000);
         $days = intval($diff / 86400);
         $hours = intval(($diff % 86400) / 3600);
+        $minutes = intval(($diff % 3600) / 60);
         
         if ($days > 0) {
-            return $this->lang->get('time.days', ['count' => $days]);
+            return $this->lang->get('time.days', ['count' => $days]) . ' left';
+        } else if ($hours > 0) {
+            return $this->lang->get('time.hours', ['count' => $hours]) . ' left';
+        } else {
+            return $this->lang->get('time.minutes', ['count' => $minutes]) . ' left';
         }
-        
-        return $this->lang->get('time.hours', ['count' => $hours]);
     }
     
-    protected function getAvatarUrl(string $uuid, string $name): string
+    public function getAvatarUrl(string $uuid, string $name): string
     {
         $baseUrl = $this->config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=32&overlay=true';
         
@@ -123,5 +148,13 @@ abstract class BaseController
         }
         
         return str_replace(['{uuid}', '{name}'], [$uuid, $name], $baseUrl);
+    }
+    
+    /**
+     * Check if UUID should be shown based on config and cookie
+     */
+    public function shouldShowUuid(): bool
+    {
+        return (bool)($this->config['show_uuid'] ?? true);
     }
 }

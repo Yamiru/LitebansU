@@ -6,8 +6,8 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       1.0
- *  Author:        Yamiru <yamiru@yamiru.com>
+ *  Version:       2.0
+ *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
@@ -29,11 +29,16 @@ class HomeController extends BaseController
         $recentBans = $this->ensurePlayerNames($recentBans);
         $recentMutes = $this->ensurePlayerNames($recentMutes);
         
+        // Check if there's a search parameter
+        $searchQuery = $_GET['search'] ?? null;
+        
         $this->render('home', [
             'stats' => $stats,
             'recentBans' => $recentBans,
             'recentMutes' => $recentMutes,
-            'controller' => $this
+            'controller' => $this,
+            'currentPage' => 'home',
+            'searchQuery' => $searchQuery
         ]);
     }
     
@@ -44,7 +49,9 @@ class HomeController extends BaseController
             return;
         }
         
-        $this->render('search');
+        $this->render('search', [
+            'currentPage' => 'search'
+        ]);
     }
     
     private function handleSearch(): void
@@ -79,6 +86,11 @@ class HomeController extends BaseController
         try {
             $punishments = $this->repository->getPlayerPunishments($query);
             
+            // If no results found by name/UUID, try a more flexible search
+            if (empty($punishments)) {
+                $punishments = $this->searchFlexible($query);
+            }
+            
             $this->jsonResponse([
                 'success' => true,
                 'player' => $query,
@@ -90,11 +102,88 @@ class HomeController extends BaseController
         }
     }
     
+    /**
+     * Flexible search that can handle partial names and case variations
+     */
+    private function searchFlexible(string $query): array
+    {
+        try {
+            $tables = ['bans', 'mutes', 'warnings', 'kicks'];
+            $results = [];
+            $historyTable = $this->repository->getTablePrefix() . 'history';
+            
+            // First try to find player in history by partial name match
+            $sql = "SELECT DISTINCT uuid, name FROM {$historyTable} 
+                    WHERE LOWER(name) LIKE LOWER(:query) 
+                    ORDER BY date DESC 
+                    LIMIT 10";
+            
+            $stmt = $this->repository->getConnection()->prepare($sql);
+            $stmt->execute([':query' => '%' . $query . '%']);
+            $players = $stmt->fetchAll();
+            
+            // For each matching player, get their punishments
+            foreach ($players as $player) {
+                if (!empty($player['uuid'])) {
+                    $playerPunishments = $this->repository->getPlayerPunishments($player['uuid']);
+                    $results = array_merge($results, $playerPunishments);
+                }
+            }
+            
+            // If still no results, search directly in punishment tables
+            if (empty($results)) {
+                foreach ($tables as $table) {
+                    $fullTable = $this->repository->getTablePrefix() . $table;
+                    
+                    $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
+                            FROM {$fullTable} p
+                            LEFT JOIN {$historyTable} h ON p.uuid = h.uuid
+                            WHERE h.name LIKE :query
+                            OR p.reason LIKE :query
+                            GROUP BY p.id
+                            ORDER BY p.time DESC
+                            LIMIT 50";
+                    
+                    $stmt = $this->repository->getConnection()->prepare($sql);
+                    $stmt->execute([':query' => '%' . $query . '%']);
+                    
+                    $tableResults = $stmt->fetchAll();
+                    foreach ($tableResults as &$row) {
+                        if (empty($row['player_name']) && !empty($row['uuid'])) {
+                            $row['player_name'] = $this->repository->getPlayerName($row['uuid']);
+                        }
+                    }
+                    
+                    $results = array_merge($results, $tableResults);
+                }
+            }
+            
+            // Sort by time descending
+            usort($results, function($a, $b) {
+                return ($b['time'] ?? 0) <=> ($a['time'] ?? 0);
+            });
+            
+            return array_slice($results, 0, 50); // Limit to 50 results
+            
+        } catch (Exception $e) {
+            error_log("Flexible search error: " . $e->getMessage());
+            return [];
+        }
+    }
+    
     private function formatPunishmentsForSearch(array $punishments): array
     {
         return array_map(function($punishment) {
+            // Ensure player name exists
+            $playerName = $punishment['player_name'] ?? $punishment['name'] ?? null;
+            if (empty($playerName) && !empty($punishment['uuid'])) {
+                $playerName = $this->repository->getPlayerName($punishment['uuid']);
+            }
+            
             return [
+                'id' => $punishment['id'] ?? null,
                 'type' => $punishment['type'] ?? 'unknown',
+                'player_name' => SecurityManager::preventXss($playerName ?? 'Unknown'),
                 'reason' => SecurityManager::preventXss($punishment['reason'] ?? 'No reason provided'),
                 'staff' => SecurityManager::preventXss($punishment['banned_by_name'] ?? 'Console'),
                 'date' => $this->formatDate((int)($punishment['time'] ?? 0)),

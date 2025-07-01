@@ -6,8 +6,8 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       1.0
- *  Author:        Yamiru <yamiru@yamiru.com>
+ *  Version:       2.0
+ *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
@@ -76,21 +76,21 @@ class PunishmentsController extends BaseController
         return array_map(function($punishment) {
             // Get player name - handle null values properly
             $playerName = $punishment['player_name'] ?? $punishment['name'] ?? null;
-            if (!$playerName) {
+            if (!$playerName && !empty($punishment['uuid'])) {
                 $playerName = $this->repository->getPlayerName($punishment['uuid']);
             }
             
             return [
                 'id' => (int)$punishment['id'],
-                'uuid' => $punishment['uuid'],
+                'uuid' => $punishment['uuid'] ?? '',
                 'name' => SecurityManager::preventXss($playerName ?? 'Unknown'),
                 'reason' => SecurityManager::preventXss($punishment['reason'] ?? 'No reason provided'),
                 'staff' => SecurityManager::preventXss($punishment['banned_by_name'] ?? 'Console'),
-                'date' => $this->formatDate((int)$punishment['time']),
+                'date' => $this->formatDate((int)($punishment['time'] ?? 0)),
                 'until' => isset($punishment['until']) ? $this->formatDuration((int)$punishment['until']) : null,
                 'active' => (bool)($punishment['active'] ?? false),
                 'removed_by' => isset($punishment['removed_by_name']) ? SecurityManager::preventXss($punishment['removed_by_name']) : null,
-                'avatar' => $this->getAvatarUrl($punishment['uuid'], $playerName ?? 'Unknown')
+                'avatar' => $this->getAvatarUrl($punishment['uuid'] ?? '', $playerName ?? 'Unknown')
             ];
         }, $punishments);
     }
