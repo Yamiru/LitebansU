@@ -1,0 +1,473 @@
+/**
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
+ *
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       2.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
+ */
+/* Light Theme - Fixed contrast */
+.theme-light {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f4f6;
+    --bg-tertiary: #e5e7eb;
+    --text-primary: #111827;
+    --text-secondary: #374151;
+    --text-tertiary: #6b7280;
+    --text-muted: #9ca3af;
+    --border-color: #e5e7eb;
+    --border-strong: #d1d5db;
+    --card-bg: #ffffff;
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --input-focus: var(--primary);
+    --hover-bg: rgba(0, 0, 0, 0.05);
+    --table-bg: #ffffff;
+    --table-hover-bg: rgba(0, 0, 0, 0.025);
+    --table-stripe-bg: rgba(0, 0, 0, 0.015);
+    --link-color: #4f46e5;
+    --link-hover: #4338ca;
+    --dropdown-bg: #ffffff;
+    --dropdown-text: #111827;
+    --dropdown-hover-bg: #f3f4f6;
+    --navbar-bg: rgba(255, 255, 255, 0.95);
+    --navbar-text: #111827;
+    --badge-opacity: 1;
+}
+
+/* Dark Theme - Enhanced visibility */
+.theme-dark {
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #262626;
+    --text-primary: #f9fafb;
+    --text-secondary: #e5e7eb;
+    --text-tertiary: #d1d5db;
+    --text-muted: #9ca3af;
+    --border-color: #374151;
+    --border-strong: #4b5563;
+    --card-bg: #1a1a1a;
+    --card-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --input-bg: #262626;
+    --input-border: #374151;
+    --input-focus: #818cf8;
+    --hover-bg: rgba(255, 255, 255, 0.1);
+    --table-bg: #1a1a1a;
+    --table-hover-bg: rgba(255, 255, 255, 0.05);
+    --table-stripe-bg: rgba(255, 255, 255, 0.025);
+    --link-color: #818cf8;
+    --link-hover: #a5b4fc;
+    --dropdown-bg: #262626;
+    --dropdown-text: #f9fafb;
+    --dropdown-hover-bg: #374151;
+    --navbar-bg: rgba(26, 26, 26, 0.95);
+    --navbar-text: #f9fafb;
+    --badge-opacity: 1;
+}
+
+/* Enhanced component visibility for both themes */
+.theme-light .text-primary,
+.theme-dark .text-primary {
+    color: var(--text-primary) !important;
+}
+
+.theme-light .text-secondary,
+.theme-dark .text-secondary {
+    color: var(--text-secondary) !important;
+}
+
+.theme-light .text-muted,
+.theme-dark .text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Fix admin panel colors */
+.theme-dark .admin-stat-card h6,
+.theme-dark .admin-stat-card h2,
+.theme-dark .admin-stat-card small {
+    color: white !important;
+}
+
+.theme-light .admin-stat-card.bg-danger,
+.theme-light .admin-stat-card.bg-warning,
+.theme-light .admin-stat-card.bg-info,
+.theme-light .admin-stat-card.bg-secondary {
+    color: white !important;
+}
+
+.theme-light .admin-stat-card.bg-danger h6,
+.theme-light .admin-stat-card.bg-warning h6,
+.theme-light .admin-stat-card.bg-info h6,
+.theme-light .admin-stat-card.bg-secondary h6,
+.theme-light .admin-stat-card.bg-danger h2,
+.theme-light .admin-stat-card.bg-warning h2,
+.theme-light .admin-stat-card.bg-info h2,
+.theme-light .admin-stat-card.bg-secondary h2,
+.theme-light .admin-stat-card.bg-danger small,
+.theme-light .admin-stat-card.bg-warning small,
+.theme-light .admin-stat-card.bg-info small,
+.theme-light .admin-stat-card.bg-secondary small {
+    color: white !important;
+}
+
+/* PUNISHMENT TABLES FIX - COMPLETE DARK THEME SOLUTION */
+
+/* Main table container fix */
+.theme-dark .table-responsive {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color);
+}
+
+.theme-dark .table {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Table headers */
+.theme-dark .table thead {
+    background: var(--bg-tertiary) !important;
+}
+
+.theme-dark .table thead th {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+    font-weight: 600;
+}
+
+/* Table body */
+.theme-dark .table tbody {
+    background: var(--card-bg) !important;
+}
+
+.theme-dark .table tbody td {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.theme-dark .table tbody tr {
+    background: transparent !important;
+    color: var(--text-primary) !important;
+}
+
+.theme-dark .table tbody tr:hover {
+    background: var(--table-hover-bg) !important;
+}
+
+/* Player info cells */
+.theme-dark .player-info .fw-bold,
+.theme-dark .player-info div > div:first-child {
+    color: var(--text-primary) !important;
+}
+
+.theme-dark .player-info small,
+.theme-dark .player-info .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+/* Reason cells */
+.theme-dark .reason-cell {
+    color: var(--text-primary) !important;
+}
+
+/* Staff names (keep primary color) */
+.theme-dark td .text-primary {
+    color: var(--primary) !important;
+}
+
+/* Date cells */
+.theme-dark td small:not(.text-muted) {
+    color: var(--text-secondary) !important;
+}
+
+/* Badge fixes in tables */
+.theme-dark .table .badge {
+    opacity: 1 !important;
+}
+
+.theme-dark .table .badge.bg-danger {
+    background: var(--danger) !important;
+    color: white !important;
+}
+
+.theme-dark .table .badge.bg-warning {
+    background: var(--warning) !important;
+    color: white !important;
+}
+
+.theme-dark .table .badge.bg-success {
+    background: var(--success) !important;
+    color: white !important;
+}
+
+.theme-dark .table .badge.bg-secondary {
+    background: var(--gray-600) !important;
+    color: white !important;
+}
+
+/* Status badges in tables */
+.theme-dark .status-badge {
+    font-weight: 600;
+}
+
+.theme-dark .status-active {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.theme-dark .status-inactive {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.theme-dark .status-expired {
+    background: rgba(107, 114, 128, 0.2);
+    color: #d1d5db;
+}
+
+.theme-dark .status-completed {
+    background: rgba(107, 114, 128, 0.2);
+    color: #d1d5db;
+}
+
+/* Action buttons in tables */
+.theme-dark .table .btn-outline-primary {
+    color: #818cf8 !important;
+    border-color: #818cf8 !important;
+    background: transparent !important;
+}
+
+.theme-dark .table .btn-outline-primary:hover {
+    background: #818cf8 !important;
+    color: #0f0f0f !important;
+    border-color: #818cf8 !important;
+}
+
+/* Mobile punishment cards for dark theme */
+.theme-dark .mobile-punishment-card .card {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+.theme-dark .mobile-punishment-card .card-body {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+.theme-dark .mobile-punishment-card h6 {
+    color: var(--text-primary) !important;
+}
+
+.theme-dark .mobile-punishment-card strong {
+    color: var(--text-secondary) !important;
+}
+
+.theme-dark .mobile-punishment-card div {
+    color: var(--text-primary) !important;
+}
+
+.theme-dark .mobile-punishment-card .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.theme-dark .mobile-punishment-card .text-primary {
+    color: var(--primary) !important;
+}
+
+/* Light theme table adjustments */
+.theme-light .table {
+    background: var(--table-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+.theme-light .table thead th {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.theme-light .table tbody td {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.theme-light .table tbody tr:hover {
+    background: var(--table-hover-bg) !important;
+}
+
+/* Ensure all text in tables is visible */
+.theme-dark td,
+.theme-dark th,
+.theme-dark .table,
+.theme-dark .table * {
+    color: var(--text-primary) !important;
+}
+
+.theme-dark td .text-muted,
+.theme-dark .table .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.theme-dark td .text-primary,
+.theme-dark .table .text-primary {
+    color: var(--primary) !important;
+}
+
+/* Stats page tables */
+.theme-dark .stats-page .table td,
+.theme-dark .stats-page .table th {
+    color: var(--text-primary) !important;
+}
+
+.theme-dark .stats-page .fw-bold {
+    color: var(--text-primary) !important;
+}
+
+/* Admin panel tables */
+.theme-dark .admin-dashboard .table td,
+.theme-dark .admin-dashboard .table th {
+    color: var(--text-primary) !important;
+    background: var(--card-bg);
+}
+
+.theme-light .admin-dashboard .table td,
+.theme-light .admin-dashboard .table th {
+    color: var(--text-primary) !important;
+}
+
+/* Table striped rows */
+.theme-dark .table-striped tbody tr:nth-of-type(odd) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.theme-light .table-striped tbody tr:nth-of-type(odd) {
+    background: rgba(0, 0, 0, 0.01);
+}
+
+/* Button visibility */
+.theme-dark .btn-outline-primary {
+    color: #818cf8;
+    border-color: #818cf8;
+}
+
+.theme-dark .btn-outline-primary:hover {
+    background: #818cf8;
+    color: #0f0f0f;
+}
+
+.theme-light .btn-outline-primary {
+    color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.theme-light .btn-outline-primary:hover {
+    background: #4f46e5;
+    color: white;
+}
+
+/* Fix navbar dropdown visibility */
+.theme-dark .dropdown-menu {
+    background: var(--dropdown-bg);
+    border-color: var(--border-color);
+}
+
+.theme-light .dropdown-menu {
+    background: var(--dropdown-bg);
+    border-color: var(--border-color);
+}
+
+.theme-dark .dropdown-item {
+    color: var(--dropdown-text);
+}
+
+.theme-light .dropdown-item {
+    color: var(--dropdown-text);
+}
+
+/* Clear cache button visibility */
+.theme-dark #clear-cache-btn {
+    background: var(--primary);
+    color: white;
+}
+
+.theme-light #clear-cache-btn {
+    background: var(--primary);
+    color: white;
+}
+
+/* Form control visibility */
+.theme-dark .form-control {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--input-border);
+}
+
+.theme-light .form-control {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--input-border);
+}
+
+/* Card visibility */
+.theme-dark .card {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.theme-light .card {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+/* Alert visibility */
+.theme-dark .alert-danger {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.theme-light .alert-danger {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Modal visibility */
+.theme-dark .modal-content {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.theme-light .modal-content {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+/* Scrollbar for dark theme */
+.theme-dark ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.theme-dark ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.theme-dark ::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--bg-secondary);
+}
+
+.theme-dark ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+}

@@ -1,0 +1,466 @@
+/**
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
+ *
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       2.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
+ */
+/* Container */
+.container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg);
+}
+
+.container-fluid {
+    width: 100%;
+    padding: 0 var(--space-lg);
+}
+
+/* Grid System */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: calc(var(--space-md) * -1);
+    margin-right: calc(var(--space-md) * -1);
+}
+
+[class*="col-"] {
+    position: relative;
+    width: 100%;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+}
+
+.col { flex: 1 0 0%; }
+.col-auto { flex: 0 0 auto; width: auto; }
+.col-12 { flex: 0 0 100%; max-width: 100%; }
+
+@media (min-width: 768px) {
+    .col-md-3 { flex: 0 0 25%; max-width: 25%; }
+    .col-md-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+    .col-md-6 { flex: 0 0 50%; max-width: 50%; }
+    .col-md-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
+    .col-md-9 { flex: 0 0 75%; max-width: 75%; }
+    .col-md-12 { flex: 0 0 100%; max-width: 100%; }
+}
+
+@media (min-width: 992px) {
+    .col-lg-3 { flex: 0 0 25%; max-width: 25%; }
+    .col-lg-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+    .col-lg-6 { flex: 0 0 50%; max-width: 50%; }
+    .col-lg-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
+    .col-lg-9 { flex: 0 0 75%; max-width: 75%; }
+    .col-lg-12 { flex: 0 0 100%; max-width: 100%; }
+}
+
+/* Navbar */
+.navbar-modern {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background: var(--navbar-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    padding: 0.75rem 0;
+    transition: all var(--transition-base);
+}
+
+.navbar-modern.scrolled {
+    box-shadow: var(--shadow-md);
+    padding: 0.5rem 0;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--navbar-text);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.navbar-brand:hover {
+    color: var(--primary);
+}
+
+.navbar-brand-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.navbar-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-toggler {
+    display: none;
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 1.25rem;
+    line-height: 1;
+    background: transparent;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--navbar-text);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.navbar-toggler:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.navbar-collapse {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+}
+
+.navbar-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.nav-item {
+    position: relative;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--primary);
+    background: var(--hover-bg);
+}
+
+/* FIXED: Active navigation state for both themes */
+.nav-link.active {
+    color: white !important;
+    background: var(--primary) !important;
+}
+
+.nav-link.active i {
+    color: white !important;
+}
+
+.nav-link.active span {
+    color: white !important;
+}
+
+/* Alternative active state with outline (Option 3) */
+/*
+.nav-link.active {
+    color: var(--primary) !important;
+    background: transparent !important;
+    box-shadow: inset 0 0 0 2px var(--primary);
+}
+*/
+
+/* Fixed badge styling - superscript style */
+.nav-link .badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(25%, -25%);
+    font-size: 0.625rem;
+    padding: 0.15rem 0.35rem;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--danger);
+    color: white;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Ensure nav items have proper spacing for badges */
+.nav-link {
+    padding-right: var(--space-lg);
+}
+
+/* Language dropdown button fix */
+.btn-navbar {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--navbar-text);
+    padding: var(--space-xs) var(--space-sm);
+    transition: all var(--transition-fast);
+}
+
+.btn-navbar:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--hover-bg);
+}
+
+/* Footer */
+.footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    margin-top: auto;
+}
+
+.footer a {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.footer a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* Hero Gradient */
+.hero-gradient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40vh;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, transparent 100%);
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.theme-dark .hero-gradient {
+    opacity: 0.1;
+}
+
+/* Mobile Menu */
+@media (max-width: 991px) {
+    .navbar-toggler {
+        display: block;
+        margin-left: auto;
+    }
+    
+    .navbar-collapse {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--navbar-bg);
+        border-top: 1px solid var(--border-color);
+        box-shadow: var(--shadow-lg);
+        padding: var(--space-md);
+        display: none;
+        flex-direction: column;
+        gap: var(--space-md);
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .navbar-collapse.show {
+        display: flex;
+    }
+    
+    .navbar-nav {
+        flex-direction: column;
+        width: 100%;
+        gap: var(--space-xs);
+    }
+    
+    .nav-item {
+        width: 100%;
+    }
+    
+    .nav-link {
+        width: 100%;
+        padding: var(--space-md);
+        padding-right: var(--space-xl);
+        justify-content: space-between;
+    }
+    
+    /* Fix badge position on mobile */
+    .nav-link .badge {
+        position: static;
+        transform: none;
+        margin-left: auto;
+    }
+    
+    .navbar-controls {
+        width: 100%;
+        justify-content: space-between;
+        padding-top: var(--space-md);
+        border-top: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+    
+    /* Language dropdown on mobile */
+    .navbar-controls .dropdown {
+        flex: 1;
+    }
+    
+    .navbar-controls .btn-navbar {
+        width: 100%;
+    }
+    
+    /* Theme toggle on mobile */
+    .theme-toggle-wrapper {
+        margin-left: auto;
+    }
+}
+
+/* Theme Toggle Switch - Simplified */
+.theme-toggle-wrapper {
+    display: inline-block;
+}
+
+.theme-toggle-checkbox {
+    display: none;
+}
+
+.theme-toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    width: 50px;
+    height: 26px;
+    background: var(--bg-tertiary);
+    border-radius: 100px;
+    position: relative;
+    transition: background-color var(--transition-base);
+    border: 2px solid var(--border-color);
+}
+
+.theme-toggle-label:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary);
+}
+
+.theme-toggle-label .fa-sun {
+    color: #f39c12;
+    font-size: 0.75rem;
+    margin-left: 0.375rem;
+}
+
+.theme-toggle-label .fa-moon {
+    color: #f1c40f;
+    font-size: 0.75rem;
+    margin-right: 0.375rem;
+}
+
+.theme-toggle-ball {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    height: 18px;
+    width: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform var(--transition-base);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.theme-toggle-checkbox:checked + .theme-toggle-label {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.theme-toggle-checkbox:checked + .theme-toggle-label .theme-toggle-ball {
+    transform: translateX(24px);
+}
+
+/* Fixed Clear Cache Button */
+.clear-cache-wrapper {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+    pointer-events: auto;
+}
+
+#clear-cache-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    transition: all var(--transition-base);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    cursor: pointer;
+    pointer-events: auto;
+    position: relative;
+    z-index: 1001;
+}
+
+#clear-cache-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+}
+
+#clear-cache-btn:active {
+    transform: translateY(0);
+}
+
+/* Ensure modal has proper z-index */
+#cacheModal {
+    z-index: 1055;
+}
+
+.modal-backdrop {
+    z-index: 1050;
+}
+
+@media (max-width: 768px) {
+    .clear-cache-wrapper {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    #clear-cache-btn {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+}
