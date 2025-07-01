@@ -5,6 +5,13 @@ Header always set X-Content-Type-Options nosniff
 Header always set X-Frame-Options DENY
 Header always set X-XSS-Protection "1; mode=block"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' https: data:; connect-src 'self'"
+
+# Remove Server signature
+ServerSignature Off
+Header always unset Server
+Header always unset X-Powered-By
 
 # UTF-8 encoding - FIXED VERSION
 # Note: Do NOT use ForceType with charset as it breaks PHP execution
@@ -26,19 +33,28 @@ Header always set Referrer-Policy "strict-origin-when-cross-origin"
     Require all denied
 </FilesMatch>
 
+# Exception for robots.txt - must be accessible
+<Files "robots.txt">
+    Require all granted
+</Files>
+
 # Hide directories from direct access
 <IfModule mod_rewrite.c>
     RewriteRule ^(config|core|controllers|templates|lang)/ - [F,L]
 </IfModule>
 
-# Asset handling - serve static files directly
+# Don't rewrite requests to index.php itself
+RewriteCond %{REQUEST_URI} !^/index\.php
+
+# Asset handling - serve static files directly (including robots.txt)
 RewriteCond %{REQUEST_FILENAME} -f
-RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ [NC]
+RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|txt)$ [NC]
 RewriteRule . - [L]
 
-# Redirect all other requests to index.php
+# Redirect all other requests to index.php (except robots.txt)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/robots\.txt$
 RewriteRule ^(.*)$ index.php [QSA,L]
 
 # Cache static assets
@@ -54,6 +70,7 @@ RewriteRule ^(.*)$ index.php [QSA,L]
     ExpiresByType image/x-icon "access plus 1 year"
     ExpiresByType font/woff "access plus 1 year"
     ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType text/plain "access plus 1 day"
 </IfModule>
 
 # Gzip compression
@@ -74,4 +91,5 @@ RewriteRule ^(.*)$ index.php [QSA,L]
     AddType text/css .css
     AddType application/javascript .js
     AddType application/json .json
+    AddType text/plain .txt
 </IfModule>
