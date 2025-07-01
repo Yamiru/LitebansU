@@ -23,11 +23,13 @@
         </div>
     </div>
 <?php else: ?>
-    <div class="table-responsive">
+    <!-- Desktop Table -->
+    <div class="table-responsive d-none d-lg-block">
         <table class="table table-hover">
             <thead>
                 <tr>
                     <th><?= $lang->get('table.player') ?></th>
+                    <th><?= $lang->get('table.server') ?></th>
                     <th><?= $lang->get('table.reason') ?></th>
                     <th><?= $lang->get('table.staff') ?></th>
                     <th><?= $lang->get('table.date') ?></th>
@@ -35,11 +37,12 @@
                         <th><?= $lang->get('table.expires') ?></th>
                     <?php endif; ?>
                     <th><?= $lang->get('table.status') ?></th>
+                    <th><?= $lang->get('table.actions') ?></th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($punishments as $punishment): ?>
-                    <tr>
+                    <tr onclick="window.location.href='<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>'" style="cursor: pointer;">
                         <td>
                             <div class="player-info">
                                 <img src="<?= $punishment['avatar'] ?>" 
@@ -47,11 +50,18 @@
                                      class="avatar">
                                 <div>
                                     <div class="fw-bold"><?= $punishment['name'] ?></div>
+                                    <?php if ($controller->shouldShowUuid()): ?>
                                     <small class="text-muted font-monospace">
                                         <?= substr($punishment['uuid'], 0, 8) ?>...
                                     </small>
+                                    <?php endif; ?>
                                 </div>
                             </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                <?= htmlspecialchars($punishment['server'] ?? 'Global', ENT_QUOTES, 'UTF-8') ?>
+                            </span>
                         </td>
                         <td>
                             <div class="reason-cell" title="<?= $punishment['reason'] ?>">
@@ -69,9 +79,16 @@
                         <?php if ($type !== 'kicks'): ?>
                             <td>
                                 <?php if ($punishment['until']): ?>
-                                    <span class="badge bg-secondary"><?= $punishment['until'] ?></span>
+                                    <?php 
+                                    if (strpos($punishment['until'], $lang->get('punishment.permanent')) !== false): ?>
+                                        <span class="badge bg-danger"><?= $punishment['until'] ?></span>
+                                    <?php elseif (strpos($punishment['until'], $lang->get('punishment.expired')) !== false): ?>
+                                        <span class="badge bg-success"><?= $punishment['until'] ?></span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning"><?= $punishment['until'] ?></span>
+                                    <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="badge bg-dark"><?= $lang->get('punishment.permanent') ?></span>
+                                    <span class="badge bg-danger"><?= $lang->get('punishment.permanent') ?></span>
                                 <?php endif; ?>
                             </td>
                         <?php endif; ?>
@@ -90,10 +107,101 @@
                                 <?php endif; ?>
                             <?php endif; ?>
                         </td>
+                        <td onclick="event.stopPropagation();">
+                            <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> <?= $lang->get('table.view') ?>
+                            </a>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
+    </div>
+
+    <!-- Mobile Card Layout -->
+    <div class="mobile-punishment-list d-lg-none">
+        <?php foreach ($punishments as $punishment): ?>
+            <div class="mobile-punishment-card" onclick="window.location.href='<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>'">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <!-- Player Header -->
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="<?= $punishment['avatar'] ?>" 
+                                 alt="<?= $punishment['name'] ?>" 
+                                 class="avatar me-3">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold"><?= $punishment['name'] ?></h6>
+                                <?php if ($controller->shouldShowUuid()): ?>
+                                <small class="text-muted font-monospace">
+                                    <?= substr($punishment['uuid'], 0, 8) ?>...
+                                </small>
+                                <?php endif; ?>
+                            </div>
+                            <div class="text-end">
+                                <?php if ($type === 'kicks'): ?>
+                                    <span class="badge bg-secondary"><?= $lang->get('status.completed') ?></span>
+                                <?php elseif ($punishment['active']): ?>
+                                    <span class="badge bg-danger"><?= $lang->get('status.active') ?></span>
+                                <?php else: ?>
+                                    <span class="badge bg-success"><?= $lang->get('status.inactive') ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <!-- Server Badge -->
+                        <div class="mb-2">
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-server"></i> <?= htmlspecialchars($punishment['server'] ?? 'Global', ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+                        </div>
+                        
+                        <!-- Reason -->
+                        <div class="mb-2">
+                            <strong class="text-muted small"><?= $lang->get('table.reason') ?>:</strong>
+                            <div class="mt-1">
+                                <?= strlen($punishment['reason']) > 80 ? 
+                                    substr($punishment['reason'], 0, 80) . '...' : 
+                                    $punishment['reason'] ?>
+                            </div>
+                        </div>
+                        
+                        <!-- Meta Information -->
+                        <div class="row g-2 small text-muted">
+                            <div class="col-6">
+                                <strong><?= $lang->get('table.staff') ?>:</strong><br>
+                                <span class="text-primary"><?= $punishment['staff'] ?></span>
+                            </div>
+                            <div class="col-6">
+                                <strong><?= $lang->get('table.date') ?>:</strong><br>
+                                <?= date('M j, Y', strtotime($punishment['date'])) ?>
+                            </div>
+                            <?php if ($type !== 'kicks' && $punishment['until']): ?>
+                                <div class="col-12 mt-2">
+                                    <strong><?= $lang->get('table.expires') ?>:</strong>
+                                    <?php 
+                                    if (strpos($punishment['until'], $lang->get('punishment.permanent')) !== false): ?>
+                                        <span class="badge bg-danger ms-1"><?= $punishment['until'] ?></span>
+                                    <?php elseif (strpos($punishment['until'], $lang->get('punishment.expired')) !== false): ?>
+                                        <span class="badge bg-success ms-1"><?= $punishment['until'] ?></span>
+                                    <?php else: ?>
+                                        <span class="badge bg-warning ms-1"><?= $punishment['until'] ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <!-- Action Button -->
+                        <div class="text-end mt-3" onclick="event.stopPropagation();">
+                            <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> <?= $lang->get('table.view') ?>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
 
     <!-- Pagination -->
@@ -103,12 +211,12 @@
                 <?php if ($pagination['has_prev']): ?>
                     <a href="<?= $pagination['prev_url'] ?>" class="btn">
                         <i class="fas fa-chevron-left"></i>
-                        <?= $lang->get('pagination.previous') ?>
+                        <span class="d-none d-sm-inline"><?= $lang->get('pagination.previous') ?></span>
                     </a>
                 <?php else: ?>
                     <span class="btn disabled">
                         <i class="fas fa-chevron-left"></i>
-                        <?= $lang->get('pagination.previous') ?>
+                        <span class="d-none d-sm-inline"><?= $lang->get('pagination.previous') ?></span>
                     </span>
                 <?php endif; ?>
                 
@@ -121,12 +229,12 @@
                 
                 <?php if ($pagination['has_next']): ?>
                     <a href="<?= $pagination['next_url'] ?>" class="btn">
-                        <?= $lang->get('pagination.next') ?>
+                        <span class="d-none d-sm-inline"><?= $lang->get('pagination.next') ?></span>
                         <i class="fas fa-chevron-right"></i>
                     </a>
                 <?php else: ?>
                     <span class="btn disabled">
-                        <?= $lang->get('pagination.next') ?>
+                        <span class="d-none d-sm-inline"><?= $lang->get('pagination.next') ?></span>
                         <i class="fas fa-chevron-right"></i>
                     </span>
                 <?php endif; ?>

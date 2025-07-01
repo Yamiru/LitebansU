@@ -1,39 +1,35 @@
 </div>
-    </main>
-    
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <p>&copy; <?= date('Y') ?> <?= htmlspecialchars($config['site_name'] ?? 'LiteBans', ENT_QUOTES, 'UTF-8') ?>. <?= htmlspecialchars($lang->get('footer.rights'), ENT_QUOTES, 'UTF-8') ?></p>
-                </div>
-                <div class="col-md-6 text-end">
-                    <p>
-                        <?= htmlspecialchars($lang->get('footer.powered_by'), ENT_QUOTES, 'UTF-8') ?> 
-                        <a href="https://github.com/Yamiru/LitebansU" target="_blank" rel="noopener noreferrer" class="text-primary">
-                            LitebansU
-                        </a>
-                    </p>
-                    <p class="small text-muted">
-                        &copy; 2024 <a href="https://github.com/Yamiru/LitebansU" target="_blank" rel="noopener noreferrer" class="text-muted">LitebansU</a> - 
-                        <?= htmlspecialchars($lang->get('footer.license'), ENT_QUOTES, 'UTF-8') ?> MIT License
-                    </p>
-                </div>
+</main>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Custom JS -->
+<script src="<?= htmlspecialchars(asset('assets/js/main.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+
+<footer class="footer mt-auto">
+    <div class="container">
+        <div class="row text-center text-md-start align-items-center py-3">
+            <!-- Left side -->
+            <div class="col-md-6 mb-2 mb-md-0">
+                <p class="mb-0">
+                    &#169; <?= htmlspecialchars($config['footer_site_name'], ENT_QUOTES, 'UTF-8') ?> <?= date('Y') ?>
+                </p>
+            </div>
+            <!-- Right side -->
+            <div class="col-md-6 text-md-end">
+                <p class="mb-0">
+                    Powered by 
+                    <strong>
+                        <a href="https://github.com/Yamiru/LitebansU" target="_blank" rel="noopener noreferrer" class="text-decoration-none"><strong>LitebansU</strong></a>
+                    </strong> 
+                    <span class="text-muted">-</span> 
+                    A project by <a href="https://yamiru.com" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Yamiru</a>
+                </p>
             </div>
         </div>
-    </footer>
-    
-    <!-- Scripts -->
-    <script src="<?= htmlspecialchars(asset('assets/js/main.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
-    
-    <!-- Performance monitoring -->
-    <script>
-        if (window.performance && window.performance.timing) {
-            window.addEventListener('load', () => {
-                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-                console.log(`Page loaded in ${loadTime}ms`);
-            });
-        }
-    </script>
+    </div>
+</footer>
+
+
 </body>
 </html>

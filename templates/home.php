@@ -20,6 +20,7 @@
     </h3>
     
     <form id="search-form" class="search-form">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(SecurityManager::generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
         <div class="row g-3">
             <div class="col-md-9">
                 <div class="input-group input-group-lg">
@@ -51,58 +52,89 @@
     <div id="search-results" class="mt-4"></div>
 </div>
 
-<!-- Statistics Grid -->
-<div class="stats-grid mb-5">
-    <div class="stat-card bg-danger">
-        <div class="stat-icon">
-            <i class="fas fa-ban"></i>
+<?php if (isset($searchQuery) && !empty($searchQuery)): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-populate search field and trigger search
+    const searchInput = document.getElementById('search-input');
+    const searchForm = document.getElementById('search-form');
+    
+    if (searchInput && searchForm) {
+        searchInput.value = <?= json_encode($searchQuery) ?>;
+        // Trigger search after a small delay
+        setTimeout(() => {
+            searchForm.dispatchEvent(new Event('submit'));
+        }, 100);
+    }
+});
+</script>
+<?php endif; ?>
+<!-- Statistics Grid - Improved 2x2 Layout -->
+<div class="stats-overview mb-5">
+    <h3 class="mb-4 text-center">
+        <i class="fas fa-chart-bar text-primary"></i>
+        <?= htmlspecialchars($lang->get('stats.title'), ENT_QUOTES, 'UTF-8') ?>
+    </h3>
+    <div class="stats-grid-2x2">
+        <div class="stat-card-compact bg-danger">
+            <div class="stat-icon-compact">
+                <i class="fas fa-ban"></i>
+            </div>
+            <div class="stat-content-compact">
+                <div class="stat-number-compact"><?= number_format($stats['bans_active'] ?? 0) ?></div>
+                <div class="stat-label-compact"><?= htmlspecialchars($lang->get('stats.active_bans'), ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="stat-total-compact">
+                    <?= htmlspecialchars($lang->get('stats.total_of'), ENT_QUOTES, 'UTF-8') ?> <?= number_format($stats['bans'] ?? 0) ?>
+                </div>
+            </div>
         </div>
-        <div class="stat-content">
-            <div class="stat-number"><?= number_format($stats['bans_active'] ?? 0) ?></div>
-            <div class="stat-label"><?= htmlspecialchars($lang->get('stats.active_bans'), ENT_QUOTES, 'UTF-8') ?></div>
-            <div class="stat-total">
-                <?= htmlspecialchars($lang->get('stats.total_of'), ENT_QUOTES, 'UTF-8') ?> <?= number_format($stats['bans'] ?? 0) ?>
+        
+        <div class="stat-card-compact bg-warning">
+            <div class="stat-icon-compact">
+                <i class="fas fa-volume-mute"></i>
+            </div>
+            <div class="stat-content-compact">
+                <div class="stat-number-compact"><?= number_format($stats['mutes_active'] ?? 0) ?></div>
+                <div class="stat-label-compact"><?= htmlspecialchars($lang->get('stats.active_mutes'), ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="stat-total-compact">
+                    <?= htmlspecialchars($lang->get('stats.total_of'), ENT_QUOTES, 'UTF-8') ?> <?= number_format($stats['mutes'] ?? 0) ?>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card-compact bg-info">
+            <div class="stat-icon-compact">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-content-compact">
+                <div class="stat-number-compact"><?= number_format($stats['warnings'] ?? 0) ?></div>
+                <div class="stat-label-compact"><?= htmlspecialchars($lang->get('stats.total_warnings'), ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="stat-total-compact">
+                    <?= htmlspecialchars($lang->get('stats.all_time'), ENT_QUOTES, 'UTF-8') ?>
+                </div>
+            </div>
+        </div>
+        
+        <div class="stat-card-compact bg-secondary">
+            <div class="stat-icon-compact">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+            <div class="stat-content-compact">
+                <div class="stat-number-compact"><?= number_format($stats['kicks'] ?? 0) ?></div>
+                <div class="stat-label-compact"><?= htmlspecialchars($lang->get('stats.total_kicks'), ENT_QUOTES, 'UTF-8') ?></div>
+                <div class="stat-total-compact">
+                    <?= htmlspecialchars($lang->get('stats.all_time'), ENT_QUOTES, 'UTF-8') ?>
+                </div>
             </div>
         </div>
     </div>
     
-    <div class="stat-card bg-warning">
-        <div class="stat-icon">
-            <i class="fas fa-volume-mute"></i>
-        </div>
-        <div class="stat-content">
-            <div class="stat-number"><?= number_format($stats['mutes_active'] ?? 0) ?></div>
-            <div class="stat-label"><?= htmlspecialchars($lang->get('stats.active_mutes'), ENT_QUOTES, 'UTF-8') ?></div>
-            <div class="stat-total">
-                <?= htmlspecialchars($lang->get('stats.total_of'), ENT_QUOTES, 'UTF-8') ?> <?= number_format($stats['mutes'] ?? 0) ?>
-            </div>
-        </div>
-    </div>
-    
-    <div class="stat-card bg-info">
-        <div class="stat-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <div class="stat-content">
-            <div class="stat-number"><?= number_format($stats['warnings'] ?? 0) ?></div>
-            <div class="stat-label"><?= htmlspecialchars($lang->get('stats.total_warnings'), ENT_QUOTES, 'UTF-8') ?></div>
-            <div class="stat-total">
-                <?= htmlspecialchars($lang->get('stats.all_time'), ENT_QUOTES, 'UTF-8') ?>
-            </div>
-        </div>
-    </div>
-    
-    <div class="stat-card bg-secondary">
-        <div class="stat-icon">
-            <i class="fas fa-sign-out-alt"></i>
-        </div>
-        <div class="stat-content">
-            <div class="stat-number"><?= number_format($stats['kicks'] ?? 0) ?></div>
-            <div class="stat-label"><?= htmlspecialchars($lang->get('stats.total_kicks'), ENT_QUOTES, 'UTF-8') ?></div>
-            <div class="stat-total">
-                <?= htmlspecialchars($lang->get('stats.all_time'), ENT_QUOTES, 'UTF-8') ?>
-            </div>
-        </div>
+    <!-- Quick Link to Full Statistics -->
+    <div class="text-center mt-4">
+        <a href="<?= htmlspecialchars(url('stats'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-primary">
+            <i class="fas fa-chart-line"></i>
+            View Detailed Statistics
+        </a>
     </div>
 </div>
 
@@ -137,7 +169,7 @@
                             $playerName = $ban['player_name'] ?? $ban['name'] ?? 'Unknown';
                             $uuid = $ban['uuid'] ?? '';
                             ?>
-                            <div class="punishment-item">
+                            <div class="punishment-item" style="cursor: pointer;" onclick="window.location.href='<?= htmlspecialchars(url('detail?type=ban&id=' . $ban['id']), ENT_QUOTES, 'UTF-8') ?>'">
                                 <div class="d-flex align-items-center">
                                     <img src="<?= htmlspecialchars($controller->getAvatarUrl($uuid, $playerName), ENT_QUOTES, 'UTF-8') ?>" 
                                          alt="<?= htmlspecialchars($playerName, ENT_QUOTES, 'UTF-8') ?>" 
@@ -199,7 +231,7 @@
                             $playerName = $mute['player_name'] ?? $mute['name'] ?? 'Unknown';
                             $uuid = $mute['uuid'] ?? '';
                             ?>
-                            <div class="punishment-item">
+                            <div class="punishment-item" style="cursor: pointer;" onclick="window.location.href='<?= htmlspecialchars(url('detail?type=mute&id=' . $mute['id']), ENT_QUOTES, 'UTF-8') ?>'">
                                 <div class="d-flex align-items-center">
                                     <img src="<?= htmlspecialchars($controller->getAvatarUrl($uuid, $playerName), ENT_QUOTES, 'UTF-8') ?>" 
                                          alt="<?= htmlspecialchars($playerName, ENT_QUOTES, 'UTF-8') ?>" 

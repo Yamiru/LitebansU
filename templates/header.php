@@ -1,20 +1,5 @@
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($config['site_lang'] ?? $lang->getCurrentLanguage(), ENT_QUOTES, 'UTF-8') ?>">
-<!--
- * ============================================================================
- *  LiteBansU
- * ============================================================================
- *
- *  Plugin Name:   LiteBansU
- *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       1.0
- *  Author:        Yamiru <yamiru@yamiru.com>
- *  Author URI:    https://yamiru.com
- *  License:       MIT
- *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
- * ============================================================================
--->
 <head>
     <meta charset="<?= htmlspecialchars($config['site_charset'] ?? 'UTF-8', ENT_QUOTES, 'UTF-8') ?>">
     <meta name="viewport" content="<?= htmlspecialchars($config['site_viewport'] ?? 'width=device-width, initial-scale=1.0', ENT_QUOTES, 'UTF-8') ?>">
@@ -56,6 +41,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -67,36 +56,11 @@
     <link href="<?= htmlspecialchars(asset('assets/css/main.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
     
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="<?= htmlspecialchars($config['site_theme_color'] ?? '#6366f1', ENT_QUOTES, 'UTF-8') ?>">
-    
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "<?= htmlspecialchars($config['site_name'], ENT_QUOTES, 'UTF-8') ?>",
-        "description": "<?= htmlspecialchars($config['site_description'], ENT_QUOTES, 'UTF-8') ?>",
-        "url": "<?= htmlspecialchars($config['site_url'], ENT_QUOTES, 'UTF-8') ?>"
-    }
-    </script>
-    
-    <!-- Debug Info (only in debug mode) -->
-    <?php if ($config['debug'] ?? false): ?>
-    <script>
-        console.log('SEO Debug:', {
-            title: '<?= addslashes(isset($title) ? $title . ' - ' . $config['site_name'] : $config['site_name']) ?>',
-            description: '<?= addslashes(isset($description) ? $description : $config['site_description']) ?>',
-            canonical: '<?= addslashes($config['site_url'] . $_SERVER['REQUEST_URI']) ?>',
-            currentTheme: '<?= $theme->getCurrentTheme() ?>',
-            bodyClass: '<?= $theme->getThemeClasses()['body'] ?>',
-            basePath: '<?= BASE_PATH ?>'
-        });
-    </script>
-    <?php endif; ?>
+    <meta name="theme-color" content="<?= htmlspecialchars($config['site_theme_color'] ?? '#ef4444', ENT_QUOTES, 'UTF-8') ?>">
 </head>
 <body class="<?= htmlspecialchars($theme->getThemeClasses()['body'], ENT_QUOTES, 'UTF-8') ?>">
     <!-- Modern Navbar -->
-    <nav class="navbar-modern" id="mainNavbar">
+    <nav class="navbar navbar-expand-lg navbar-modern" id="mainNavbar">
         <div class="container">
             <a class="navbar-brand" href="<?= htmlspecialchars(url(), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="navbar-brand-icon">
@@ -105,74 +69,129 @@
                 <span><?= htmlspecialchars($config['site_name'] ?? 'LiteBans', ENT_QUOTES, 'UTF-8') ?></span>
             </a>
             
-            <ul class="navbar-nav" id="navbarNav">
-                <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage ?? '') === 'home' ? 'active' : '' ?>" href="<?= htmlspecialchars(url(), ENT_QUOTES, 'UTF-8') ?>">
-                        <i class="fas fa-home"></i>
-                        <span><?= htmlspecialchars($lang->get('nav.home'), ENT_QUOTES, 'UTF-8') ?></span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage ?? '') === 'bans' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('bans'), ENT_QUOTES, 'UTF-8') ?>">
-                        <i class="fas fa-ban"></i>
-                        <span><?= htmlspecialchars($lang->get('nav.bans'), ENT_QUOTES, 'UTF-8') ?></span>
-                        <?php if (isset($stats['bans_active']) && $stats['bans_active'] > 0): ?>
-                            <span class="badge"><?= htmlspecialchars((string)$stats['bans_active'], ENT_QUOTES, 'UTF-8') ?></span>
-                        <?php endif; ?>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage ?? '') === 'mutes' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('mutes'), ENT_QUOTES, 'UTF-8') ?>">
-                        <i class="fas fa-volume-mute"></i>
-                        <span><?= htmlspecialchars($lang->get('nav.mutes'), ENT_QUOTES, 'UTF-8') ?></span>
-                        <?php if (isset($stats['mutes_active']) && $stats['mutes_active'] > 0): ?>
-                            <span class="badge"><?= htmlspecialchars((string)$stats['mutes_active'], ENT_QUOTES, 'UTF-8') ?></span>
-                        <?php endif; ?>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage ?? '') === 'warnings' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('warnings'), ENT_QUOTES, 'UTF-8') ?>">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span><?= htmlspecialchars($lang->get('nav.warnings'), ENT_QUOTES, 'UTF-8') ?></span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= ($currentPage ?? '') === 'kicks' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('kicks'), ENT_QUOTES, 'UTF-8') ?>">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span><?= htmlspecialchars($lang->get('nav.kicks'), ENT_QUOTES, 'UTF-8') ?></span>
-                    </a>
-                </li>
-            </ul>
+            <!-- Mobile Menu Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
             
-            <div class="navbar-controls">
-                <!-- Language Switcher -->
-                <div class="lang-select">
-                    <select id="lang-switcher" class="form-select form-select-sm" aria-label="<?= htmlspecialchars($lang->get('nav.language'), ENT_QUOTES, 'UTF-8') ?>">
-                        <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
-                            <option value="<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>" 
-                                    <?= $lang->getCurrentLanguage() === $langCode ? 'selected' : '' ?>>
-                                <?= htmlspecialchars(strtoupper($langCode), ENT_QUOTES, 'UTF-8') ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+            <!-- Navbar Content -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage ?? '') === 'home' ? 'active' : '' ?>" href="<?= htmlspecialchars(url(), ENT_QUOTES, 'UTF-8') ?>">
+                            <i class="fas fa-home"></i>
+                            <span><?= htmlspecialchars($lang->get('nav.home'), ENT_QUOTES, 'UTF-8') ?></span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage ?? '') === 'bans' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('bans'), ENT_QUOTES, 'UTF-8') ?>">
+                            <i class="fas fa-ban"></i>
+                            <span><?= htmlspecialchars($lang->get('nav.bans'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php if (isset($GLOBALS['stats']['bans_active']) && $GLOBALS['stats']['bans_active'] > 0): ?>
+                                <span class="badge"><?= htmlspecialchars((string)$GLOBALS['stats']['bans_active'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage ?? '') === 'mutes' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('mutes'), ENT_QUOTES, 'UTF-8') ?>">
+                            <i class="fas fa-volume-mute"></i>
+                            <span><?= htmlspecialchars($lang->get('nav.mutes'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php if (isset($GLOBALS['stats']['mutes_active']) && $GLOBALS['stats']['mutes_active'] > 0): ?>
+                                <span class="badge"><?= htmlspecialchars((string)$GLOBALS['stats']['mutes_active'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage ?? '') === 'warnings' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('warnings'), ENT_QUOTES, 'UTF-8') ?>">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span><?= htmlspecialchars($lang->get('nav.warnings'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php if (isset($GLOBALS['stats']['warnings']) && $GLOBALS['stats']['warnings'] > 0): ?>
+                                <span class="badge"><?= htmlspecialchars((string)$GLOBALS['stats']['warnings'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage ?? '') === 'kicks' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('kicks'), ENT_QUOTES, 'UTF-8') ?>">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span><?= htmlspecialchars($lang->get('nav.kicks'), ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php if (isset($GLOBALS['stats']['kicks']) && $GLOBALS['stats']['kicks'] > 0): ?>
+                                <span class="badge"><?= htmlspecialchars((string)$GLOBALS['stats']['kicks'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php endif; ?>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage ?? '') === 'stats' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('stats'), ENT_QUOTES, 'UTF-8') ?>">
+                            <i class="fas fa-chart-bar"></i>
+                            <span><?= htmlspecialchars($lang->get('nav.statistics'), ENT_QUOTES, 'UTF-8') ?></span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage ?? '') === 'protest' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('protest'), ENT_QUOTES, 'UTF-8') ?>">
+                            <i class="fas fa-gavel"></i>
+                            <span><?= htmlspecialchars($lang->get('nav.protest'), ENT_QUOTES, 'UTF-8') ?></span>
+                        </a>
+                    </li>
+                    <?php if ($config['admin_enabled'] ?? false): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= ($currentPage ?? '') === 'admin' ? 'active' : '' ?>" href="<?= htmlspecialchars(url('admin'), ENT_QUOTES, 'UTF-8') ?>">
+                            <i class="fas fa-cog"></i>
+                            <span><?= htmlspecialchars($lang->get('nav.admin'), ENT_QUOTES, 'UTF-8') ?></span>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                </ul>
                 
-                <!-- Theme Switcher -->
-                <div class="theme-select">
-                    <select id="theme-switcher" class="form-select form-select-sm" aria-label="<?= htmlspecialchars($lang->get('nav.theme'), ENT_QUOTES, 'UTF-8') ?>">
-                        <?php foreach ($theme->getAvailableThemes() as $themeOption): ?>
-                            <option value="<?= htmlspecialchars($themeOption, ENT_QUOTES, 'UTF-8') ?>" 
-                                    <?= $theme->getCurrentTheme() === $themeOption ? 'selected' : '' ?>>
-                                <?= htmlspecialchars(ucfirst($themeOption), ENT_QUOTES, 'UTF-8') ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                <div class="navbar-controls d-flex align-items-center">
+                    <!-- Language Switcher Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-navbar dropdown-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <?php 
+                            $currentLang = $lang->getCurrentLanguage();
+                            $langNames = [
+'ar' => 'AR',
+'cs' => 'CS',
+'de' => 'DE',
+'gr' => 'GR',
+'en' => 'EN',
+'es' => 'ES',
+'fr' => 'FR',
+'hu' => 'HU',
+'it' => 'IT',
+'ja' => 'JA',
+'pl' => 'PL',
+'ro' => 'RO',
+'ru' => 'RU',
+'sk' => 'SK',
+'sr' => 'SR',
+'tr' => 'TR',
+'zh' => 'ZH'                            ];
+                            ?>
+                            <i class="fas fa-globe"></i>
+                            <span><?= $langNames[$currentLang] ?? 'EN' ?></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
+                                <li>
+                                    <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>" 
+                                       href="?lang=<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>">
+                                        <?= $langNames[$langCode] ?? strtoupper($langCode) ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                    
+                    <!-- Theme Toggle Switch -->
+                    <div class="theme-toggle-wrapper">
+                        <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox" 
+                               <?= $theme->getCurrentTheme() === 'dark' ? 'checked' : '' ?>>
+                        <label for="theme-toggle" class="theme-toggle-label">
+                            <i class="fas fa-sun"></i>
+                            <i class="fas fa-moon"></i>
+                            <span class="theme-toggle-ball"></span>
+                        </label>
+                    </div>
                 </div>
-                
-                <!-- Mobile Menu Toggle -->
-                <button class="mobile-menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
-                    <i class="fas fa-bars"></i>
-                </button>
             </div>
         </div>
     </nav>
@@ -183,20 +202,4 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="container">
-            <!-- Breadcrumb (optional) -->
-            <?php if (($currentPage ?? '') !== 'home' && isset($title)): ?>
-            <nav aria-label="breadcrumb" class="mb-4">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="<?= htmlspecialchars(url(), ENT_QUOTES, 'UTF-8') ?>">
-                            <i class="fas fa-home"></i>
-                        </a>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">
-                        <?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?>
-                    </li>
-                </ol>
-            </nav>
-            <?php endif; ?>
-            
             <!-- Page content will be inserted here -->
