@@ -6,20 +6,21 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       1.0
- *  Author:        Yamiru <yamiru@yamiru.com>
+ *  Version:       2.0
+ *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
  *  Repository    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
+
 declare(strict_types=1);
 
 class ThemeManager
 {
-    private const DEFAULT_THEME = 'auto';
-    private const AVAILABLE_THEMES = ['light', 'dark', 'auto'];
+    private const DEFAULT_THEME = 'dark';
+    private const AVAILABLE_THEMES = ['light', 'dark'];
     
     private string $currentTheme;
     
@@ -33,6 +34,12 @@ class ThemeManager
         // Check cookie first (from theme switcher)
         if (isset($_COOKIE['selected_theme']) && in_array($_COOKIE['selected_theme'], self::AVAILABLE_THEMES)) {
             return $_COOKIE['selected_theme'];
+        }
+        
+        // Use default from config if available
+        if (class_exists('core\\EnvLoader')) {
+            $defaultTheme = \core\EnvLoader::get('DEFAULT_THEME', self::DEFAULT_THEME);
+            return in_array($defaultTheme, self::AVAILABLE_THEMES) ? $defaultTheme : self::DEFAULT_THEME;
         }
         
         return self::DEFAULT_THEME;
@@ -99,14 +106,6 @@ class ThemeManager
     }
     
     /**
-     * Check if current theme is auto mode
-     */
-    public function isAutoMode(): bool
-    {
-        return $this->currentTheme === 'auto';
-    }
-    
-    /**
      * Get theme name for display
      */
     public function getThemeName(string $theme = null): string
@@ -115,8 +114,7 @@ class ThemeManager
         
         return match($theme) {
             'light' => 'Light',
-            'dark' => 'Dark', 
-            'auto' => 'Auto',
+            'dark' => 'Dark',
             default => 'Unknown'
         };
     }

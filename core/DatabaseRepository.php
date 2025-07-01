@@ -6,8 +6,8 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       1.0
- *  Author:        Yamiru <yamiru@yamiru.com>
+ *  Version:       2.0
+ *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
@@ -26,6 +26,16 @@ class DatabaseRepository
     {
         $this->connection = $connection;
         $this->tablePrefix = $tablePrefix;
+    }
+    
+    public function getConnection(): PDO
+    {
+        return $this->connection;
+    }
+    
+    public function getTablePrefix(): string
+    {
+        return $this->tablePrefix;
     }
     
     public function getBans(int $limit = 20, int $offset = 0, bool $activeOnly = true): array
@@ -177,6 +187,12 @@ class DatabaseRepository
     public function getPlayerPunishments(string $identifier): array
     {
         try {
+            // Sanitize input
+            $identifier = trim($identifier);
+            if (empty($identifier)) {
+                return [];
+            }
+            
             $isUuid = SecurityManager::validateUuid($identifier);
             $historyTable = $this->tablePrefix . 'history';
             
@@ -184,9 +200,14 @@ class DatabaseRepository
                 $field = 'uuid';
                 $value = $identifier;
             } else {
+                // Validate username format
+                if (!SecurityManager::validateUsername($identifier)) {
+                    return [];
+                }
+                
                 // If searching by name, first get UUID from history
                 $stmt = $this->connection->prepare("SELECT uuid FROM {$historyTable} WHERE name = :name ORDER BY date DESC LIMIT 1");
-                $stmt->bindValue(':name', $identifier);
+                $stmt->bindValue(':name', $identifier, PDO::PARAM_STR);
                 $stmt->execute();
                 $result = $stmt->fetch();
                 
@@ -221,7 +242,7 @@ class DatabaseRepository
                 $sql = "SELECT {$columns} FROM {$fullTable} WHERE {$field} = :identifier AND uuid != '#' ORDER BY time DESC";
                 
                 $stmt = $this->connection->prepare($sql);
-                $stmt->bindValue(':identifier', $value);
+                $stmt->bindValue(':identifier', $value, PDO::PARAM_STR);
                 $stmt->execute();
                 
                 $tableResults = $stmt->fetchAll();
@@ -390,6 +411,226 @@ class DatabaseRepository
             return $stmt->fetchAll();
         } catch (PDOException $e) {
             error_log("Error getting table structure for {$table}: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    // Advanced statistics methods for the StatsController
+    
+    public function getTopBannedPlayers(int $limit = 10): array
+    {
+        try {
+            $bansTable = $this->tablePrefix . 'bans';
+            $historyTable = $this->tablePrefix . 'history';
+            
+            $sql = "SELECT b.uuid, h.name as player_name, COUNT(*) as ban_count,
+                           MAX(b.time) as last_ban_time,
+                           SUM(CASE WHEN b.active = 1 THEN 1 ELSE 0 END) as active_bans
+                    FROM {$bansTable} b
+                    LEFT JOIN (
+                        SELECT h1.uuid, h1.name
+                        FROM {$historyTable} h1
+                        INNER JOIN (
+                            SELECT uuid, MAX(date) as max_date
+                            FROM {$historyTable}
+                            GROUP BY uuid
+                        ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
+                    ) h ON b.uuid = h.uuid
+                    WHERE b.uuid IS NOT NULL AND b.uuid != '#'
+                    GROUP BY b.uuid, h.name
+                    ORDER BY ban_count DESC, last_ban_time DESC
+                    LIMIT :limit";
+            
+            $stmt = $this->connection->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error getting top banned players: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public function getMostActiveStaff(int $limit = 10): array
+    {
+        try {
+            $tables = ['bans', 'mutes', 'warnings', 'kicks'];
+            $results = [];
+            
+            foreach ($tables as $table) {
+                $fullTable = $this->tablePrefix . $table;
+                
+                $sql = "SELECT banned_by_name as staff_name, 
+                               COUNT(*) as count,
+                               '{$table}' as punishment_type,
+                               MAX(time) as last_action
+                        FROM {$fullTable} 
+                        WHERE banned_by_name IS NOT NULL 
+                        AND banned_by_name != '' 
+                        AND banned_by_name != 'CONSOLE'
+                        AND uuid IS NOT NULL 
+                        AND uuid != '#'
+                        GROUP BY banned_by_name";
+                
+                $stmt = $this->connection->query($sql);
+                $tableResults = $stmt->fetchAll();
+                
+                foreach ($tableResults as $row) {
+                    $staffName = $row['staff_name'];
+                    if (!isset($results[$staffName])) {
+                        $results[$staffName] = [
+                            'staff_name' => $staffName,
+                            'total_punishments' => 0,
+                            'bans' => 0,
+                            'mutes' => 0,
+                            'warnings' => 0,
+                            'kicks' => 0,
+                            'last_action' => 0
+                        ];
+                    }
+                    
+                    $results[$staffName]['total_punishments'] += (int)$row['count'];
+                    $results[$staffName][$table] = (int)$row['count'];
+                    $results[$staffName]['last_action'] = max($results[$staffName]['last_action'], (int)$row['last_action']);
+                }
+            }
+            
+            // Sort by total punishments
+            uasort($results, function($a, $b) {
+                return $b['total_punishments'] <=> $a['total_punishments'];
+            });
+            
+            return array_slice(array_values($results), 0, $limit);
+        } catch (PDOException $e) {
+            error_log("Error getting most active staff: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public function getTopBanReasons(int $limit = 10): array
+    {
+        try {
+            $bansTable = $this->tablePrefix . 'bans';
+            
+            $sql = "SELECT reason, COUNT(*) as count
+                    FROM {$bansTable}
+                    WHERE reason IS NOT NULL 
+                    AND reason != ''
+                    AND uuid IS NOT NULL AND uuid != '#'
+                    GROUP BY reason
+                    ORDER BY count DESC
+                    LIMIT :limit";
+            
+            $stmt = $this->connection->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error getting top ban reasons: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public function getPunishmentTrends(int $days = 30): array
+    {
+        try {
+            $sinceTimestamp = (time() - ($days * 24 * 60 * 60)) * 1000;
+            $tables = ['bans', 'mutes', 'warnings', 'kicks'];
+            $trends = [];
+            
+            foreach ($tables as $table) {
+                $fullTable = $this->tablePrefix . $table;
+                
+                $sql = "SELECT DATE(FROM_UNIXTIME(time/1000)) as date, COUNT(*) as count
+                        FROM {$fullTable}
+                        WHERE time >= :since
+                        AND uuid IS NOT NULL AND uuid != '#'
+                        GROUP BY DATE(FROM_UNIXTIME(time/1000))
+                        ORDER BY date DESC";
+                
+                $stmt = $this->connection->prepare($sql);
+                $stmt->bindValue(':since', $sinceTimestamp, PDO::PARAM_INT);
+                $stmt->execute();
+                
+                $trends[$table] = $stmt->fetchAll();
+            }
+            
+            return $trends;
+        } catch (PDOException $e) {
+            error_log("Error getting punishment trends: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public function getRecentActivity(): array
+    {
+        try {
+            $oneDayAgo = (time() - 86400) * 1000;
+            $oneWeekAgo = (time() - (7 * 86400)) * 1000;
+            $oneMonthAgo = (time() - (30 * 86400)) * 1000;
+            
+            $activity = [
+                'last_24h' => [],
+                'last_7d' => [],
+                'last_30d' => []
+            ];
+            
+            $tables = ['bans', 'mutes', 'warnings', 'kicks'];
+            $periods = [
+                'last_24h' => $oneDayAgo,
+                'last_7d' => $oneWeekAgo,
+                'last_30d' => $oneMonthAgo
+            ];
+            
+            foreach ($periods as $period => $timestamp) {
+                foreach ($tables as $table) {
+                    $fullTable = $this->tablePrefix . $table;
+                    
+                    $sql = "SELECT COUNT(*) as count FROM {$fullTable} 
+                            WHERE time >= :since 
+                            AND uuid IS NOT NULL AND uuid != '#'";
+                    
+                    $stmt = $this->connection->prepare($sql);
+                    $stmt->bindValue(':since', $timestamp, PDO::PARAM_INT);
+                    $stmt->execute();
+                    
+                    $result = $stmt->fetch();
+                    $activity[$period][$table] = (int)($result['count'] ?? 0);
+                }
+            }
+            
+            return $activity;
+        } catch (PDOException $e) {
+            error_log("Error getting recent activity: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public function getDailyActivity(int $days = 7): array
+    {
+        try {
+            $sinceTimestamp = (time() - ($days * 24 * 60 * 60)) * 1000;
+            $bansTable = $this->tablePrefix . 'bans';
+            
+            $sql = "SELECT 
+                        DAYOFWEEK(FROM_UNIXTIME(time/1000)) as day_of_week,
+                        DAYNAME(FROM_UNIXTIME(time/1000)) as day_name,
+                        COUNT(*) as count
+                    FROM {$bansTable}
+                    WHERE time >= :since
+                    AND uuid IS NOT NULL AND uuid != '#'
+                    GROUP BY DAYOFWEEK(FROM_UNIXTIME(time/1000)), DAYNAME(FROM_UNIXTIME(time/1000))
+                    ORDER BY day_of_week";
+            
+            $stmt = $this->connection->prepare($sql);
+            $stmt->bindValue(':since', $sinceTimestamp, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error getting daily activity: " . $e->getMessage());
             return [];
         }
     }

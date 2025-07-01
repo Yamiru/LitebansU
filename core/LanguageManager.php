@@ -6,8 +6,8 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       1.0
- *  Author:        Yamiru <yamiru@yamiru.com>
+ *  Version:       2.0
+ *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
@@ -20,7 +20,7 @@ declare(strict_types=1);
 class LanguageManager
 {
     private const DEFAULT_LANG = 'en';
-    private const SUPPORTED_LANGS = ['en', 'sk', 'ru', 'de', 'es', 'fr'];
+    private const SUPPORTED_LANGS = ['en', 'ar', 'cs', 'de', 'gr', 'es', 'fr', 'hu', 'it', 'ja', 'pl', 'ro', 'ru', 'sk', 'sr', 'tr', 'cn'];
     
     private array $translations = [];
     private string $currentLang;
@@ -58,7 +58,11 @@ class LanguageManager
         }
     }
     
-    public function get(string $key, array $params = []): string
+    /**
+     * Get translation value for a key
+     * Returns string for text values, array for array values, or fallback
+     */
+    public function get(string $key, array $params = [])
     {
         $keys = explode('.', $key);
         $value = $this->translations;
@@ -71,12 +75,17 @@ class LanguageManager
             $value = $value[$k];
         }
         
-        // Ensure value is string
+        // If value is array, return it as-is (for foreach loops)
+        if (is_array($value)) {
+            return $value;
+        }
+        
+        // Ensure value is string for text values
         if (!is_string($value)) {
             return "[{$key}]";
         }
         
-        // Replace parameters
+        // Replace parameters for string values
         if (!empty($params)) {
             foreach ($params as $param => $replacement) {
                 // Ensure replacement is string
@@ -101,13 +110,23 @@ class LanguageManager
     public function getLanguageName(string $code): string
     {
         $names = [
-            'en' => 'English',
-            'sk' => 'Slovenèina',
-            'ru' => 'Russian',
-            'de' => 'Deutsch',
-            'es' => 'Espanol',
-            'fr' => 'Français'
-        ];
+'ar' => '???????',
+'cs' => 'Èeština',
+'de' => 'Deutsch',
+'gr' => '????????',
+'en' => 'English',
+'es' => 'Espanol',
+'fr' => 'Français',
+'hu' => 'Magyar',
+'it' => 'Italiano',
+'ja' => '???',
+'pl' => 'Polski',
+'ro' => 'Românã',
+'ru' => '???????',
+'sk' => 'Slovenèina',
+'sr' => 'Srpski',
+'tr' => 'Türkçe',
+'cn' => '?? (??)'        ];
         
         return $names[$code] ?? strtoupper($code);
     }
@@ -131,6 +150,12 @@ class LanguageManager
             if (in_array($browserLang, self::SUPPORTED_LANGS, true)) {
                 return $browserLang;
             }
+        }
+        
+        // Use default from config if available
+        if (class_exists('core\\EnvLoader')) {
+            $defaultLang = \core\EnvLoader::get('DEFAULT_LANGUAGE', self::DEFAULT_LANG);
+            return in_array($defaultLang, self::SUPPORTED_LANGS, true) ? $defaultLang : self::DEFAULT_LANG;
         }
         
         return self::DEFAULT_LANG;
