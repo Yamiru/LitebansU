@@ -1,0 +1,696 @@
+/**
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
+ *
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       2.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
+ */
+/* Login Form */
+.login-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.login-header {
+    background: var(--primary);
+    color: white;
+    text-align: center;
+    padding: var(--space-2xl);
+}
+
+.login-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--space-md);
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.login-body {
+    padding: var(--space-2xl);
+}
+
+.form-floating {
+    position: relative;
+    margin-bottom: var(--space-lg);
+}
+
+.form-floating > .form-control {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+    padding: 1rem 0.75rem;
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+}
+
+.form-floating > .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.form-floating > label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    padding: 1rem 0.75rem;
+    pointer-events: none;
+    border: 2px solid transparent;
+    transform-origin: 0 0;
+    transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+    color: var(--text-secondary);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    opacity: 0.65;
+    transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+}
+
+.btn-login {
+    width: 100%;
+    padding: var(--space-md);
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    transition: all var(--transition-fast);
+}
+
+.btn-login:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary));
+}
+
+/* Admin Dashboard Stats Cards */
+.admin-stat-card {
+    background: linear-gradient(135deg, var(--danger), var(--danger-hover));
+    border: none;
+    border-radius: var(--radius-lg);
+    color: white;
+    overflow: hidden;
+    transition: all var(--transition-fast);
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.admin-stat-card.bg-warning {
+    background: linear-gradient(135deg, var(--warning), var(--warning-hover));
+}
+
+.admin-stat-card.bg-info {
+    background: linear-gradient(135deg, var(--info), var(--info-hover));
+}
+
+.admin-stat-card.bg-secondary {
+    background: linear-gradient(135deg, var(--secondary), var(--secondary-hover));
+}
+
+.admin-stat-card.bg-success {
+    background: linear-gradient(135deg, var(--success), var(--success-hover));
+}
+
+.admin-stat-card .card-body {
+    padding: var(--space-xl);
+}
+
+.admin-stat-card h6,
+.admin-stat-card h2,
+.admin-stat-card small {
+    color: white !important;
+}
+
+.admin-stat-card .fa-2x {
+    opacity: 0.5;
+}
+
+/* Admin Search Results */
+.admin-search-result {
+    padding: var(--space-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-sm);
+    transition: all var(--transition-fast);
+    border: 1px solid var(--border-color);
+}
+
+.admin-search-result:hover {
+    background: var(--hover-bg);
+    transform: translateX(4px);
+    border-color: var(--primary);
+}
+
+.admin-search-result .fw-bold {
+    color: var(--text-primary) !important;
+}
+
+.admin-search-result .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.admin-search-result .badge {
+    font-size: 0.75rem;
+}
+
+.admin-search-result .small {
+    font-size: 0.875rem;
+    color: var(--text-secondary) !important;
+}
+
+.admin-search-result strong {
+    color: var(--text-primary) !important;
+}
+
+/* Admin dashboard tables */
+.admin-dashboard .table {
+    background: var(--table-bg);
+    color: var(--text-primary);
+}
+
+.admin-dashboard .table td,
+.admin-dashboard .table th {
+    color: var(--text-primary) !important;
+    border-color: var(--border-color);
+}
+
+.admin-dashboard .table-sm td,
+.admin-dashboard .table-sm th {
+    color: var(--text-primary) !important;
+}
+
+/* Fix progress bars text */
+.admin-dashboard .progress {
+    background: var(--bg-tertiary);
+}
+
+.admin-dashboard .progress-bar {
+    color: white !important;
+}
+
+/* System info table */
+.admin-dashboard .card .table td:first-child {
+    color: var(--text-secondary) !important;
+}
+
+.admin-dashboard .card .table td:last-child {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+}
+
+.remove-punishment-btn {
+    font-size: 0.875rem;
+    padding: var(--space-xs) var(--space-sm);
+}
+
+/* PHP Info Container - MOBILE RESPONSIVE */
+.phpinfo-container {
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    -webkit-overflow-scrolling: touch;
+}
+
+.phpinfo-container table {
+    width: 100%;
+    margin-bottom: var(--space-md);
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    min-width: 300px; /* Ensure minimum width for readability */
+}
+
+.phpinfo-container td {
+    padding: var(--space-sm);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary) !important;
+    background: var(--card-bg);
+    word-break: break-word;
+    overflow-wrap: break-word;
+    vertical-align: top;
+}
+
+.phpinfo-container th {
+    padding: var(--space-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    text-align: left;
+}
+
+.phpinfo-container h3,
+.phpinfo-container h4 {
+    color: var(--primary) !important;
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-md);
+    font-size: 1.125rem;
+}
+
+.phpinfo-container h1,
+.phpinfo-container h2 {
+    color: var(--primary) !important;
+    margin-top: var(--space-lg);
+    margin-bottom: var(--space-md);
+}
+
+/* PHP Info buttons */
+.btn-group-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+}
+
+.phpinfo-btn {
+    transition: all var(--transition-fast);
+    font-size: 0.875rem;
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+}
+
+.phpinfo-btn:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.phpinfo-btn.active {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
+
+/* Mobile wrapper for PHP info */
+.phpinfo-mobile-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Settings Form */
+#settings-form .form-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+#settings-form .form-text {
+    font-size: 0.8125rem;
+    color: var(--text-tertiary);
+}
+
+#settings-form .form-control,
+#settings-form select {
+    background: var(--input-bg);
+    border-color: var(--input-border);
+    color: var(--text-primary);
+}
+
+#settings-form .form-control:focus,
+#settings-form select:focus {
+    border-color: var(--input-focus);
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* Export/Import Cards */
+.admin-dashboard .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.admin-dashboard .card-header {
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.admin-dashboard .card-body {
+    color: var(--text-primary);
+}
+
+/* Admin buttons */
+.admin-dashboard .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+    border: none;
+}
+
+.admin-dashboard .btn-warning {
+    background: linear-gradient(135deg, var(--warning), var(--warning-hover));
+    border: none;
+    color: white;
+}
+
+.admin-dashboard .btn-success {
+    background: linear-gradient(135deg, var(--success), var(--success-hover));
+    border: none;
+}
+
+.admin-dashboard .btn-danger {
+    background: linear-gradient(135deg, var(--danger), var(--danger-hover));
+    border: none;
+}
+
+.admin-dashboard .btn-outline-primary {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.admin-dashboard .btn-outline-primary:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+/* Progress bars in admin */
+.admin-dashboard .progress {
+    background: var(--bg-tertiary);
+}
+
+/* Filter options */
+#filter-options {
+    transition: all var(--transition-fast);
+}
+
+/* Form check */
+.form-check-input {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* Mobile Responsive - IMPROVED */
+@media (max-width: 768px) {
+    /* Navigation tabs responsive */
+    .nav-tabs {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding: var(--space-xs);
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 0.875rem;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    /* Stat cards responsive */
+    .admin-stat-card {
+        margin-bottom: var(--space-md);
+    }
+    
+    .admin-stat-card h2 {
+        font-size: 1.5rem;
+    }
+    
+    .admin-stat-card .opacity-50 {
+        font-size: 2rem;
+    }
+    
+    /* Search results responsive */
+    .admin-search-result {
+        padding: var(--space-md);
+        font-size: 0.875rem;
+    }
+    
+    .admin-search-result .small {
+        font-size: 0.75rem;
+    }
+    
+    /* Login card responsive */
+    .login-card {
+        margin: var(--space-md);
+    }
+    
+    .login-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 1.5rem;
+    }
+    
+    .login-body {
+        padding: var(--space-lg);
+    }
+    
+    /* PHP Info mobile optimizations */
+    .phpinfo-container {
+        max-height: 400px;
+        padding: var(--space-sm);
+        margin: 0 calc(var(--space-sm) * -1);
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+    
+    .phpinfo-container table {
+        font-size: 0.75rem;
+        min-width: 280px;
+    }
+    
+    .phpinfo-container td,
+    .phpinfo-container th {
+        padding: var(--space-xs);
+        font-size: 0.75rem;
+        line-height: 1.3;
+    }
+    
+    .phpinfo-container h3,
+    .phpinfo-container h4 {
+        font-size: 1rem;
+        margin-top: var(--space-md);
+        margin-bottom: var(--space-sm);
+    }
+    
+    /* Button group mobile */
+    .btn-group-wrap {
+        justify-content: flex-start;
+        gap: var(--space-xs);
+    }
+    
+    .phpinfo-btn {
+        font-size: 0.75rem;
+        padding: var(--space-xs) var(--space-sm);
+        flex: 1;
+        min-width: 0;
+        text-align: center;
+    }
+    
+    /* Forms responsive */
+    .form-control {
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    /* Cards responsive */
+    .card {
+        margin-bottom: var(--space-md);
+    }
+    
+    .card-body {
+        padding: var(--space-md);
+    }
+    
+    /* Table responsive */
+    .table-responsive {
+        margin: 0 calc(var(--space-sm) * -1);
+        border-radius: 0;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    /* Admin dashboard header responsive */
+    .admin-dashboard h1 {
+        font-size: 1.5rem;
+        margin-bottom: var(--space-lg);
+    }
+    
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+    
+    .d-flex.gap-2 {
+        gap: var(--space-sm) !important;
+        justify-content: center;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 576px) {
+    /* Even smaller optimizations */
+    .container {
+        padding: 0 var(--space-sm);
+    }
+    
+    .phpinfo-container {
+        max-height: 350px;
+        padding: var(--space-xs);
+    }
+    
+    .phpinfo-container table {
+        font-size: 0.7rem;
+    }
+    
+    .phpinfo-container td,
+    .phpinfo-container th {
+        padding: 0.25rem;
+        font-size: 0.7rem;
+    }
+    
+    .btn-group-wrap {
+        flex-direction: column;
+    }
+    
+    .phpinfo-btn {
+        width: 100%;
+        margin-bottom: var(--space-xs);
+    }
+    
+    .nav-tabs .nav-link span {
+        display: none;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: var(--space-sm);
+        justify-content: center;
+    }
+    
+    /* Buttons responsive */
+    .btn {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Admin stats grid */
+    .admin-stat-card .card-body {
+        padding: var(--space-md);
+    }
+    
+    .admin-stat-card h6 {
+        font-size: 0.875rem;
+    }
+    
+    .admin-stat-card h2 {
+        font-size: 1.25rem;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .phpinfo-container table,
+    .admin-dashboard .table {
+        border-width: 0.5px;
+    }
+}
+
+/* Landscape orientation on small devices */
+@media (max-height: 600px) and (orientation: landscape) {
+    .phpinfo-container {
+        max-height: 250px;
+    }
+    
+    .login-card {
+        max-width: 500px;
+    }
+    
+    .login-header {
+        padding: var(--space-lg);
+    }
+    
+    .login-body {
+        padding: var(--space-lg);
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Fixed admin table text colors */
+.admin-table-text {
+    color: var(--text-primary) !important;
+}
+
+.admin-quick-stats-text {
+    color: var(--text-primary) !important;
+}
+
+/* Scrollbar styling for PHP info */
+.phpinfo-container::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.phpinfo-container::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.phpinfo-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.phpinfo-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
