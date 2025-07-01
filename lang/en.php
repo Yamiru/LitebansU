@@ -1,19 +1,4 @@
 <?php
-/**
- * ============================================================================
- *  LiteBansU
- * ============================================================================
- *
- *  Plugin Name:   LiteBansU
- *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       1.0
- *  Author:        Yamiru <yamiru@yamiru.com>
- *  Author URI:    https://yamiru.com
- *  License:       MIT
- *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
- * ============================================================================
- */
 
 return [
     'site' => [
@@ -25,9 +10,14 @@ return [
     'nav' => [
         'home' => 'Home',
         'bans' => 'Bans',
-        'mutes' => 'Mutes', 
+        'mutes' => 'Mutes',
         'warnings' => 'Warnings',
-        'kicks' => 'Kicks'
+        'kicks' => 'Kicks',
+        'statistics' => 'Statistics',
+        'language' => 'Language',
+        'theme' => 'Theme',
+        'admin' => 'Admin',
+        'protest' => 'Ban Protest',
     ],
     
     'home' => [
@@ -48,7 +38,8 @@ return [
         'help' => 'You can search by player name or full UUID',
         'button' => 'Search',
         'no_results' => 'No punishments found for this player',
-        'error' => 'Search error occurred'
+        'error' => 'Search error occurred',
+        'network_error' => 'Network error occurred. Please try again.'
     ],
     
     'stats' => [
@@ -58,7 +49,18 @@ return [
         'total_warnings' => 'Total Warnings',
         'total_kicks' => 'Total Kicks',
         'total_of' => 'of',
-        'all_time' => 'all time'
+        'all_time' => 'all time',
+        'most_banned_players' => 'Most Banned Players',
+        'most_active_staff' => 'Most Active Staff',
+        'top_ban_reasons' => 'Top Ban Reasons',
+        'recent_activity_overview' => 'Recent Activity Overview',
+        'activity_by_day' => 'Activity by Day',
+        'cache_cleared' => 'Statistics cache cleared successfully',
+        'cache_clear_failed' => 'Failed to clear statistics cache',
+        'clear_cache' => 'Clear Cache',
+        'last_24h' => 'Last 24 Hours',
+        'last_7d' => 'Last 7 Days',
+        'last_30d' => 'Last 30 Days'
     ],
     
     'table' => [
@@ -67,7 +69,15 @@ return [
         'staff' => 'Staff',
         'date' => 'Date',
         'expires' => 'Expires',
-        'status' => 'Status'
+        'status' => 'Status',
+        'actions' => 'Actions',
+        'type' => 'Type',
+        'view' => 'View',
+        'total' => 'Total',
+        'active' => 'Active',
+        'last_ban' => 'Last Ban',
+        'last_action' => 'Last Action',
+        'server' => 'Server',
     ],
     
     'status' => [
@@ -87,6 +97,16 @@ return [
     'punishments' => [
         'no_data' => 'No punishments found',
         'no_data_desc' => 'There are currently no punishments to display'
+    ],
+    
+    'detail' => [
+        'duration' => 'Duration',
+        'time_left' => 'Time Left',
+        'progress' => 'Progress',
+        'removed_by' => 'Removed By',
+        'removed_date' => 'Removed Date',
+        'flags' => 'Flags',
+        'other_punishments' => 'Other Punishments'
     ],
     
     'time' => [
@@ -111,6 +131,75 @@ return [
     'error' => [
         'not_found' => 'Page not found',
         'server_error' => 'Server error occurred',
-        'invalid_request' => 'Invalid request'
-    ]
+        'invalid_request' => 'Invalid request',
+        'punishment_not_found' => 'The requested punishment could not be found.',
+        'loading_failed' => 'Failed to load punishment details.'
+    ],
+    
+    'protest' => [
+        'title' => 'Ban Protest',
+        'description' => 'If you believe your ban was issued in error, you can submit a protest for review.',
+        'how_to_title' => 'How to Submit a Ban Protest',
+        'how_to_subtitle' => 'Follow these steps to request an unban:',
+        'step1_title' => '1. Gather Your Information',
+        'step1_desc' => 'Before submitting a protest, make sure you have:',
+        'step1_items' => [
+            'Your Minecraft username',
+            'The date and time of your ban',
+            'The reason given for your ban',
+            'Any evidence that supports your case'
+        ],
+        'step2_title' => '2. Contact Methods',
+        'step2_desc' => 'You can submit your ban protest through one of the following methods:',
+        'discord_title' => 'Discord (Recommended)',
+        'discord_desc' => 'Join our Discord server and create a ticket in the #ban-protests channel',
+        'discord_button' => 'Join Discord',
+        'email_title' => 'Email',
+        'email_desc' => 'Send a detailed email with your protest to:',
+        'forum_title' => 'Forum',
+        'forum_desc' => 'Create a new post in the Ban Protests section of our website forum.',
+        'forum_button' => 'Visit Forum',
+        'step3_title' => '3. What to Include',
+        'step3_desc' => 'Your protest should include: Your nickname - What happened - Why you are protesting - What you want to happen - ID from the site (e.g. ban&id=181) - Optional: Screenshot for proof.',
+        'step3_items' => [
+            'Your Minecraft username',
+            'The date and approximate time of the ban',
+            'The staff member who banned you (if known)',
+            'A detailed explanation of why you believe the ban was unfair',
+            'Any screenshots or evidence that support your case',
+            'An honest account of what happened'
+        ],
+        'step4_title' => '4. Wait for Review',
+        'step4_desc' => 'Our staff team will review your protest within 48-72 hours. Please be patient and do not submit multiple protests for the same ban.',
+        'guidelines_title' => 'Important Guidelines',
+        'guidelines_items' => [
+            'Be honest and respectful in your protest',
+            'Do not lie or provide false information',
+            'Do not spam or submit multiple protests',
+            'Accept the final decision of the staff team',
+            'Ban evasion will result in a permanent ban'
+        ],
+        'warning_title' => 'Warning',
+        'warning_desc' => 'Submitting false information or attempting to deceive staff will result in your protest being denied and may lead to extended punishment.',
+        'form_not_available' => 'Direct protest submission is not available at this time. Please use one of the contact methods above.'
+    ],
+    
+    'admin' => [
+        'dashboard' => 'Admin Dashboard',
+        'login' => 'Admin Login',
+        'logout' => 'Logout',
+        'password' => 'Password',
+        'export_data' => 'Export Data',
+        'export_desc' => 'Export punishment data in various formats',
+        'import_data' => 'Import Data',
+        'import_desc' => 'Import punishment data from JSON or XML files',
+        'data_type' => 'Data Type',
+        'all_punishments' => 'All Punishments',
+        'select_file' => 'Select File',
+        'import' => 'Import',
+        'settings' => 'Settings',
+        'show_player_uuid' => 'Show Player UUID',
+        'footer_site_name' => 'Footer Site Name',
+        'footer_site_name_desc' => 'Site name displayed in the footer copyright text',
+    ],
 ];
