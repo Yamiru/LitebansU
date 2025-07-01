@@ -1,0 +1,299 @@
+/**
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
+ *
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       2.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
+ */
+/* Page Header */
+.punishments-page h1 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+}
+
+/* Table Styles */
+.table-responsive {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    background: var(--table-bg);
+}
+
+.table {
+    margin-bottom: 0;
+    background: var(--table-bg);
+}
+
+.table tbody tr {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background: var(--table-hover-bg);
+    transform: translateX(2px);
+}
+
+/* Player Info Cell - FIXED FOR DARK THEME */
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.player-info .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.player-info > div {
+    flex: 1;
+}
+
+.player-info .fw-bold {
+    font-weight: 600;
+    color: var(--text-primary) !important;
+    display: block;
+}
+
+.player-info small {
+    font-size: 0.75rem;
+    color: var(--text-secondary) !important;
+    font-family: var(--font-mono);
+    display: block;
+}
+
+/* Reason Cell */
+.reason-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary) !important;
+}
+
+/* Staff name color */
+.table .text-primary {
+    color: var(--primary) !important;
+}
+
+/* Date text */
+.table small {
+    color: var(--text-secondary) !important;
+}
+
+/* Mobile Punishment Cards - FIXED */
+.mobile-punishment-list {
+    display: none;
+    margin: 0 calc(var(--space-sm) * -1);
+}
+
+.mobile-punishment-card {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: var(--space-md);
+}
+
+.mobile-punishment-card:hover {
+    transform: translateY(-2px);
+}
+
+.mobile-punishment-card .card {
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+    margin: 0 var(--space-sm);
+    background: var(--card-bg);
+}
+
+.mobile-punishment-card:hover .card {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+.mobile-punishment-card .avatar {
+    width: 48px;
+    height: 48px;
+}
+
+.mobile-punishment-card h6 {
+    font-size: 1rem;
+    color: var(--text-primary) !important;
+    margin-bottom: 0.25rem;
+}
+
+.mobile-punishment-card .badge {
+    font-size: 0.75rem;
+}
+
+.mobile-punishment-card .text-truncate {
+    color: var(--text-primary) !important;
+}
+
+.mobile-punishment-card .text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.mobile-punishment-card strong {
+    color: var(--text-secondary) !important;
+}
+
+.mobile-punishment-card .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.mobile-punishment-card .col-6,
+.mobile-punishment-card .col-12 {
+    padding-left: 0;
+    padding-right: var(--space-sm);
+}
+
+/* Status Badge Variants */
+.status-badge {
+    font-size: 0.75rem;
+    padding: var(--space-xs) var(--space-sm);
+}
+
+/* No Data State */
+.no-data-state {
+    text-align: center;
+    padding: var(--space-3xl) var(--space-lg);
+}
+
+.no-data-state i {
+    font-size: 3rem;
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-md);
+}
+
+.no-data-state h4 {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+}
+
+.no-data-state p {
+    color: var(--text-tertiary);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-xl);
+}
+
+.pagination .btn {
+    min-width: auto;
+    padding: var(--space-sm) var(--space-md);
+}
+
+.pagination .btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-info {
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .table-responsive {
+        display: none;
+    }
+    
+    .mobile-punishment-list {
+        display: block;
+    }
+    
+    .punishments-page h1 {
+        font-size: 1.5rem;
+        margin-bottom: var(--space-lg);
+    }
+    
+    .pagination {
+        flex-wrap: wrap;
+    }
+    
+    .pagination-info {
+        order: -1;
+        width: 100%;
+        text-align: center;
+        margin-bottom: var(--space-sm);
+        font-size: 0.875rem;
+    }
+    
+    .pagination .btn {
+        font-size: 0.875rem;
+        padding: var(--space-xs) var(--space-sm);
+    }
+}
+
+/* Specific punishment type colors */
+.punishments-page .fa-ban { color: var(--danger); }
+.punishments-page .fa-volume-mute { color: var(--warning); }
+.punishments-page .fa-exclamation-triangle { color: var(--info); }
+.punishments-page .fa-sign-out-alt { color: var(--gray-600); }
+/* Table Styles - FIXED DARK THEME */
+.punishments-page .table-responsive {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.punishments-page .table {
+    margin-bottom: 0;
+    background: transparent;
+}
+
+.punishments-page .table thead {
+    background: var(--bg-tertiary);
+}
+
+.punishments-page .table thead th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary) !important;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.punishments-page .table tbody {
+    background: var(--card-bg);
+}
+
+.punishments-page .table tbody tr {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: transparent;
+}
+
+.punishments-page .table tbody tr:hover {
+    background: var(--table-hover-bg);
+    transform: translateX(2px);
+}
+
+.punishments-page .table tbody td {
+    background: transparent;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color);
+}
+

@@ -1,0 +1,706 @@
+/**
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
+ *
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       2.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
+ */
+.stats-page {
+    padding-bottom: var(--space-2xl);
+}
+
+/* Main Stats Grid - Consistent with Home Page */
+.stats-grid-main {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+}
+
+/* Main Stat Cards - Fixed styling */
+.stat-card-main {
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    min-height: 140px;
+    color: white !important;
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.stat-card-main:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+/* Gradient backgrounds */
+.bg-danger-gradient {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.bg-warning-gradient {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.bg-info-gradient {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+.bg-secondary-gradient {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+/* Stat Icon */
+.stat-icon-main {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: white !important;
+    flex-shrink: 0;
+}
+
+/* Stat Content */
+.stat-content-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.stat-number-main {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1;
+    color: white !important;
+    margin-bottom: var(--space-xs);
+}
+
+.stat-label-main {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white !important;
+    margin-bottom: var(--space-xs);
+    opacity: 0.95;
+}
+
+.stat-total-main {
+    font-size: 0.875rem;
+    color: white !important;
+    opacity: 0.85;
+}
+
+/* Activity Timeline - Mobile-friendly */
+.activity-timeline {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-lg);
+}
+
+.timeline-item {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    transition: all var(--transition-fast);
+}
+
+.timeline-item:hover {
+    background: var(--hover-bg);
+    transform: translateY(-2px);
+}
+
+.timeline-header h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    text-align: center;
+}
+
+.activity-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+}
+
+.activity-stat-item {
+    text-align: center;
+    padding: var(--space-sm);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.activity-stat-item:hover {
+    transform: scale(1.05);
+}
+
+.activity-stat-count {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-xs);
+}
+
+.activity-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Player Rank List */
+.top-players-list,
+.staff-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.player-rank-item,
+.staff-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.player-rank-item:hover,
+.staff-item:hover {
+    background: var(--hover-bg);
+    transform: translateX(4px);
+}
+
+.rank-number {
+    width: 30px;
+    height: 30px;
+    background: var(--primary);
+    color: white;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+.player-details,
+.staff-details {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
+    min-width: 0;
+}
+
+.player-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.player-name {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.player-name .fw-bold {
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.last-ban-time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.ban-stats,
+.punishment-breakdown {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.breakdown-details {
+    display: flex;
+    gap: var(--space-xs);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.breakdown-details span {
+    white-space: nowrap;
+}
+
+/* Reasons Grid */
+.reasons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--space-sm);
+}
+
+.reason-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    gap: var(--space-md);
+}
+
+.reason-card:hover {
+    background: var(--hover-bg);
+    transform: translateX(4px);
+}
+
+.reason-text {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reason-count {
+    flex-shrink: 0;
+}
+
+/* Daily Activity Chart */
+.daily-chart-container {
+    overflow-x: auto;
+    padding: var(--space-sm);
+    -webkit-overflow-scrolling: touch;
+    cursor: grab;
+}
+
+.daily-chart-container:active {
+    cursor: grabbing;
+}
+
+.daily-chart-container.active {
+    cursor: grabbing;
+}
+
+.daily-activity-chart {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    height: 150px;
+    min-width: 350px;
+    gap: var(--space-sm);
+}
+
+.day-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    flex: 1;
+    max-width: 60px;
+}
+
+.day-bar {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: var(--radius-sm);
+    width: 100%;
+    min-height: 20px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: var(--space-xs);
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+.day-bar:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.day-count {
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.day-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .stats-grid-main {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid-main {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+    
+    .stat-card-main {
+        padding: var(--space-md);
+        min-height: 110px;
+        gap: var(--space-md);
+    }
+    
+    .stat-icon-main {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+    
+    .stat-number-main {
+        font-size: 1.75rem;
+    }
+    
+    .stat-label-main {
+        font-size: 0.875rem;
+    }
+    
+    .stat-total-main {
+        font-size: 0.75rem;
+    }
+    
+    .activity-timeline {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-stats {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .activity-stat-count {
+        font-size: 1.25rem;
+    }
+    
+    .activity-stat-label {
+        font-size: 0.625rem;
+    }
+    
+    .player-rank-item,
+    .staff-item {
+        padding: var(--space-xs);
+        gap: var(--space-sm);
+    }
+    
+    .rank-number {
+        width: 24px;
+        height: 24px;
+        font-size: 0.75rem;
+    }
+    
+    .player-avatar-small {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .player-name .fw-bold,
+    .staff-details .fw-bold {
+        font-size: 0.875rem;
+    }
+    
+    .last-ban-time {
+        font-size: 0.625rem;
+    }
+    
+    .badge {
+        font-size: 0.625rem !important;
+        padding: 0.125rem 0.375rem !important;
+    }
+    
+    .breakdown-details {
+        font-size: 0.75rem;
+        gap: 0.25rem;
+    }
+    
+    .reasons-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .reason-card {
+        padding: var(--space-sm);
+    }
+    
+    .reason-text {
+        font-size: 0.8125rem;
+    }
+    
+    .daily-activity-chart {
+        height: 100px;
+        min-width: 300px;
+    }
+    
+    .day-column {
+        max-width: 40px;
+    }
+    
+    .day-count {
+        font-size: 0.625rem;
+    }
+    
+    .day-label {
+        font-size: 0.625rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .stat-card-main {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--space-md);
+        min-height: auto;
+    }
+    
+    .stat-icon-main {
+        width: 56px;
+        height: 56px;
+        font-size: 1.75rem;
+    }
+    
+    .stat-content-main {
+        align-items: center;
+    }
+    
+    .activity-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .timeline-item {
+        padding: var(--space-md);
+    }
+    
+    /* Simplify mobile display */
+    .ban-stats,
+    .punishment-breakdown {
+        flex-direction: column;
+        gap: 0.25rem;
+        align-items: flex-end;
+    }
+    
+    .breakdown-details {
+        display: none;
+    }
+    
+    /* Show only total for staff on mobile */
+    .staff-item .badge.bg-primary {
+        display: inline-flex;
+    }
+}
+
+/* Dark theme fixes */
+.theme-dark .timeline-item {
+    background: var(--bg-secondary);
+}
+
+.theme-dark .activity-stat-item {
+    background: var(--bg-tertiary);
+}
+
+.theme-dark .player-rank-item,
+.theme-dark .staff-item,
+.theme-dark .reason-card {
+    background: var(--bg-secondary);
+}
+
+.theme-dark .player-rank-item:hover,
+.theme-dark .staff-item:hover,
+.theme-dark .reason-card:hover {
+    background: var(--hover-bg);
+}
+
+/* Light theme fixes */
+.theme-light .stat-card-main {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.theme-light .stat-card-main:hover {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stats-page .stat-card-main {
+    animation: fadeInUp 0.6s ease-out backwards;
+}
+
+.stats-page .stat-card-main:nth-child(1) { animation-delay: 0.1s; }
+.stats-page .stat-card-main:nth-child(2) { animation-delay: 0.2s; }
+.stats-page .stat-card-main:nth-child(3) { animation-delay: 0.3s; }
+.stats-page .stat-card-main:nth-child(4) { animation-delay: 0.4s; }
+
+/* Touch feedback for mobile */
+@media (hover: none) {
+    .stat-card-main:active {
+        transform: scale(0.98);
+    }
+    
+    .player-rank-item:active,
+    .staff-item:active,
+    .reason-card:active {
+        background: var(--hover-bg);
+    }
+}
+
+/* Scrollbar styling */
+.daily-chart-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.daily-chart-container::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+.daily-chart-container::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: var(--radius-sm);
+}
+
+.daily-chart-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-hover);
+}
+
+/* Clear cache button styling */
+#stats-clear-cache-btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+    #stats-clear-cache-btn {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    #stats-clear-cache-btn i {
+        font-size: 0.875rem;
+    }
+}
+
+/* PRIDAJ DO assets/css/pages/stats.css alebo do main.css */
+
+/* Clear Cache Modal Styling pre stats.php */
+#cacheModal .modal-content {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+#cacheModal .modal-header {
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-radius: 1rem 1rem 0 0;
+}
+
+#cacheModal .modal-body {
+    padding: 1.5rem;
+}
+
+#cacheModal .modal-footer {
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-radius: 0 0 1rem 1rem;
+}
+
+/* Theme support pre modal */
+.theme-dark #cacheModal .modal-content {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+.theme-light #cacheModal .modal-content {
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+/* Clear cache button hover effect */
+#clear-cache-btn {
+    transition: all 0.3s ease;
+}
+
+#clear-cache-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#clear-cache-btn:disabled {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* Loading state pre confirm button */
+#confirm-clear-cache:disabled {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* Responsive fixes */
+@media (max-width: 576px) {
+    #cacheModal .modal-dialog {
+        margin: 1rem;
+    }
+    
+    #cacheModal .modal-body {
+        padding: 1rem;
+    }
+    
+    #clear-cache-btn {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    #clear-cache-btn .d-none.d-sm-inline {
+        display: none !important;
+    }
+}

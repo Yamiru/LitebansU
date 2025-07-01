@@ -1,0 +1,396 @@
+/**
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
+ *
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       2.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
+ */
+/* Hero Section */
+.hero-section {
+    margin-bottom: var(--space-2xl);
+}
+
+.hero-section .card {
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg-secondary) 100%);
+    border: none;
+    padding: var(--space-2xl) var(--space-lg);
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    margin-bottom: var(--space-md);
+}
+
+.hero-section .lead {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Search Container */
+.search-container {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+    box-shadow: var(--card-shadow);
+    margin-bottom: var(--space-2xl);
+}
+
+@media (max-width: 768px) {
+    .search-container {
+        padding: var(--space-lg);
+    }
+}
+
+.search-container h3 {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    color: var(--text-primary);
+}
+
+.search-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#search-results {
+    margin-top: var(--space-xl);
+}
+
+.search-results {
+    animation: fadeIn var(--transition-base);
+}
+
+.search-results h4 {
+    margin-bottom: var(--space-lg);
+    color: var(--text-primary);
+}
+
+.search-results .table {
+    margin-bottom: 0;
+}
+
+/* Mobile search results */
+.mobile-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.search-result-card .card {
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.search-result-card:hover .card {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+}
+
+.search-result-card .card-body {
+    padding: var(--space-md);
+}
+
+.search-result-card strong {
+    color: var(--text-secondary);
+}
+
+.search-result-card .text-primary {
+    color: var(--primary) !important;
+}
+
+@media (max-width: 576px) {
+    .search-container {
+        padding: var(--space-md);
+        margin-bottom: var(--space-lg);
+    }
+    
+    .search-container h3 {
+        font-size: 1.125rem;
+        margin-bottom: var(--space-md);
+    }
+    
+    #search-results {
+        margin-top: var(--space-md);
+    }
+    
+    .search-results h4 {
+        font-size: 1rem;
+        margin-bottom: var(--space-md);
+    }
+    
+    .search-result-card .card-body {
+        padding: var(--space-sm);
+    }
+}
+
+/* Recent Activity Cards */
+.punishment-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.punishment-item {
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.punishment-item:hover {
+    background: var(--hover-bg);
+    transform: translateX(4px);
+}
+
+.punishment-item .avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.punishment-item .fw-bold {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.punishment-item small {
+    color: var(--text-secondary);
+}
+
+/* Stats Overview */
+.stats-overview {
+    margin-bottom: var(--space-2xl);
+}
+
+.stats-overview h3 {
+    text-align: center;
+    margin-bottom: var(--space-xl);
+    color: var(--text-primary);
+}
+
+/* Stats Grid 2x2 - Fixed text colors */
+.stats-grid-2x2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+}
+
+@media (max-width: 576px) {
+    .stats-grid-2x2 {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+}
+
+.stat-card-compact {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    min-height: 120px;
+}
+
+@media (max-width: 576px) {
+    .stat-card-compact {
+        padding: var(--space-md);
+        gap: var(--space-md);
+        min-height: 100px;
+    }
+}
+
+.stat-card-compact::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.stat-card-compact:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-card-compact.bg-danger {
+    background: var(--danger);
+    color: white !important;
+}
+
+.stat-card-compact.bg-danger * {
+    color: white !important;
+}
+
+.stat-card-compact.bg-danger::before {
+    background: var(--danger-hover);
+}
+
+.stat-card-compact.bg-warning {
+    background: var(--warning);
+    color: white !important;
+}
+
+.stat-card-compact.bg-warning * {
+    color: white !important;
+}
+
+.stat-card-compact.bg-warning::before {
+    background: var(--warning-hover);
+}
+
+.stat-card-compact.bg-info {
+    background: var(--info);
+    color: white !important;
+}
+
+.stat-card-compact.bg-info * {
+    color: white !important;
+}
+
+.stat-card-compact.bg-info::before {
+    background: var(--info-hover);
+}
+
+.stat-card-compact.bg-secondary {
+    background: var(--gray-600);
+    color: white !important;
+}
+
+.stat-card-compact.bg-secondary * {
+    color: white !important;
+}
+
+.stat-card-compact.bg-secondary::before {
+    background: var(--gray-700);
+}
+
+.stat-icon-compact {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white !important;
+    flex-shrink: 0;
+}
+
+@media (max-width: 576px) {
+    .stat-icon-compact {
+        width: 40px;
+        height: 40px;
+        font-size: 1.25rem;
+    }
+}
+
+.stat-content-compact {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-number-compact {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    color: white !important;
+    margin-bottom: var(--space-xs);
+}
+
+@media (max-width: 576px) {
+    .stat-number-compact {
+        font-size: 1.5rem;
+    }
+}
+
+.stat-label-compact {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white !important;
+    margin-bottom: var(--space-xs);
+    opacity: 0.95;
+}
+
+@media (max-width: 576px) {
+    .stat-label-compact {
+        font-size: 0.8125rem;
+    }
+}
+
+.stat-total-compact {
+    font-size: 0.75rem;
+    color: white !important;
+    opacity: 0.85;
+}
+
+@media (max-width: 576px) {
+    .stat-total-compact {
+        font-size: 0.7rem;
+    }
+}
+/* Quick link button */
+.stats-overview .btn-outline-primary {
+    margin-top: var(--space-lg);
+}
+
+/* Recent activity section */
+.recent-activity {
+    margin-top: var(--space-2xl);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-section .lead {
+        font-size: 1.1rem;
+    }
+    
+    .hero-section .card {
+        padding: var(--space-lg) var(--space-md);
+    }
+    
+    .search-container {
+        padding: var(--space-lg);
+    }
+    
+    .search-container h3 {
+        font-size: 1.25rem;
+        margin-bottom: var(--space-lg);
+    }
+    
+    .punishment-item {
+        padding: var(--space-sm);
+    }
+    
+    .punishment-item .avatar {
+        width: 32px;
+        height: 32px;
+    }
+}

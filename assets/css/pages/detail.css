@@ -1,0 +1,230 @@
+/**
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
+ *
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       2.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
+ */
+.punishment-detail {
+    animation: fadeIn var(--transition-slow);
+}
+
+/* Detail Card */
+.detail-card {
+    margin-bottom: var(--space-xl);
+    border: none;
+    box-shadow: var(--shadow-lg);
+}
+
+.detail-card .card-header {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.detail-card .card-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+/* Player Card */
+.player-card {
+    padding: var(--space-2xl);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.player-avatar {
+    width: 128px;
+    height: 128px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin: 0 auto var(--space-lg);
+}
+
+.player-card h4 {
+    margin-bottom: var(--space-sm);
+    color: var(--text-primary);
+}
+
+.player-card .font-monospace {
+    font-size: 0.875rem;
+    color: var(--text-tertiary);
+    word-break: break-all;
+}
+
+/* Details Grid */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-lg);
+}
+
+.detail-item {
+    background: var(--bg-secondary);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.detail-item:hover {
+    background: var(--hover-bg);
+}
+
+.detail-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.detail-label {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.detail-value {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Progress Bar */
+.detail-item .progress {
+    height: 1.5rem;
+    background-color: var(--bg-tertiary);
+    margin-top: var(--space-sm);
+}
+
+.detail-item .progress-bar {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+}
+
+/* Related Punishments */
+.related-punishments-card .card-header h5 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.related-punishments-card .table {
+    margin-bottom: 0;
+}
+
+.related-punishments-card .table td {
+    vertical-align: middle;
+}
+
+.related-punishments-card .text-truncate {
+    max-width: 200px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    background: var(--bg-secondary);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    color: var(--text-tertiary);
+    content: "/";
+    padding: 0 var(--space-sm);
+}
+
+.breadcrumb-item a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.breadcrumb-item a:hover {
+    color: var(--primary);
+}
+
+.breadcrumb-item.active {
+    color: var(--text-primary);
+}
+
+/* Status badges in header */
+.detail-card .badge {
+    font-size: 0.875rem;
+    padding: var(--space-xs) var(--space-md);
+}
+
+/* Flags section */
+.detail-value .badge {
+    margin-right: var(--space-xs);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .player-card {
+        padding: var(--space-lg);
+    }
+    
+    .player-avatar {
+        width: 96px;
+        height: 96px;
+    }
+    
+    .details-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+    
+    .detail-item {
+        padding: var(--space-sm);
+    }
+    
+    .detail-label {
+        font-size: 0.8125rem;
+    }
+    
+    .detail-value {
+        font-size: 0.9375rem;
+    }
+    
+    .breadcrumb {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 0.875rem;
+    }
+    
+    .related-punishments-card .table {
+        font-size: 0.875rem;
+    }
+    
+    .related-punishments-card .btn-sm {
+        padding: var(--space-xs);
+        font-size: 0.75rem;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
