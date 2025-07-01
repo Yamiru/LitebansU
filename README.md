@@ -11,7 +11,7 @@
 
 ## 🌐 Live Demo (optional)
 
-[https://mc.proserver.sk](https://mc.proserver.sk)
+[https://yamiru.com/litebansU](https://yamiru.com/litebansU)
 
 
 ## Screenshot
@@ -21,12 +21,14 @@
 ## ✨ Features
 
 - **🎨 Modern UI/UX** - Clean, responsive design with smooth animations and dark/light themes
-- **🌍 Multi-language Support** - English, Slovak, Russian, German, Spanish, French
+- **🌍 Multi-language Support** - Arabic, Czech, German, Greek, English, Spanish, French, Hungarian, Italian, Japanese, Polish, Romanian, Russian, Slovak, Serbian, Turkish, Chinese (Simplified) 
+- **📈 Statistics** View server punishment statistics
 - **🔍 Real-time Search** - Instant player punishment search with debouncing
 - **🛡️ Security First** - CSRF protection, XSS prevention, SQL injection protection
 - **📱 Mobile Responsive** - Works perfectly on all devices and screen sizes
 - **⚡ Performance Optimized** - Lazy loading, caching, and minimal resource usage
 - **🔧 Easy Installation** - Simple download and copy setup
+- **⚙️ Admin Panel** - Manage punishments, export/import data, and view system information.
 - **🎯 SEO Optimized** - Full SEO meta tags and Open Graph support
 
 ## 🚀 Quick Start
@@ -64,10 +66,10 @@
   - PDO & pdo_mysql
   - mbstring
   - intl
-  - session
-  - json
+  - gd/imagick
+  - curl
 - **MySQL 5.7+** or **MariaDB 10.3+**
-- **Web Server**: Apache 2.4+ or Nginx 1.18+
+- **Web Server**: Apache 2.4+ (mod_rewrite) or Nginx 1.18+
 
 ### LiteBans Plugin
 - **LiteBans 2.8.0+** installed on your Minecraft server
@@ -77,52 +79,57 @@
 
 ### 1. Database Settings
 
-Edit `database.php` file with your database credentials:
+Edit `.env` file with your database credentials:
 
-```database.php
-        // Your Database
-        $this->host = $_ENV['DB_HOST'] ?? 'localhost';
-        $this->port = (int)($_ENV['DB_PORT'] ?? 3306);
-        $this->database = $_ENV['DB_NAME'] ?? '';
-        $this->username = $_ENV['DB_USER'] ?? '';
-        $this->password = $_ENV['DB_PASS'] ?? '';
-        $this->driver = $_ENV['DB_DRIVER'] ?? 'mysql';
-
+```.env
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=
+DB_USER=
+DB_PASS=
+DB_DRIVER=mysql
+TABLE_PREFIX=litebans_
 ```
 
 ### 2. Site Configuration and SEO
-Edit `index.php` file 
-```index.php
-// Configuration
-$config = [
-    'site_name' => $_ENV['SITE_NAME'] ?? 'LiteBans',
-    'items_per_page' => (int)($_ENV['ITEMS_PER_PAGE'] ?? 20),
-    'timezone' => $_ENV['TIMEZONE'] ?? 'UTC',
-    'date_format' => $_ENV['DATE_FORMAT'] ?? 'Y-m-d H:i:s',
-    'avatar_url' => $_ENV['AVATAR_URL'] ?? 'https://crafatar.com/avatars/{uuid}?size=32&overlay=true',
-    'avatar_url_offline' => $_ENV['AVATAR_URL_OFFLINE'] ?? 'https://minotar.net/avatar/{name}/32',
-    'base_path' => BASE_PATH,
-    'debug' => ($_ENV['DEBUG'] ?? 'false') === 'true',
-    
-    // SEO Configuration
-    'site_url' => $_ENV['SITE_URL'] ?? 'http://localhost',
-    'site_lang' => $_ENV['SITE_LANG'] ?? 'en',
-    'site_charset' => $_ENV['SITE_CHARSET'] ?? 'UTF-8',
-    'site_viewport' => $_ENV['SITE_VIEWPORT'] ?? 'width=device-width, initial-scale=1.0',
-    'site_robots' => $_ENV['SITE_ROBOTS'] ?? 'index, follow',
-    'site_description' => $_ENV['SITE_DESCRIPTION'] ?? 'Public interface for viewing server punishments and bans',
-    'site_title_template' => $_ENV['SITE_TITLE_TEMPLATE'] ?? '{page} - {site}',
-    'site_favicon' => $_ENV['SITE_FAVICON'] ?? '/favicon.ico',
-    'site_apple_icon' => $_ENV['SITE_APPLE_ICON'] ?? '/apple-touch-icon.png',
-    'site_theme_color' => $_ENV['SITE_THEME_COLOR'] ?? '#6366f1',
-    'site_og_image' => $_ENV['SITE_OG_IMAGE'] ?? null,
-    'site_twitter_site' => $_ENV['SITE_TWITTER_SITE'] ?? null,
-    'site_keywords' => $_ENV['SITE_KEYWORDS'] ?? null,
-    'site_author' => $_ENV['SITE_AUTHOR'] ?? null,
-    'site_generator' => $_ENV['SITE_GENERATOR'] ?? 'LitebansU'
+Edit `.env` file 
+```.env
+# Site Configuration
+SITE_NAME=LiteBansU
+FOOTER_SITE_NAME=YourSite
+ITEMS_PER_PAGE=100
+TIMEZONE=UTC
+DATE_FORMAT=Y-m-d H:i:s
+BASE_URL=https://YourSite.com
+
+# SEO Configuration
+SITE_URL=https://YourSite.com
+SITE_CHARSET=UTF-8
+SITE_VIEWPORT=width=device-width, initial-scale=1.0
+SITE_ROBOTS=index, follow
+SITE_DESCRIPTION=View and search player punishments on our Minecraft server
+SITE_TITLE_TEMPLATE={page} | {site}
+SITE_THEME_COLOR=#ef4444
+SITE_OG_IMAGE=https://YourSite.com/og-image.png
+SITE_TWITTER_SITE=@yourtwitter
+SITE_KEYWORDS=minecraft,litebans,punishments,bans,mutes,server
+
+# Default Settings
+DEFAULT_THEME=dark
+DEFAULT_LANGUAGE=en
+SHOW_PLAYER_UUID=false
+# Protest Configuration
+PROTEST_DISCORD=https://discord.gg/
+PROTEST_EMAIL=info@YourSite.com
+PROTEST_FORUM=https://forum.YourSite.com/ban-protests
 
 ```
+### 3. Admin Install
 
+Edit `.env` and enable :
+
+open url https://yourSite.com/hash.php add password copy to inside .env file and remove hash.php
 
 ## 🎯 Usage
 
@@ -132,6 +139,9 @@ $config = [
 - **Mutes** - View all mutes with pagination  
 - **Warnings** - View all warnings
 - **Kicks** - View all kicks
+- **Statistics** - View banlist stats
+- **Ban Protest** -  How to Submit a Ban Protest
+- **Admin** -  Administration area
 
 ### Search
 - Search by player name or UUID
@@ -141,52 +151,34 @@ $config = [
 ### Themes
 - **Light Theme** - Clean white interface
 - **Dark Theme** - Eye-friendly dark interface
-- **Auto Theme** - Follows system preference
 
 ### Languages
 Switch between supported languages:
-- 🇺🇸 English
-- 🇸🇰 Slovenčina  
-- 🇷🇺 Русский
-- 🇩🇪 Deutsch
-- 🇪🇸 Español
-- 🇫🇷 Français
+- AR العربية
+- CS Čeština
+- DE Deutsch
+- GR Ελληνικά
+- EN English
+- ES Español
+- FR Français
+- HU Magyar
+- IT Italiano
+- JA 日本語
+- PL Polski
+- RO Română
+- RU Русский
+- SK Slovenčina
+- SR Srpski
+- TR Türkçe
+- CN 中文 (简体)
 
-## 🔧 Advanced Configuration
-
-### Web Server Setup
-
-#### Apache (.htaccess included)
-The included `.htaccess` file handles URL rewriting automatically.
-
-### Adding Custom Languages
-
-1. Create new language file: `lang/xx.php`
-2. Copy structure from `lang/en.php`
-3. Translate all strings
-4. Add language code to `LanguageManager.php`:
-   ```php
-   private const SUPPORTED_LANGS = ['en', 'sk', 'ru', 'de', 'es', 'fr', 'xx'];
-   ```
-5. add to index.php 
-
-### Custom Themes
-
-Edit CSS variables in `assets/css/main.css`:
-```css
-.theme-custom {
-    --primary: #your-color;
-    --bg-primary: #your-background;
-    /* ... other variables */
-}
-```
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
 #### 1. 500 Internal Server Error
-- add database
+- add database to `.env` file
 
 #### 2. Theme/Language Switcher Not Working
 - Clear browser cache (Ctrl+F5)
@@ -208,41 +200,6 @@ find /var/www/html/litebans -type f -exec chmod 644 {} \;
 find /var/www/html/litebans -type d -exec chmod 755 {} \;
 ```
 
-## 📁 Directory Structure
-
-```
-litebans/
-├── assets/
-│   ├── css/
-│   │   └── main.css          # Main stylesheet
-│   └── js/
-│       └── main.js           # JavaScript functionality
-├── config/
-│   └── database.php          # Database configuration
-├── controllers/
-│   ├── HomeController.php    # Home page logic
-│   └── PunishmentsController.php # Punishments logic
-├── core/
-│   ├── BaseController.php    # Base controller class
-│   ├── DatabaseRepository.php # Database operations
-│   ├── LanguageManager.php   # Language handling
-│   ├── SecurityManager.php   # Security functions
-│   └── ThemeManager.php      # Theme management
-├── lang/
-│   ├── en.php               # English translations
-│   ├── sk.php               # Slovak translations
-│   ├── ru.php               # Russian translations
-│   └── ...                  # Other languages
-├── templates/
-│   ├── header.php           # Page header
-│   ├── footer.php           # Page footer
-│   ├── home.php             # Home page template
-│   └── punishments.php      # Punishments template
-├── .htaccess                # Apache configuration
-├── index.php                # Main entry point
-└── README.md                # This file
-```
-
 ## 🛡️ Security Features
 
 - **CSRF Protection** - All forms include CSRF tokens
@@ -253,17 +210,9 @@ litebans/
 - **Security Headers** - X-Frame-Options, CSP, etc.
 - **Input Validation** - Strict input filtering and sanitization
 
-## 🎨 Customization
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
 
 ## 📊 Performance Tips
 
-### Production Optimizations
 1. **Enable OPcache** in PHP
 2. **Use PHP-FPM** instead of mod_php
 3. **Enable Gzip compression** (included in .htaccess)
@@ -273,8 +222,10 @@ litebans/
 
 ## 🌟 Roadmap
 
-- [ ] .env - Simple edit configuration (currently not working due to a loading error)
-
+- [ ] Implement language selection in the admin menu
+- [ ] Implement theme color customization
+- [ ] Add a comment system for bans
+- [ ] Implement Discord and Steam authentication
 
 ## 📞 Support
 
