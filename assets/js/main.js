@@ -1,29 +1,28 @@
-//
-// ============================================================================
-//  LiteBansU
-// ============================================================================
-//
-//  Plugin Name:   LiteBansU
-//  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
-//  Version:       1.0
-//  Author:        Yamiru <yamiru@yamiru.com>
-//  Author URI:    https://yamiru.com
-//  License:       MIT
-//  License URI:   https://opensource.org/licenses/MIT
-//  Repository    https://github.com/Yamiru/LitebansU/
-// ============================================================================
-//
-
+/**
+ * ============================================================================
+ *  LiteBansU
+ * ============================================================================
+ *
+ *  Plugin Name:   LiteBansU
+ *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ *  Version:       2.0
+ *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ *  Author URI:    https://yamiru.com
+ *  License:       MIT
+ *  License URI:   https://opensource.org/licenses/MIT
+ *  Repository    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
+ */
 class LiteBansUI {
     constructor() {
         this.basePath = this.getBasePath();
         this.csrfToken = this.getCsrfToken();
         this.debounceTimer = null;
+        this.searchCache = new Map();
         this.init();
     }
 
     init() {
-        // Wait for DOM to be ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initialize());
         } else {
@@ -32,30 +31,29 @@ class LiteBansUI {
     }
 
     initialize() {
+        // Core functionality
         this.setupThemeSwitcher();
         this.setupLanguageSwitcher();
         this.setupSearch();
         this.setupMobileMenu();
-        this.loadUserPreferences();
         this.setupScrollEffects();
         this.setupTooltips();
+        this.setupDetailPageFeatures();
+        this.setupClearCache();
+        this.setupModals();
+        this.setupTables();
         
-        // Debug mode
-        if (window.location.search.includes('debug=theme')) {
-            this.debugTheme();
-        }
+        // Initialize Bootstrap components
+        this.initializeBootstrapComponents();
     }
 
     getBasePath() {
         const metaBasePath = document.querySelector('meta[name="base-path"]');
         if (metaBasePath) {
-            return metaBasePath.getAttribute('content') || '';
+            let path = metaBasePath.getAttribute('content') || '';
+            return path.replace(/\/$/, '');
         }
-        
-        const path = window.location.pathname;
-        const lastSlash = path.lastIndexOf('/');
-        const scriptName = lastSlash > 0 ? path.substring(0, lastSlash) : '';
-        return scriptName || '';
+        return '';
     }
 
     getCsrfToken() {
@@ -64,32 +62,32 @@ class LiteBansUI {
     }
 
     setupThemeSwitcher() {
-        const switcher = document.getElementById('theme-switcher');
-        if (!switcher) {
-            console.warn('Theme switcher not found');
-            return;
-        }
+        const toggle = document.getElementById('theme-toggle');
+        if (!toggle) return;
 
-        switcher.addEventListener('change', (e) => {
+        toggle.addEventListener('change', (e) => {
             e.preventDefault();
-            const theme = e.target.value;
-            console.log('Theme switcher changed to:', theme);
-            if (['light', 'dark', 'auto'].includes(theme)) {
-                this.setTheme(theme);
-            }
+            const theme = e.target.checked ? 'dark' : 'light';
+            const url = new URL(window.location.href);
+            url.searchParams.set('theme', theme);
+            window.location.href = url.toString();
         });
     }
 
     setupLanguageSwitcher() {
-        const switcher = document.getElementById('lang-switcher');
-        if (!switcher) return;
+        const dropdownItems = document.querySelectorAll('#langDropdown + .dropdown-menu .dropdown-item');
+        if (dropdownItems.length === 0) return;
 
-        switcher.addEventListener('change', (e) => {
-            e.preventDefault();
-            const lang = e.target.value;
-            if (/^[a-z]{2}$/.test(lang)) {
-                this.setLanguage(lang);
-            }
+        dropdownItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const lang = e.currentTarget.getAttribute('href').match(/lang=(\w+)/);
+                if (lang && lang[1]) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('lang', lang[1]);
+                    window.location.href = url.toString();
+                }
+            });
         });
     }
 
@@ -100,12 +98,28 @@ class LiteBansUI {
 
         if (!form || !input || !results) return;
 
+        // Prevent zoom on iOS when focusing input
+        input.addEventListener('focus', (e) => {
+            if (window.innerWidth <= 768) {
+                e.target.setAttribute('style', 'font-size: 16px !important');
+            }
+        });
+
+        input.addEventListener('blur', (e) => {
+            e.target.removeAttribute('style');
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const query = input.value.trim();
             if (!query || query.length < 3) {
-                results.innerHTML = '<div class="alert alert-warning">Please enter at least 3 characters</div>';
+                results.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please enter at least 3 characters</div>';
+                return;
+            }
+
+            if (this.searchCache.has(query)) {
+                this.displaySearchResults(this.searchCache.get(query), results);
                 return;
             }
 
@@ -113,10 +127,19 @@ class LiteBansUI {
                 results.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Searching...</span></div></div>';
                 
                 const response = await this.fetchSearch(query);
+                
+                if (response.success) {
+                    this.searchCache.set(query, response);
+                    setTimeout(() => this.searchCache.delete(query), 300000);
+                }
+                
                 this.displaySearchResults(response, results);
             } catch (error) {
                 console.error('Search error:', error);
-                results.innerHTML = `<div class="alert alert-danger">Error: ${this.escapeHtml(error.message)}</div>`;
+                results.innerHTML = `<div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    ${this.escapeHtml(error.message || 'An error occurred while searching. Please try again.')}
+                </div>`;
             }
         });
 
@@ -131,6 +154,15 @@ class LiteBansUI {
                 results.innerHTML = '';
             }
         });
+
+        // Clear search on ESC
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                input.value = '';
+                results.innerHTML = '';
+                input.blur(); // Remove focus on mobile
+            }
+        });
     }
 
     async fetchSearch(query) {
@@ -140,68 +172,169 @@ class LiteBansUI {
 
         const searchUrl = this.basePath + '/search';
         
-        const response = await fetch(searchUrl, {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        try {
+            const response = await fetch(searchUrl, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
             }
-        });
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Invalid response format from server');
+            }
+
+            const data = await response.json();
+            
+            if (!data || typeof data !== 'object') {
+                throw new Error('Invalid response data');
+            }
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            return data;
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('Request timeout. Please check your connection and try again.');
+            }
+            throw error;
         }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('Invalid response format');
-        }
-
-        const data = await response.json();
-        
-        if (!data || typeof data !== 'object') {
-            throw new Error('Invalid response format');
-        }
-
-        return data;
     }
 
     displaySearchResults(data, container) {
         if (!data.success) {
-            container.innerHTML = `<div class="alert alert-danger">${this.escapeHtml(data.error || 'Unknown error')}</div>`;
+            container.innerHTML = `<div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i> 
+                ${this.escapeHtml(data.error || 'Search failed. Please try again.')}
+            </div>`;
             return;
         }
 
         if (!data.punishments || data.punishments.length === 0) {
-            container.innerHTML = '<div class="alert alert-info">No punishments found for this player.</div>';
+            container.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle"></i> No punishments found for this player.</div>';
             return;
         }
 
-        const html = `
-            <div class="search-results fade-in">
-                <h4 class="mb-3">Results for: <strong>${this.escapeHtml(data.player)}</strong></h4>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Type</th>
-                                <th>Reason</th>
-                                <th>Staff</th>
-                                <th>Date</th>
-                                <th>Until</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.punishments.map(p => this.renderPunishmentRow(p)).join('')}
-                        </tbody>
-                    </table>
+        // Mobile-friendly display for phones
+        if (window.innerWidth <= 768) {
+            const html = `
+                <div class="search-results fade-in">
+                    <h4 class="mb-3">Results for: <strong>${this.escapeHtml(data.player)}</strong></h4>
+                    <div class="mobile-search-results">
+                        ${data.punishments.map(p => this.renderMobilePunishmentCard(p)).join('')}
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        } else {
+            const html = `
+                <div class="search-results fade-in">
+                    <h4 class="mb-3">Results for: <strong>${this.escapeHtml(data.player)}</strong></h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Reason</th>
+                                    <th>Staff</th>
+                                    <th>Date</th>
+                                    <th>Expires</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.punishments.map(p => this.renderPunishmentRow(p)).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+        
+        this.fadeIn(container.querySelector('.search-results'));
+        
+        // Add click handlers for punishment rows
+        this.setupPunishmentRowClicks();
+    }
+
+    renderMobilePunishmentCard(punishment) {
+        const statusClass = punishment.active ? 'status-active' : 'status-inactive';
+        const statusText = punishment.active ? 'Active' : 'Inactive';
+        
+        const typeClass = {
+            'ban': 'bg-danger',
+            'bans': 'bg-danger',
+            'mute': 'bg-warning',
+            'mutes': 'bg-warning',
+            'warning': 'bg-info',
+            'warnings': 'bg-info',
+            'kick': 'bg-secondary',
+            'kicks': 'bg-secondary'
+        }[punishment.type] || 'bg-dark';
+
+        const typeText = punishment.type.replace(/s$/, '').toUpperCase();
+        const typeSingular = punishment.type.replace(/s$/, '');
+
+        let untilText = '';
+        if (punishment.until) {
+            if (punishment.until.toLowerCase().includes('permanent')) {
+                untilText = '<span class="badge bg-danger">Permanent</span>';
+            } else if (punishment.until.toLowerCase().includes('expired')) {
+                untilText = '<span class="badge bg-success">Expired</span>';
+            } else {
+                untilText = `<span class="badge bg-warning">${this.escapeHtml(punishment.until)}</span>`;
+            }
+        } else if (punishment.type === 'ban' || punishment.type === 'mute') {
+            untilText = '<span class="badge bg-danger">Permanent</span>';
+        }
+
+        return `
+            <div class="search-result-card mb-3 punishment-row" data-type="${typeSingular}" data-id="${punishment.id || ''}" style="cursor: pointer;">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge ${typeClass}">${this.escapeHtml(typeText)}</span>
+                            <span class="status-badge ${statusClass}">${this.escapeHtml(statusText)}</span>
+                        </div>
+                        <div class="mb-2">
+                            <strong class="text-muted small">Reason:</strong>
+                            <div class="mt-1">${this.escapeHtml(punishment.reason)}</div>
+                        </div>
+                        <div class="row g-2 small">
+                            <div class="col-6">
+                                <strong class="text-muted">Staff:</strong><br>
+                                <span class="text-primary">${this.escapeHtml(punishment.staff)}</span>
+                            </div>
+                            <div class="col-6">
+                                <strong class="text-muted">Date:</strong><br>
+                                ${this.escapeHtml(punishment.date)}
+                            </div>
+                            ${untilText ? `
+                                <div class="col-12 mt-2">
+                                    <strong class="text-muted">Expires:</strong> ${untilText}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
-
-        container.innerHTML = html;
     }
 
     renderPunishmentRow(punishment) {
@@ -210,53 +343,87 @@ class LiteBansUI {
         
         const typeClass = {
             'ban': 'bg-danger',
+            'bans': 'bg-danger',
             'mute': 'bg-warning',
+            'mutes': 'bg-warning',
             'warning': 'bg-info',
-            'kick': 'bg-secondary'
+            'warnings': 'bg-info',
+            'kick': 'bg-secondary',
+            'kicks': 'bg-secondary'
         }[punishment.type] || 'bg-dark';
 
+        const typeText = punishment.type.replace(/s$/, '').toUpperCase();
+        const typeSingular = punishment.type.replace(/s$/, '');
+
+        let untilBadge = '';
+        if (punishment.until) {
+            if (punishment.until.toLowerCase().includes('permanent')) {
+                untilBadge = '<span class="badge bg-danger">Permanent</span>';
+            } else if (punishment.until.toLowerCase().includes('expired')) {
+                untilBadge = '<span class="badge bg-success">Expired</span>';
+            } else {
+                untilBadge = `<span class="badge bg-warning">${this.escapeHtml(punishment.until)}</span>`;
+            }
+        } else if (punishment.type === 'ban' || punishment.type === 'mute') {
+            untilBadge = '<span class="badge bg-danger">Permanent</span>';
+        } else {
+            untilBadge = '<span class="text-muted">N/A</span>';
+        }
+
         return `
-            <tr>
-                <td><span class="badge ${typeClass}">${this.escapeHtml(punishment.type.toUpperCase())}</span></td>
+            <tr class="punishment-row" data-type="${typeSingular}" data-id="${punishment.id || ''}" style="cursor: pointer;">
+                <td><span class="badge ${typeClass}">${this.escapeHtml(typeText)}</span></td>
                 <td class="text-truncate" style="max-width: 200px;" title="${this.escapeHtml(punishment.reason)}">${this.escapeHtml(punishment.reason)}</td>
                 <td>${this.escapeHtml(punishment.staff)}</td>
                 <td>${this.escapeHtml(punishment.date)}</td>
-                <td>${punishment.until ? this.escapeHtml(punishment.until) : '<span class="badge bg-dark">Permanent</span>'}</td>
+                <td>${untilBadge}</td>
                 <td><span class="status-badge ${statusClass}">${this.escapeHtml(statusText)}</span></td>
             </tr>
         `;
     }
 
+    setupPunishmentRowClicks() {
+        // Use event delegation for dynamically added rows
+        document.addEventListener('click', (e) => {
+            const row = e.target.closest('.punishment-row');
+            if (row) {
+                const type = row.dataset.type;
+                const id = row.dataset.id;
+                
+                if (type && id) {
+                    const detailUrl = `${this.basePath}/detail?type=${type}&id=${id}`;
+                    window.location.href = detailUrl;
+                }
+            }
+        });
+    }
+
     setupMobileMenu() {
-        const toggle = document.querySelector('.mobile-menu-toggle');
-        const nav = document.querySelector('.navbar-nav');
+        const toggler = document.querySelector('.navbar-toggler');
+        const collapse = document.querySelector('.navbar-collapse');
         
-        if (!toggle || !nav) return;
+        if (!toggler || !collapse) return;
         
-        toggle.addEventListener('click', (e) => {
+        toggler.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            nav.classList.toggle('show');
-            toggle.innerHTML = nav.classList.contains('show') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
-            toggle.setAttribute('aria-expanded', nav.classList.contains('show'));
+            collapse.classList.toggle('show');
+            toggler.setAttribute('aria-expanded', collapse.classList.contains('show'));
         });
         
-        // Close menu when clicking outside
+        // Close on outside click
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.navbar-modern') && nav.classList.contains('show')) {
-                nav.classList.remove('show');
-                toggle.innerHTML = '<i class="fas fa-bars"></i>';
-                toggle.setAttribute('aria-expanded', 'false');
+            if (!e.target.closest('.navbar-modern') && collapse.classList.contains('show')) {
+                collapse.classList.remove('show');
+                toggler.setAttribute('aria-expanded', 'false');
             }
         });
 
-        // Close menu on escape key
+        // Close on ESC
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && nav.classList.contains('show')) {
-                nav.classList.remove('show');
-                toggle.innerHTML = '<i class="fas fa-bars"></i>';
-                toggle.setAttribute('aria-expanded', 'false');
-                toggle.focus();
+            if (e.key === 'Escape' && collapse.classList.contains('show')) {
+                collapse.classList.remove('show');
+                toggler.setAttribute('aria-expanded', 'false');
             }
         });
     }
@@ -290,210 +457,214 @@ class LiteBansUI {
     }
 
     setupTooltips() {
-        const tooltips = document.querySelectorAll('[title]');
+        const tooltips = document.querySelectorAll('[title]:not([data-bs-toggle="tooltip"])');
         tooltips.forEach(el => {
-            el.setAttribute('data-bs-toggle', 'tooltip');
-            el.setAttribute('data-bs-placement', 'top');
-        });
-    }
-
-    setTheme(theme) {
-        // Validate theme
-        if (!['light', 'dark', 'auto'].includes(theme)) {
-            console.error('Invalid theme:', theme);
-            return;
-        }
-
-        console.log('Setting theme to:', theme);
-
-        // Apply theme immediately to body for instant feedback
-        document.body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
-        document.body.classList.add(`theme-${theme}`);
-        
-        // Save to localStorage (if available)
-        try {
-            localStorage.setItem('litebans_theme', theme);
-            console.log('Theme saved to localStorage:', theme);
-        } catch (e) {
-            console.warn('localStorage not available:', e);
-        }
-
-        // Set cookie with proper options
-        const path = this.basePath || '/';
-        const cookieValue = `selected_theme=${theme}; path=${path}; max-age=2592000; SameSite=Lax`;
-        if (window.location.protocol === 'https:') {
-            document.cookie = cookieValue + '; Secure';
-        } else {
-            document.cookie = cookieValue;
-        }
-        
-        console.log('Cookie set:', document.cookie);
-        
-        // Update theme switcher value
-        const switcher = document.getElementById('theme-switcher');
-        if (switcher && switcher.value !== theme) {
-            switcher.value = theme;
-        }
-        
-        // Reload page to apply server-side changes
-        // Small delay to let the cookie be set
-        setTimeout(() => {
-            const url = new URL(window.location.href);
-            url.searchParams.set('theme', theme);
-            window.location.href = url.toString();
-        }, 100);
-    }
-
-    setLanguage(lang) {
-        // Validate language code
-        if (!/^[a-z]{2}$/.test(lang)) return;
-
-        // Update URL with language parameter
-        const url = new URL(window.location.href);
-        url.searchParams.set('lang', lang);
-        window.location.href = url.toString();
-    }
-
-    loadUserPreferences() {
-        // Try to get theme from cookie first (server-side set)
-        const themeCookie = document.cookie.match(/selected_theme=([^;]+)/);
-        let cookieTheme = themeCookie ? themeCookie[1] : null;
-        
-        // Try localStorage as fallback
-        let savedTheme = null;
-        try {
-            savedTheme = localStorage.getItem('litebans_theme');
-        } catch (e) {
-            console.warn('localStorage not available');
-        }
-        
-        const theme = cookieTheme || savedTheme || 'auto';
-        console.log('Loading theme preference:', theme, {
-            cookie: cookieTheme,
-            localStorage: savedTheme,
-            final: theme
-        });
-        
-        if (['light', 'dark', 'auto'].includes(theme)) {
-            // Apply theme class immediately
-            document.body.classList.remove('theme-light', 'theme-dark', 'theme-auto');
-            document.body.classList.add(`theme-${theme}`);
-            
-            // Update switcher value
-            const switcher = document.getElementById('theme-switcher');
-            if (switcher) {
-                switcher.value = theme;
-                console.log('Theme switcher updated to:', theme);
+            if (!el.closest('.navbar-nav')) { // Skip nav items
+                el.setAttribute('data-bs-toggle', 'tooltip');
+                el.setAttribute('data-bs-placement', 'top');
             }
-            
-            // Sync localStorage with cookie
-            if (cookieTheme && cookieTheme !== savedTheme) {
-                try {
-                    localStorage.setItem('litebans_theme', cookieTheme);
-                } catch (e) {
-                    console.warn('Could not sync localStorage');
+        });
+    }
+
+    setupDetailPageFeatures() {
+        // Auto-refresh for active punishments
+        const progressBar = document.querySelector('.progress-bar');
+        if (progressBar) {
+            // Update progress every minute
+            setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    const progress = parseFloat(progressBar.style.width);
+                    if (progress < 100) {
+                        // Could implement real-time progress update here
+                        // For now, just reload the page
+                        location.reload();
+                    }
                 }
-            }
+            }, 60000);
         }
+
+        // Copy UUID on click
+        const uuidElements = document.querySelectorAll('.font-monospace');
+        uuidElements.forEach(el => {
+            if (el.textContent.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+                el.style.cursor = 'pointer';
+                el.addEventListener('click', () => {
+                    this.copyToClipboard(el.textContent);
+                });
+            }
+        });
     }
 
+    setupClearCache() {
+        const clearCacheBtn = document.getElementById('clear-cache-btn');
+        const confirmBtn = document.getElementById('confirm-clear-cache');
+        
+        if (!clearCacheBtn || !confirmBtn) return;
+        
+        clearCacheBtn.addEventListener('click', () => {
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('cacheModal'));
+            modal.show();
+        });
+        
+        confirmBtn.addEventListener('click', async () => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('cacheModal'));
+            
+            try {
+                const formData = new FormData();
+                formData.append('csrf_token', this.csrfToken);
+                
+                const response = await fetch(this.basePath + '/stats/clear-cache', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    modal.hide();
+                    this.showNotification('success', data.message || 'Cache cleared successfully');
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    throw new Error(data.message || 'Failed to clear cache');
+                }
+            } catch (error) {
+                console.error('Cache clear error:', error);
+                this.showNotification('danger', error.message);
+                modal.hide();
+            }
+        });
+    }
+
+    setupModals() {
+        // Handle all modal close buttons
+        document.querySelectorAll('.modal .btn-close, [data-bs-dismiss="modal"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const modal = btn.closest('.modal');
+                if (modal) {
+                    const bsModal = bootstrap.Modal.getInstance(modal);
+                    if (bsModal) bsModal.hide();
+                }
+            });
+        });
+    }
+
+    setupTables() {
+        // Make table rows clickable
+        document.querySelectorAll('.table tbody tr[onclick]').forEach(row => {
+            row.style.cursor = 'pointer';
+            
+            // Prevent navigation when clicking on buttons/links
+            row.querySelectorAll('a, button').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            });
+        });
+
+        // Sort tables (if needed in future)
+        this.setupTableSort();
+    }
+
+    setupTableSort() {
+        // Placeholder for table sorting functionality
+        // Can be implemented later if needed
+    }
+
+    initializeBootstrapComponents() {
+        // Initialize all Bootstrap tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Initialize all Bootstrap popovers
+        const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+        popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl);
+        });
+    }
+
+    // Utility functions
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = String(text);
         return div.innerHTML;
     }
 
-    // Debug method
-    debugTheme() {
-        console.log('=== THEME DEBUG INFO ===');
+    fadeIn(element) {
+        if (!element) return;
+        element.style.opacity = '0';
+        element.style.transition = 'opacity 300ms ease-in-out';
         
-        // Check current body classes
-        console.log('Body classes:', document.body.className);
-        
-        // Check theme switcher
-        const switcher = document.getElementById('theme-switcher');
-        console.log('Theme switcher found:', !!switcher);
-        console.log('Theme switcher value:', switcher?.value || 'N/A');
-        console.log('Theme switcher options:', switcher ? Array.from(switcher.options).map(o => o.value) : 'N/A');
-        
-        // Check cookies
-        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-            const [name, value] = cookie.trim().split('=');
-            acc[name] = value;
-            return acc;
-        }, {});
-        console.log('All cookies:', cookies);
-        console.log('Theme cookie:', cookies.selected_theme || 'Not set');
-        
-        // Check localStorage
-        let localTheme = 'Not available';
-        try {
-            localTheme = localStorage.getItem('litebans_theme') || 'Not set';
-        } catch (e) {
-            localTheme = 'Error: ' + e.message;
+        setTimeout(() => {
+            element.style.opacity = '1';
+        }, 10);
+    }
+
+    copyToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                this.showNotification('success', 'Copied to clipboard!');
+            }).catch(() => {
+                this.fallbackCopy(text);
+            });
+        } else {
+            this.fallbackCopy(text);
         }
-        console.log('LocalStorage theme:', localTheme);
-        
-        // Check CSS variables
-        const computedStyle = getComputedStyle(document.body);
-        console.log('CSS Variables:', {
-            'bg-primary': computedStyle.getPropertyValue('--bg-primary').trim(),
-            'text-primary': computedStyle.getPropertyValue('--text-primary').trim(),
-            'card-bg': computedStyle.getPropertyValue('--card-bg').trim(),
-            'border-color': computedStyle.getPropertyValue('--border-color').trim()
-        });
-        
-        // Check if LiteBansUI is loaded
-        console.log('LiteBansUI loaded:', typeof window.litebansUI);
-        console.log('Base path:', this.basePath);
-        
-        console.log('=== END DEBUG INFO ===');
-        
-        // Add global test function
-        window.testThemeSwitch = (theme) => {
-            console.log('Testing theme switch to:', theme);
-            this.setTheme(theme);
-        };
-        
-        console.log('Use testThemeSwitch("dark") or testThemeSwitch("light") to test theme switching');
     }
 
-    // Utility methods
-    static formatDate(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleString();
+    fallbackCopy(text) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            this.showNotification('success', 'Copied to clipboard!');
+        } catch (err) {
+            this.showNotification('danger', 'Failed to copy');
+        }
+        
+        document.body.removeChild(textArea);
     }
 
-    static formatDuration(seconds) {
-        if (seconds <= 0) return 'Permanent';
+    showNotification(type, message) {
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+        alert.style.zIndex = '9999';
+        alert.style.minWidth = '250px';
         
-        const days = Math.floor(seconds / 86400);
-        const hours = Math.floor((seconds % 86400) / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
+        const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+        
+        alert.innerHTML = `
+            <i class="fas fa-${icon}"></i> ${this.escapeHtml(message)}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(alert);
+        
+        // Auto dismiss after 3 seconds
+        setTimeout(() => {
+            alert.classList.remove('show');
+            setTimeout(() => alert.remove(), 150);
+        }, 3000);
+    }
 
-        const parts = [];
-        if (days > 0) parts.push(`${days}d`);
-        if (hours > 0) parts.push(`${hours}h`);
-        if (minutes > 0 && days === 0) parts.push(`${minutes}m`);
+    // Public API methods
+    refresh() {
+        location.reload();
+    }
 
-        return parts.join(' ') || '< 1m';
+    navigateTo(url) {
+        window.location.href = this.basePath + url;
     }
 }
 
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        window.litebansUI = new LiteBansUI();
-    });
-} else {
-    window.litebansUI = new LiteBansUI();
-}
+// Initialize the UI when DOM is ready
+const LiteBansU = new LiteBansUI();
 
-// Global debug function
-window.debugTheme = function() {
-    if (window.litebansUI) {
-        window.litebansUI.debugTheme();
-    } else {
-        console.error('LiteBansUI not loaded');
-    }
-};
+// Expose to global scope for external access
+window.LiteBansU = LiteBansU;
