@@ -30,6 +30,7 @@
 - **🔧 Easy Installation** - Simple download and copy setup
 - **⚙️ Admin Panel** - Manage punishments, export/import data, and view system information.
 - **🎯 SEO Optimized** - Full SEO meta tags and Open Graph support
+- **▶️ Demo Management** - Advanced Evidence Management
 
 ## 🚀 Quick Start
 
