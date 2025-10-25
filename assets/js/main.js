@@ -1,16 +1,16 @@
 /**
  * ============================================================================
- *  LiteBansU
+ * LiteBansU
  * ============================================================================
  *
- *  Plugin Name:   LiteBansU
- *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
- *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- *  Author URI:    https://yamiru.com
- *  License:       MIT
- *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
+ * Plugin Name: LiteBansU
+ * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version: 2.2
+ * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI: https://yamiru.com
+ * License: MIT
+ * License URI: https://opensource.org/licenses/MIT
+ * Repository https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 class LiteBansUI {
@@ -91,6 +91,48 @@ class LiteBansUI {
         });
     }
 
+    // =====================================================================
+    // ZMENA 1: Pôvodná logika z form.addEventListener('submit') je presunutá 
+    // do tejto novej metódy, aby ju bolo možné volať priamo.
+    // =====================================================================
+    async performSearch() {
+        const input = document.getElementById('search-input');
+        const results = document.getElementById('search-results');
+
+        if (!input || !results) return;
+
+        const query = input.value.trim();
+        if (!query || query.length < 3) {
+            results.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please enter at least 3 characters</div>';
+            return;
+        }
+
+        if (this.searchCache.has(query)) {
+            this.displaySearchResults(this.searchCache.get(query), results);
+            return;
+        }
+
+        try {
+            results.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Searching...</span></div></div>';
+            
+            const response = await this.fetchSearch(query);
+            
+            if (response.success) {
+                this.searchCache.set(query, response);
+                setTimeout(() => this.searchCache.delete(query), 300000);
+            }
+            
+            this.displaySearchResults(response, results);
+        } catch (error) {
+            console.error('Search error:', error);
+            results.innerHTML = `<div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    ${this.escapeHtml(error.message || 'An error occurred while searching. Please try again.')}
+                </div>`;
+        }
+    }
+
+
     setupSearch() {
         const form = document.getElementById('search-form');
         const input = document.getElementById('search-input');
@@ -109,51 +151,29 @@ class LiteBansUI {
             e.target.removeAttribute('style');
         });
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const query = input.value.trim();
-            if (!query || query.length < 3) {
-                results.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please enter at least 3 characters</div>';
-                return;
-            }
-
-            if (this.searchCache.has(query)) {
-                this.displaySearchResults(this.searchCache.get(query), results);
-                return;
-            }
-
-            try {
-                results.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Searching...</span></div></div>';
-                
-                const response = await this.fetchSearch(query);
-                
-                if (response.success) {
-                    this.searchCache.set(query, response);
-                    setTimeout(() => this.searchCache.delete(query), 300000);
-                }
-                
-                this.displaySearchResults(response, results);
-            } catch (error) {
-                console.error('Search error:', error);
-                results.innerHTML = `<div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i> 
-                    ${this.escapeHtml(error.message || 'An error occurred while searching. Please try again.')}
-                </div>`;
-            }
+        // =====================================================================
+        // ZMENA 2: Nahradenie celej pôvodnej logiky volaním novej metódy performSearch()
+        // =====================================================================
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Zastaví štandardné odoslanie formulára
+            this.performSearch();
         });
+
 
         // Auto-search with debounce
         input.addEventListener('input', () => {
             clearTimeout(this.debounceTimer);
             if (input.value.length >= 3) {
                 this.debounceTimer = setTimeout(() => {
-                    form.dispatchEvent(new Event('submit'));
+                    // Pôvodné: form.dispatchEvent(new Event('submit'));
+                    // Nové: Priame volanie, ktoré Firefox nezablokuje
+                    this.performSearch(); 
                 }, 500);
             } else if (input.value.length === 0) {
                 results.innerHTML = '';
             }
         });
+        // =====================================================================
 
         // Clear search on ESC
         input.addEventListener('keydown', (e) => {
