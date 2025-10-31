@@ -53,7 +53,7 @@
                                     <div class="fw-bold"><?= $punishment['name'] ?></div>
                                     <?php if ($controller->shouldShowUuid()): ?>
                                     <small class="text-muted font-monospace">
-                                        <?= substr($punishment['uuid'], 0, 8) ?>...
+                                        <?= substr($punishment['uuid'], 0, 36) ?>
                                     </small>
                                     <?php endif; ?>
                                 </div>
@@ -62,9 +62,7 @@
                         <td>
                             <small class="font-monospace text-muted">
                                 <?= $punishment['id'] ?>
-                                <?php if ($config['show_uuid'] === true): ?>
-                                <br><strong>UUID:</strong> <?= substr($punishment['uuid'], 0, 8) ?>...
-                                <?php endif; ?>
+                         
                             </small>
                         </td>
                         <td>
@@ -189,7 +187,7 @@
                                 <?php 
                                 $reason = $punishment['reason'];
                                 if (strlen($reason) > 15) {
-                                    echo htmlspecialchars(substr($reason, 0, 15), ENT_QUOTES, 'UTF-8') . '…';
+                                    echo htmlspecialchars(substr($reason, 0, 15), ENT_QUOTES, 'UTF-8') . 'â€¦';
                                 } else {
                                     echo htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
                                 }
