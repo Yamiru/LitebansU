@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       2.3
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -317,14 +317,14 @@ class DatabaseRepository
         }
     }
     
-    public function getTotalBans(): int
+    public function getTotalBans(bool $activeOnly = true): int
     {
-        return $this->getTotalCount('bans');
+        return $this->getTotalCount('bans', $activeOnly);
     }
     
-    public function getTotalMutes(): int
+    public function getTotalMutes(bool $activeOnly = true): int
     {
-        return $this->getTotalCount('mutes');
+        return $this->getTotalCount('mutes', $activeOnly);
     }
     
     public function getTotalWarnings(): int
@@ -337,11 +337,19 @@ class DatabaseRepository
         return $this->getTotalCount('kicks');
     }
     
-    private function getTotalCount(string $table): int
+    private function getTotalCount(string $table, bool $activeOnly = true): int
     {
         try {
             $fullTable = $this->tablePrefix . $table;
-            $stmt = $this->connection->query("SELECT COUNT(*) as total FROM {$fullTable} WHERE uuid IS NOT NULL AND uuid != '#'");
+            
+            // For bans and mutes, support activeOnly filter
+            if (in_array($table, ['bans', 'mutes'])) {
+                $where = $activeOnly ? 'WHERE active = 1 AND uuid IS NOT NULL AND uuid != \'#\'' : 'WHERE uuid IS NOT NULL AND uuid != \'#\'';
+            } else {
+                $where = 'WHERE uuid IS NOT NULL AND uuid != \'#\'';
+            }
+            
+            $stmt = $this->connection->query("SELECT COUNT(*) as total FROM {$fullTable} {$where}");
             $result = $stmt->fetch();
             return (int)($result['total'] ?? 0);
         } catch (PDOException $e) {
