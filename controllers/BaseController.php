@@ -141,7 +141,7 @@ abstract class BaseController
         // OFFLINE PLAYER - Use name-based avatar
         if ($isOffline && !empty($name)) {
             // Use Minotar for offline players (works with player name)
-            return "https://minotar.net/avatar/{$name}/64";
+            return "https://cravatar.eu/avatar/{$name}/64";
         }
         
         // ONLINE PLAYER - Use UUID-based avatar
