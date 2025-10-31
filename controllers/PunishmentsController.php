@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       2.3
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -27,7 +27,7 @@ class PunishmentsController extends BaseController
             'title' => $this->lang->get('nav.bans'),
             'type' => 'bans',
             'punishments' => $this->formatPunishments($punishments),
-            'pagination' => $this->getPaginationData('bans'),
+            'pagination' => $this->getPaginationData('bans', false),
             'currentPage' => 'bans'
         ]);
     }
@@ -40,7 +40,7 @@ class PunishmentsController extends BaseController
             'title' => $this->lang->get('nav.mutes'),
             'type' => 'mutes',
             'punishments' => $this->formatPunishments($punishments),
-            'pagination' => $this->getPaginationData('mutes'),
+            'pagination' => $this->getPaginationData('mutes', false),
             'currentPage' => 'mutes'
         ]);
     }
@@ -90,18 +90,19 @@ class PunishmentsController extends BaseController
                 'until' => isset($punishment['until']) ? $this->formatDuration((int)$punishment['until']) : null,
                 'active' => (bool)($punishment['active'] ?? false),
                 'removed_by' => isset($punishment['removed_by_name']) ? SecurityManager::preventXss($punishment['removed_by_name']) : null,
-                'avatar' => $this->getAvatarUrl($punishment['uuid'] ?? '', $playerName ?? 'Unknown')
+                'avatar' => $this->getAvatarUrl($punishment['uuid'] ?? '', $playerName ?? 'Unknown'),
+                'server' => $punishment['server'] ?? 'Global'
             ];
         }, $punishments);
     }
     
-    private function getPaginationData(string $type): array
+    private function getPaginationData(string $type, bool $activeOnly = true): array
     {
         $currentPage = $this->getPage();
         $limit = $this->getLimit();
         
         // Get total count for accurate pagination
-        $totalCount = $this->getTotalCount($type);
+        $totalCount = $this->getTotalCount($type, $activeOnly);
         $totalPages = max(1, (int)ceil($totalCount / $limit));
         
         // Ensure current page is within bounds
@@ -120,12 +121,12 @@ class PunishmentsController extends BaseController
         ];
     }
     
-    private function getTotalCount(string $type): int
+    private function getTotalCount(string $type, bool $activeOnly = true): int
     {
         try {
             return match($type) {
-                'bans' => $this->repository->getTotalBans(),
-                'mutes' => $this->repository->getTotalMutes(),
+                'bans' => $this->repository->getTotalBans($activeOnly),
+                'mutes' => $this->repository->getTotalMutes($activeOnly),
                 'warnings' => $this->repository->getTotalWarnings(),
                 'kicks' => $this->repository->getTotalKicks(),
                 default => 0
