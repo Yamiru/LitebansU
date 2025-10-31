@@ -73,11 +73,19 @@
                             </span>
                         </td>
                         <td>
-                            <div class="reason-cell" title="<?= $punishment['reason'] ?>">
-                                <?= strlen($punishment['reason']) > 15 ? 
-                                    substr($punishment['reason'], 0, 15) . '...' : 
-                                    $punishment['reason'] ?>
-                            </div>
+                            <span class="reason-cell" 
+                                  title="<?= htmlspecialchars($punishment['reason'], ENT_QUOTES, 'UTF-8') ?>"
+                                  data-bs-toggle="tooltip" 
+                                  data-bs-title="<?= htmlspecialchars($punishment['reason'], ENT_QUOTES, 'UTF-8') ?>">
+                                <?php 
+                                $reason = $punishment['reason'];
+                                if (strlen($reason) > 15) {
+                                    echo htmlspecialchars(substr($reason, 0, 15), ENT_QUOTES, 'UTF-8') . '...';
+                                } else {
+                                    echo htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
+                                }
+                                ?>
+                            </span>
                         </td>
                         <td>
                             <span class="text-primary"><?= $punishment['staff'] ?></span>
@@ -173,10 +181,19 @@
                         <!-- Reason -->
                         <div class="mb-2">
                             <strong class="text-muted small"><?= $lang->get('table.reason') ?>:</strong>
-                            <div class="mt-1">
-                                <?= strlen($punishment['reason']) > 15 ? 
-                                    substr($punishment['reason'], 0, 15) . '...' : 
-                                    $punishment['reason'] ?>
+                            <div class="mt-1" 
+                                 title="<?= htmlspecialchars($punishment['reason'], ENT_QUOTES, 'UTF-8') ?>"
+                                 data-bs-toggle="tooltip" 
+                                 data-bs-title="<?= htmlspecialchars($punishment['reason'], ENT_QUOTES, 'UTF-8') ?>"
+                                 style="display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: help;">
+                                <?php 
+                                $reason = $punishment['reason'];
+                                if (strlen($reason) > 15) {
+                                    echo htmlspecialchars(substr($reason, 0, 15), ENT_QUOTES, 'UTF-8') . '…';
+                                } else {
+                                    echo htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
+                                }
+                                ?>
                             </div>
                         </div>
                         
