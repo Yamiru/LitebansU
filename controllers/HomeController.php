@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       2.3
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -69,8 +69,8 @@ class HomeController extends BaseController
         }
         
         $query = trim($_POST['query'] ?? '');
-        if (empty($query) || strlen($query) < 3) {
-            $this->jsonResponse(['error' => 'Search query must be at least 3 characters'], 400);
+        if (empty($query) || strlen($query) < 2) {
+            $this->jsonResponse(['error' => 'Search query must be at least 2 characters'], 400);
             return;
         }
         
@@ -84,9 +84,19 @@ class HomeController extends BaseController
         $query = SecurityManager::sanitizeInput($query);
         
         try {
-            $punishments = $this->repository->getPlayerPunishments($query);
+            $punishments = [];
             
-            // If no results found by name/UUID, try a more flexible search
+            // First, check if query is a numeric ID (ban ID search)
+            if (is_numeric($query)) {
+                $punishments = $this->searchById((int)$query);
+            }
+            
+            // If no results from ID search, try player search
+            if (empty($punishments)) {
+                $punishments = $this->repository->getPlayerPunishments($query);
+            }
+            
+            // If still no results, try flexible search
             if (empty($punishments)) {
                 $punishments = $this->searchFlexible($query);
             }
@@ -99,6 +109,50 @@ class HomeController extends BaseController
         } catch (Exception $e) {
             error_log("Search error: " . $e->getMessage());
             $this->jsonResponse(['error' => 'Search failed. Please try again.'], 500);
+        }
+    }
+    
+    /**
+     * Search punishments by ID (ban/mute/warning/kick ID)
+     */
+    private function searchById(int $id): array
+    {
+        try {
+            $tables = ['bans', 'mutes', 'warnings', 'kicks'];
+            $results = [];
+            $historyTable = $this->repository->getTablePrefix() . 'history';
+            
+            foreach ($tables as $table) {
+                $fullTable = $this->repository->getTablePrefix() . $table;
+                
+                $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
+                        FROM {$fullTable} p
+                        LEFT JOIN (
+                            SELECT h1.uuid, h1.name
+                            FROM {$historyTable} h1
+                            INNER JOIN (
+                                SELECT uuid, MAX(date) as max_date
+                                FROM {$historyTable}
+                                GROUP BY uuid
+                            ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
+                        ) h ON p.uuid = h.uuid
+                        WHERE p.id = :id
+                        AND p.uuid IS NOT NULL AND p.uuid != '#'
+                        LIMIT 1";
+                
+                $stmt = $this->repository->getConnection()->prepare($sql);
+                $stmt->execute([':id' => $id]);
+                $result = $stmt->fetch();
+                
+                if ($result) {
+                    $results[] = $result;
+                }
+            }
+            
+            return $results;
+        } catch (Exception $e) {
+            error_log("ID search error: " . $e->getMessage());
+            return [];
         }
     }
     
@@ -137,9 +191,17 @@ class HomeController extends BaseController
                     
                     $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
                             FROM {$fullTable} p
-                            LEFT JOIN {$historyTable} h ON p.uuid = h.uuid
-                            WHERE h.name LIKE :query
-                            OR p.reason LIKE :query
+                            LEFT JOIN (
+                                SELECT h1.uuid, h1.name
+                                FROM {$historyTable} h1
+                                INNER JOIN (
+                                    SELECT uuid, MAX(date) as max_date
+                                    FROM {$historyTable}
+                                    GROUP BY uuid
+                                ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
+                            ) h ON p.uuid = h.uuid
+                            WHERE (h.name LIKE :query OR p.reason LIKE :query OR LOWER(p.banned_by_name) LIKE LOWER(:query))
+                            AND p.uuid IS NOT NULL AND p.uuid != '#'
                             GROUP BY p.id
                             ORDER BY p.time DESC
                             LIMIT 50";
