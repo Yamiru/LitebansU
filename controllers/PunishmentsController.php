@@ -19,55 +19,99 @@ declare(strict_types=1);
 
 class PunishmentsController extends BaseController
 {
+    private function getSort(): string
+    {
+        $sort = $_GET['sort'] ?? 'time';
+        $allowed = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'until', 'active'];
+        return in_array($sort, $allowed) ? $sort : 'time';
+    }
+    
+    private function getOrder(): string
+    {
+        $sort = $this->getSort();
+        $requestedOrder = strtoupper($_GET['order'] ?? '');
+        
+        // Determine default sort order based on column type
+        $defaultOrder = 'DESC'; // Default for numbers, dates, and active status
+        
+        // For text fields (name, reason, staff, server), default to ASC (A-Z)
+        if (in_array($sort, ['name', 'reason', 'banned_by_name', 'server'])) {
+            $defaultOrder = 'ASC';
+        }
+        
+        // If user explicitly requested an order, use it
+        if (in_array($requestedOrder, ['ASC', 'DESC'])) {
+            return $requestedOrder;
+        }
+        
+        return $defaultOrder;
+    }
+    
+    private function getSortParams(): array
+    {
+        return [
+            'sort' => $this->getSort(),
+            'order' => $this->getOrder()
+        ];
+    }
+    
     public function bans(): void
     {
-        $punishments = $this->repository->getBans($this->getLimit(), $this->getOffset(), false);
+        $sortParams = $this->getSortParams();
+        $punishments = $this->repository->getBans($this->getLimit(), $this->getOffset(), false, $sortParams['sort'], $sortParams['order']);
         
         $this->render('punishments', [
             'title' => $this->lang->get('nav.bans'),
             'type' => 'bans',
             'punishments' => $this->formatPunishments($punishments),
             'pagination' => $this->getPaginationData('bans', false),
-            'currentPage' => 'bans'
+            'currentPage' => 'bans',
+            'sortParams' => $sortParams
         ]);
     }
     
     public function mutes(): void
     {
-        $punishments = $this->repository->getMutes($this->getLimit(), $this->getOffset(), false);
+        $sortParams = $this->getSortParams();
+        $punishments = $this->repository->getMutes($this->getLimit(), $this->getOffset(), false, $sortParams['sort'], $sortParams['order']);
         
         $this->render('punishments', [
             'title' => $this->lang->get('nav.mutes'),
             'type' => 'mutes',
             'punishments' => $this->formatPunishments($punishments),
             'pagination' => $this->getPaginationData('mutes', false),
-            'currentPage' => 'mutes'
+            'currentPage' => 'mutes',
+            'sortParams' => $sortParams
         ]);
     }
     
     public function warnings(): void
     {
-        $punishments = $this->repository->getWarnings($this->getLimit(), $this->getOffset());
+        $sortParams = $this->getSortParams();
+        $punishments = $this->repository->getWarnings($this->getLimit(), $this->getOffset(), $sortParams['sort'], $sortParams['order']);
         
         $this->render('punishments', [
             'title' => $this->lang->get('nav.warnings'),
             'type' => 'warnings',
             'punishments' => $this->formatPunishments($punishments),
             'pagination' => $this->getPaginationData('warnings'),
-            'currentPage' => 'warnings'
+            'currentPage' => 'warnings',
+            'sortParams' => $sortParams
         ]);
     }
     
     public function kicks(): void
     {
-        $punishments = $this->repository->getKicks($this->getLimit(), $this->getOffset());
+        $sortParams = $this->getSortParams();
+        $punishments = $this->repository->getKicks($this->getLimit(), $this->getOffset(), $sortParams['sort'], $sortParams['order']);
         
         $this->render('punishments', [
             'title' => $this->lang->get('nav.kicks'),
             'type' => 'kicks',
             'punishments' => $this->formatPunishments($punishments),
             'pagination' => $this->getPaginationData('kicks'),
-            'currentPage' => 'kicks'
+            'currentPage' => 'kicks',
+            'sortParams' => $sortParams
         ]);
     }
     
