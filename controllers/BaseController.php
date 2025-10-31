@@ -6,8 +6,8 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
- *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ *  Version:       2.3
+ *  Author:        Yamiru <yamiru@yamiru.com>
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
@@ -34,29 +34,16 @@ abstract class BaseController
     
     protected function render(string $template, array $data = []): void
     {
+        // Make controller instance available in templates
+        $data['controller'] = $this;
         $data['lang'] = $this->lang;
         $data['theme'] = $this->theme;
         $data['config'] = $this->config;
-        $data['controller'] = $this;
         
         extract($data);
         
-        // Check if template is in admin directory
-        if (strpos($template, 'admin/') === 0) {
-            $templatePath = __DIR__ . "/../templates/{$template}.php";
-        } else {
-            $templatePath = __DIR__ . "/../templates/{$template}.php";
-        }
-        
-        // Always include header and footer
         include __DIR__ . "/../templates/header.php";
-        
-        if (file_exists($templatePath)) {
-            include $templatePath;
-        } else {
-            echo '<div class="alert alert-danger">Template not found: ' . htmlspecialchars($template) . '</div>';
-        }
-        
+        include __DIR__ . "/../templates/{$template}.php";
         include __DIR__ . "/../templates/footer.php";
     }
     
@@ -70,12 +57,6 @@ abstract class BaseController
     
     protected function redirect(string $url, int $code = 302): void
     {
-        // Ensure URL doesn't have duplicate base paths
-        $basePath = $this->config['base_path'] ?? '';
-        if ($basePath && strpos($url, $basePath . '/' . $basePath) !== false) {
-            $url = str_replace($basePath . '/' . $basePath, $basePath, $url);
-        }
-        
         header("Location: {$url}", true, $code);
         exit;
     }
@@ -84,7 +65,7 @@ abstract class BaseController
     {
         header('Content-Type: application/json');
         http_response_code($code);
-        echo json_encode($data);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;
     }
     
@@ -104,13 +85,19 @@ abstract class BaseController
         return ($this->getPage() - 1) * $this->getLimit();
     }
     
-    public function formatDate(int $timestamp): string
+    protected function formatDate(int $timestamp): string
     {
-        $timezone = new DateTimeZone($this->config['timezone'] ?? 'UTC');
-        $date = new DateTime('@' . intval($timestamp / 1000));
-        $date->setTimezone($timezone);
-        
-        return $date->format($this->config['date_format'] ?? 'Y-m-d H:i:s');
+        try {
+            $timezone = new DateTimeZone($this->config['timezone'] ?? 'UTC');
+            // Handle millisecond timestamps
+            $seconds = intval($timestamp / 1000);
+            $date = new DateTime('@' . $seconds);
+            $date->setTimezone($timezone);
+            
+            return $date->format($this->config['date_format'] ?? 'Y-m-d H:i:s');
+        } catch (Exception $e) {
+            return date('Y-m-d H:i:s', intval($timestamp / 1000));
+        }
     }
     
     protected function formatDuration(int $until): string
@@ -124,35 +111,49 @@ abstract class BaseController
             return $this->lang->get('punishment.expired');
         }
         
-        // Calculate time remaining (not total duration)
         $diff = intval(($until - $now) / 1000);
         $days = intval($diff / 86400);
         $hours = intval(($diff % 86400) / 3600);
         $minutes = intval(($diff % 3600) / 60);
         
         if ($days > 0) {
-            return $this->lang->get('time.days', ['count' => $days]) . ' left';
-        } else if ($hours > 0) {
-            return $this->lang->get('time.hours', ['count' => $hours]) . ' left';
+            return $this->lang->get('time.days', ['count' => (string)$days]);
+        } elseif ($hours > 0) {
+            return $this->lang->get('time.hours', ['count' => (string)$hours]);
         } else {
-            return $this->lang->get('time.minutes', ['count' => $minutes]) . ' left';
+            return $this->lang->get('time.minutes', ['count' => (string)max(1, $minutes)]);
         }
     }
     
-    public function getAvatarUrl(string $uuid, string $name): string
+    protected function getAvatarUrl(?string $uuid, ?string $name): string
     {
-        $baseUrl = $this->config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=32&overlay=true';
+        // Sanitize inputs
+        $uuid = !empty($uuid) ? preg_replace('/[^a-f0-9-]/i', '', $uuid) : '';
+        $name = !empty($name) ? preg_replace('/[^a-zA-Z0-9_]/i', '', $name) : '';
         
-        if (strlen($uuid) === 36 && $uuid[14] === '3') {
-            $baseUrl = $this->config['avatar_url_offline'] ?? 'https://minotar.net/avatar/{name}/32';
+        // Default avatar SVG
+        $default = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSI4IiBmaWxsPSIjNjY2Ii8+PHBhdGggZD0iTTMyIDE2Yy00LjQyIDAtOCAzLjU4LTggOHMzLjU4IDggOCA4IDgtMy41OCA4LTgtMy41OC04LTgtOHptMCAyMGMtOC44NCAwLTE2IDcuMTYtMTYgMTZ2NGg0di00YzAtNi42MiA1LjM3LTEyIDEyLTEyczEyIDUuMzggMTIgMTJ2NGg0di00YzAtOC44NC03LjE2LTE2LTE2LTE2eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
+        
+        // Detect if offline UUID (UUID v3 - offline players)
+        // Offline UUID has '3' at position 14 (xxxxxxxx-xxxx-3xxx-xxxx-xxxxxxxxxxxx)
+        $isOffline = !empty($uuid) && strlen($uuid) === 36 && substr($uuid, 14, 1) === '3';
+        
+        // OFFLINE PLAYER - Use name-based avatar
+        if ($isOffline && !empty($name)) {
+            // Use Minotar for offline players (works with player name)
+            return "https://minotar.net/avatar/{$name}/64";
         }
         
-        return str_replace(['{uuid}', '{name}'], [$uuid, $name], $baseUrl);
+        // ONLINE PLAYER - Use UUID-based avatar
+        if (!empty($uuid) && !$isOffline) {
+            // Use Crafatar for online players (works with UUID)
+            return "https://crafatar.com/avatars/{$uuid}?size=64&overlay=true";
+        }
+        
+        // FALLBACK - Return default SVG
+        return $default;
     }
     
-    /**
-     * Check if UUID should be shown based on config and cookie
-     */
     public function shouldShowUuid(): bool
     {
         return (bool)($this->config['show_uuid'] ?? true);
