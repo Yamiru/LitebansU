@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       2.3
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -174,6 +174,7 @@ class AdminController extends BaseController
     {
         $results = [];
         $historyTable = $this->repository->getTablePrefix() . 'history';
+        $seenIds = []; // Track already found results to avoid duplicates
         
         // Determine which tables to search
         if (!empty($type)) {
@@ -182,44 +183,68 @@ class AdminController extends BaseController
             $tables = ['bans', 'mutes', 'warnings', 'kicks'];
         }
         
+        // Check if query is numeric (ID search)
+        $isNumeric = is_numeric($query);
+        
         // Check if query is a UUID
-        $isUuid = SecurityManager::validateUuid($query);
+        $isUuid = !$isNumeric && SecurityManager::validateUuid($query);
         
         foreach ($tables as $table) {
             $fullTable = $this->repository->getTablePrefix() . $table;
             
-            if ($isUuid) {
-                // Direct UUID search
+            // 1. ID SEARCH (NEW - case-insensitive, numeric)
+            if ($isNumeric) {
                 $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
                         FROM {$fullTable} p
-                        LEFT JOIN (
-                            SELECT h1.uuid, h1.name
-                            FROM {$historyTable} h1
-                            INNER JOIN (
-                                SELECT uuid, MAX(date) as max_date
-                                FROM {$historyTable}
-                                GROUP BY uuid
-                            ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
-                        ) h ON p.uuid = h.uuid
+                        LEFT JOIN {$historyTable} h ON p.uuid = h.uuid 
+                            AND h.date = (SELECT MAX(date) FROM {$historyTable} WHERE uuid = p.uuid)
+                        WHERE p.id = :id
+                        AND p.uuid IS NOT NULL AND p.uuid != '#'
+                        LIMIT 1";
+                
+                $stmt = $this->repository->getConnection()->prepare($sql);
+                $stmt->execute([':id' => (int)$query]);
+                $row = $stmt->fetch();
+                
+                if ($row) {
+                    $key = $row['id'] . '_' . $table;
+                    if (!isset($seenIds[$key])) {
+                        $results[] = $row;
+                        $seenIds[$key] = true;
+                    }
+                }
+                continue; // Skip other searches for ID
+            }
+            
+            // 2. UUID SEARCH
+            if ($isUuid) {
+                $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
+                        FROM {$fullTable} p
+                        LEFT JOIN {$historyTable} h ON p.uuid = h.uuid 
+                            AND h.date = (SELECT MAX(date) FROM {$historyTable} WHERE uuid = p.uuid)
                         WHERE p.uuid = :uuid
                         AND p.uuid IS NOT NULL AND p.uuid != '#'
                         ORDER BY p.time DESC";
                 
                 $stmt = $this->repository->getConnection()->prepare($sql);
                 $stmt->execute([':uuid' => $query]);
-                $results = array_merge($results, $stmt->fetchAll());
+                foreach ($stmt->fetchAll() as $row) {
+                    $key = $row['id'] . '_' . $table;
+                    if (!isset($seenIds[$key])) {
+                        $results[] = $row;
+                        $seenIds[$key] = true;
+                    }
+                }
             } else {
-                // Multi-step name search
-                
-                // 1. Find UUIDs by player name (exact and partial matches)
-                $uuidSql = "SELECT DISTINCT uuid FROM {$historyTable} 
-                           WHERE (LOWER(name) = LOWER(:exact_name) 
-                           OR LOWER(name) LIKE LOWER(:partial_name))
-                           AND uuid IS NOT NULL AND uuid != '#'
-                           ORDER BY date DESC
+                // 3. NAME SEARCH (case-insensitive)
+                $nameSql = "SELECT DISTINCT p.uuid FROM {$historyTable} p
+                           WHERE (LOWER(p.name) = LOWER(:exact_name) 
+                           OR LOWER(p.name) LIKE LOWER(:partial_name))
+                           AND p.uuid IS NOT NULL AND p.uuid != '#'
+                           ORDER BY p.date DESC
                            LIMIT 50";
                 
-                $stmt = $this->repository->getConnection()->prepare($uuidSql);
+                $stmt = $this->repository->getConnection()->prepare($nameSql);
                 $stmt->execute([
                     ':exact_name' => $query,
                     ':partial_name' => '%' . $query . '%'
@@ -227,39 +252,31 @@ class AdminController extends BaseController
                 $uuids = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 
                 if (!empty($uuids)) {
-                    // 2. Search punishments for found UUIDs
-                    $placeholders = str_repeat('?,', count($uuids) - 1) . '?';
+                    // Search punishments for found UUIDs
+                    $placeholders = implode(',', array_fill(0, count($uuids), '?'));
                     $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
                             FROM {$fullTable} p
-                            LEFT JOIN (
-                                SELECT h1.uuid, h1.name
-                                FROM {$historyTable} h1
-                                INNER JOIN (
-                                    SELECT uuid, MAX(date) as max_date
-                                    FROM {$historyTable}
-                                    GROUP BY uuid
-                                ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
-                            ) h ON p.uuid = h.uuid
+                            LEFT JOIN {$historyTable} h ON p.uuid = h.uuid 
+                                AND h.date = (SELECT MAX(date) FROM {$historyTable} WHERE uuid = p.uuid)
                             WHERE p.uuid IN ({$placeholders})
                             ORDER BY p.time DESC";
                     
                     $stmt = $this->repository->getConnection()->prepare($sql);
                     $stmt->execute($uuids);
-                    $results = array_merge($results, $stmt->fetchAll());
+                    foreach ($stmt->fetchAll() as $row) {
+                        $key = $row['id'] . '_' . $table;
+                        if (!isset($seenIds[$key])) {
+                            $results[] = $row;
+                            $seenIds[$key] = true;
+                        }
+                    }
                 }
                 
-                // 3. Also search by reason (staff might search for ban reasons)
+                // 4. REASON SEARCH (case-insensitive)
                 $reasonSql = "SELECT p.*, '{$table}' as type, h.name as player_name
                              FROM {$fullTable} p
-                             LEFT JOIN (
-                                 SELECT h1.uuid, h1.name
-                                 FROM {$historyTable} h1
-                                 INNER JOIN (
-                                     SELECT uuid, MAX(date) as max_date
-                                     FROM {$historyTable}
-                                     GROUP BY uuid
-                                 ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
-                             ) h ON p.uuid = h.uuid
+                             LEFT JOIN {$historyTable} h ON p.uuid = h.uuid 
+                                 AND h.date = (SELECT MAX(date) FROM {$historyTable} WHERE uuid = p.uuid)
                              WHERE LOWER(p.reason) LIKE LOWER(:reason)
                              AND p.uuid IS NOT NULL AND p.uuid != '#'
                              ORDER BY p.time DESC
@@ -267,34 +284,19 @@ class AdminController extends BaseController
                 
                 $stmt = $this->repository->getConnection()->prepare($reasonSql);
                 $stmt->execute([':reason' => '%' . $query . '%']);
-                $reasonResults = $stmt->fetchAll();
-                
-                // Merge and deduplicate
-                foreach ($reasonResults as $result) {
-                    $exists = false;
-                    foreach ($results as $existing) {
-                        if ($existing['id'] === $result['id'] && $existing['type'] === $result['type']) {
-                            $exists = true;
-                            break;
-                        }
-                    }
-                    if (!$exists) {
-                        $results[] = $result;
+                foreach ($stmt->fetchAll() as $row) {
+                    $key = $row['id'] . '_' . $table;
+                    if (!isset($seenIds[$key])) {
+                        $results[] = $row;
+                        $seenIds[$key] = true;
                     }
                 }
                 
-                // 4. Search by staff name
+                // 5. STAFF NAME SEARCH (case-insensitive)
                 $staffSql = "SELECT p.*, '{$table}' as type, h.name as player_name
                             FROM {$fullTable} p
-                            LEFT JOIN (
-                                SELECT h1.uuid, h1.name
-                                FROM {$historyTable} h1
-                                INNER JOIN (
-                                    SELECT uuid, MAX(date) as max_date
-                                    FROM {$historyTable}
-                                    GROUP BY uuid
-                                ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
-                            ) h ON p.uuid = h.uuid
+                            LEFT JOIN {$historyTable} h ON p.uuid = h.uuid 
+                                AND h.date = (SELECT MAX(date) FROM {$historyTable} WHERE uuid = p.uuid)
                             WHERE LOWER(p.banned_by_name) LIKE LOWER(:staff)
                             AND p.uuid IS NOT NULL AND p.uuid != '#'
                             ORDER BY p.time DESC
@@ -302,19 +304,11 @@ class AdminController extends BaseController
                 
                 $stmt = $this->repository->getConnection()->prepare($staffSql);
                 $stmt->execute([':staff' => '%' . $query . '%']);
-                $staffResults = $stmt->fetchAll();
-                
-                // Merge and deduplicate staff results
-                foreach ($staffResults as $result) {
-                    $exists = false;
-                    foreach ($results as $existing) {
-                        if ($existing['id'] === $result['id'] && $existing['type'] === $result['type']) {
-                            $exists = true;
-                            break;
-                        }
-                    }
-                    if (!$exists) {
-                        $results[] = $result;
+                foreach ($stmt->fetchAll() as $row) {
+                    $key = $row['id'] . '_' . $table;
+                    if (!isset($seenIds[$key])) {
+                        $results[] = $row;
+                        $seenIds[$key] = true;
                     }
                 }
             }
