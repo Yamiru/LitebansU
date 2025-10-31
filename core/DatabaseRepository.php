@@ -38,11 +38,38 @@ class DatabaseRepository
         return $this->tablePrefix;
     }
     
-    public function getBans(int $limit = 20, int $offset = 0, bool $activeOnly = true): array
+    public function getBans(int $limit = 20, int $offset = 0, bool $activeOnly = true, string $sort = 'time', string $order = 'DESC'): array
     {
         try {
             $table = $this->tablePrefix . 'bans';
             $historyTable = $this->tablePrefix . 'history';
+            
+            // Validate sort and order parameters
+            $allowedSorts = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'until', 'active'];
+            $sort = in_array($sort, $allowedSorts) ? $sort : 'time';
+            $order = strtoupper($order);
+            $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
+            
+            // Map sort field to correct column
+            $sortColumn = match($sort) {
+                'name' => 'h.name',
+                'reason' => 'b.reason',
+                'banned_by_name' => 'b.banned_by_name',
+                'server' => 'b.server',
+                'active' => 'b.active',
+                'until' => 'b.until',
+                'id' => 'b.id',
+                default => 'b.time'
+            };
+            
+            // For active column, ensure DESC shows active first (1 > 0)
+            if ($sort === 'active' && $order === 'DESC') {
+                $orderClause = "{$sortColumn} DESC";
+            } else if ($sort === 'active' && $order === 'ASC') {
+                $orderClause = "{$sortColumn} ASC";
+            } else {
+                $orderClause = "{$sortColumn} {$order}";
+            }
             
             $where = $activeOnly ? 'WHERE b.active = 1 AND b.uuid IS NOT NULL AND b.uuid != \'#\'' : 'WHERE b.uuid IS NOT NULL AND b.uuid != \'#\'';
             
@@ -61,7 +88,7 @@ class DatabaseRepository
                         ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
                     ) h ON b.uuid = h.uuid
                     {$where}
-                    ORDER BY b.time DESC 
+                    ORDER BY {$orderClause}
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->connection->prepare($sql);
@@ -76,11 +103,31 @@ class DatabaseRepository
         }
     }
     
-    public function getMutes(int $limit = 20, int $offset = 0, bool $activeOnly = true): array
+    public function getMutes(int $limit = 20, int $offset = 0, bool $activeOnly = true, string $sort = 'time', string $order = 'DESC'): array
     {
         try {
             $table = $this->tablePrefix . 'mutes';
             $historyTable = $this->tablePrefix . 'history';
+            
+            // Validate sort and order parameters
+            $allowedSorts = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'until', 'active'];
+            $sort = in_array($sort, $allowedSorts) ? $sort : 'time';
+            $order = strtoupper($order);
+            $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
+            
+            // Map sort field to correct column
+            $sortColumn = match($sort) {
+                'name' => 'h.name',
+                'reason' => 'm.reason',
+                'banned_by_name' => 'm.banned_by_name',
+                'server' => 'm.server',
+                'active' => 'm.active',
+                'until' => 'm.until',
+                'id' => 'm.id',
+                default => 'm.time'
+            };
+            
+            $orderClause = "{$sortColumn} {$order}";
             
             $where = $activeOnly ? 'WHERE m.active = 1 AND m.uuid IS NOT NULL AND m.uuid != \'#\'' : 'WHERE m.uuid IS NOT NULL AND m.uuid != \'#\'';
             
@@ -99,7 +146,7 @@ class DatabaseRepository
                         ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
                     ) h ON m.uuid = h.uuid
                     {$where}
-                    ORDER BY m.time DESC 
+                    ORDER BY {$orderClause}
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->connection->prepare($sql);
@@ -114,11 +161,30 @@ class DatabaseRepository
         }
     }
     
-    public function getWarnings(int $limit = 20, int $offset = 0): array
+    public function getWarnings(int $limit = 20, int $offset = 0, string $sort = 'time', string $order = 'DESC'): array
     {
         try {
             $table = $this->tablePrefix . 'warnings';
             $historyTable = $this->tablePrefix . 'history';
+            
+            // Validate sort and order parameters
+            $allowedSorts = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'active'];
+            $sort = in_array($sort, $allowedSorts) ? $sort : 'time';
+            $order = strtoupper($order);
+            $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
+            
+            // Map sort field to correct column
+            $sortColumn = match($sort) {
+                'name' => 'h.name',
+                'reason' => 'w.reason',
+                'banned_by_name' => 'w.banned_by_name',
+                'server' => 'w.server',
+                'active' => 'w.active',
+                'id' => 'w.id',
+                default => 'w.time'
+            };
+            
+            $orderClause = "{$sortColumn} {$order}";
             
             $sql = "SELECT w.id, w.uuid, w.reason, w.banned_by_name, w.banned_by_uuid, w.time, 
                            CAST(w.warned AS UNSIGNED) as warned, CAST(w.active AS UNSIGNED) as active,
@@ -134,7 +200,7 @@ class DatabaseRepository
                         ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
                     ) h ON w.uuid = h.uuid
                     WHERE w.uuid IS NOT NULL AND w.uuid != '#'
-                    ORDER BY w.time DESC 
+                    ORDER BY {$orderClause}
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->connection->prepare($sql);
@@ -149,11 +215,30 @@ class DatabaseRepository
         }
     }
     
-    public function getKicks(int $limit = 20, int $offset = 0): array
+    public function getKicks(int $limit = 20, int $offset = 0, string $sort = 'time', string $order = 'DESC'): array
     {
         try {
             $table = $this->tablePrefix . 'kicks';
             $historyTable = $this->tablePrefix . 'history';
+            
+            // Validate sort and order parameters
+            $allowedSorts = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'active'];
+            $sort = in_array($sort, $allowedSorts) ? $sort : 'time';
+            $order = strtoupper($order);
+            $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
+            
+            // Map sort field to correct column
+            $sortColumn = match($sort) {
+                'name' => 'h.name',
+                'reason' => 'k.reason',
+                'banned_by_name' => 'k.banned_by_name',
+                'server' => 'k.server',
+                'active' => 'k.active',
+                'id' => 'k.id',
+                default => 'k.time'
+            };
+            
+            $orderClause = "{$sortColumn} {$order}";
             
             $sql = "SELECT k.id, k.uuid, k.reason, k.banned_by_name, k.banned_by_uuid, k.time,
                            CAST(k.active AS UNSIGNED) as active,
@@ -169,7 +254,7 @@ class DatabaseRepository
                         ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
                     ) h ON k.uuid = h.uuid
                     WHERE k.uuid IS NOT NULL AND k.uuid != '#'
-                    ORDER BY k.time DESC 
+                    ORDER BY {$orderClause}
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->connection->prepare($sql);
