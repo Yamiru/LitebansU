@@ -29,6 +29,7 @@
             <thead>
                 <tr>
                     <th><?= $lang->get('table.player') ?></th>
+                    <th>ID</th>
                     <th><?= $lang->get('table.server') ?></th>
                     <th><?= $lang->get('table.reason') ?></th>
                     <th><?= $lang->get('table.staff') ?></th>
@@ -59,14 +60,22 @@
                             </div>
                         </td>
                         <td>
+                            <small class="font-monospace text-muted">
+                                <?= $punishment['id'] ?>
+                                <?php if ($config['show_uuid'] === true): ?>
+                                <br><strong>UUID:</strong> <?= substr($punishment['uuid'], 0, 8) ?>...
+                                <?php endif; ?>
+                            </small>
+                        </td>
+                        <td>
                             <span class="badge bg-secondary">
                                 <?= htmlspecialchars($punishment['server'] ?? 'Global', ENT_QUOTES, 'UTF-8') ?>
                             </span>
                         </td>
                         <td>
                             <div class="reason-cell" title="<?= $punishment['reason'] ?>">
-                                <?= strlen($punishment['reason']) > 50 ? 
-                                    substr($punishment['reason'], 0, 50) . '...' : 
+                                <?= strlen($punishment['reason']) > 15 ? 
+                                    substr($punishment['reason'], 0, 15) . '...' : 
                                     $punishment['reason'] ?>
                             </div>
                         </td>
@@ -132,11 +141,9 @@
                                  class="avatar me-3">
                             <div class="flex-grow-1">
                                 <h6 class="mb-1 fw-bold"><?= $punishment['name'] ?></h6>
-                                <?php if ($controller->shouldShowUuid()): ?>
                                 <small class="text-muted font-monospace">
-                                    <?= substr($punishment['uuid'], 0, 8) ?>...
+                                    <?= $type === 'bans' ? 'Ban' : ($type === 'mutes' ? 'Mute' : ($type === 'warnings' ? 'Warn' : 'Kick')) ?> #<?= $punishment['id'] ?>
                                 </small>
-                                <?php endif; ?>
                             </div>
                             <div class="text-end">
                                 <?php if ($type === 'kicks'): ?>
@@ -148,6 +155,13 @@
                                 <?php endif; ?>
                             </div>
                         </div>
+
+                        <!-- UUID Display (conditionally shown) -->
+                        <?php if ($config['show_uuid'] === true): ?>
+                        <div class="mb-2">
+                            <small class="text-muted font-monospace"><strong>UUID:</strong> <?= $punishment['uuid'] ?></small>
+                        </div>
+                        <?php endif; ?>
                         
                         <!-- Server Badge -->
                         <div class="mb-2">
@@ -160,8 +174,8 @@
                         <div class="mb-2">
                             <strong class="text-muted small"><?= $lang->get('table.reason') ?>:</strong>
                             <div class="mt-1">
-                                <?= strlen($punishment['reason']) > 80 ? 
-                                    substr($punishment['reason'], 0, 80) . '...' : 
+                                <?= strlen($punishment['reason']) > 15 ? 
+                                    substr($punishment['reason'], 0, 15) . '...' : 
                                     $punishment['reason'] ?>
                             </div>
                         </div>
