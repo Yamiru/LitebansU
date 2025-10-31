@@ -92,8 +92,8 @@ class LiteBansUI {
     }
 
     // =====================================================================
-    // ZMENA 1: PÃ´vodnÃ¡ logika z form.addEventListener('submit') je presunutÃ¡ 
-    // do tejto novej metÃ³dy, aby ju bolo moÅ¾nÃ© volaÅ¥ priamo.
+    // ZMENA 1: PĂÂ´vodnĂÂˇ logika z form.addEventListener('submit') je presunutĂÂˇ 
+    // do tejto novej metĂÂłdy, aby ju bolo moĂ…ÂľnĂÂ© volaĂ…ÂĄ priamo.
     // =====================================================================
     async performSearch() {
         const input = document.getElementById('search-input');
@@ -152,10 +152,10 @@ class LiteBansUI {
         });
 
         // =====================================================================
-        // ZMENA 2: Nahradenie celej pÃ´vodnej logiky volanÃ­m novej metÃ³dy performSearch()
+        // ZMENA 2: Nahradenie celej pĂÂ´vodnej logiky volanĂÂ­m novej metĂÂłdy performSearch()
         // =====================================================================
         form.addEventListener('submit', (e) => {
-            e.preventDefault(); // ZastavÃ­ Å¡tandardnÃ© odoslanie formulÃ¡ra
+            e.preventDefault(); // ZastavĂÂ­ Ă…ÂˇtandardnĂÂ© odoslanie formulĂÂˇra
             this.performSearch();
         });
 
@@ -165,8 +165,8 @@ class LiteBansUI {
             clearTimeout(this.debounceTimer);
             if (input.value.length >= 2) {
                 this.debounceTimer = setTimeout(() => {
-                    // PÃ´vodnÃ©: form.dispatchEvent(new Event('submit'));
-                    // NovÃ©: Priame volanie, ktorÃ© Firefox nezablokuje
+                    // PĂÂ´vodnĂÂ©: form.dispatchEvent(new Event('submit'));
+                    // NovĂÂ©: Priame volanie, ktorĂÂ© Firefox nezablokuje
                     this.performSearch(); 
                 }, 500);
             } else if (input.value.length === 0) {
