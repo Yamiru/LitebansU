@@ -109,47 +109,26 @@
     display: block;
 }
 
-/* Reason Cell - LIMITED TO 15 LINES */
+/* Reason Cell - LIMITED TO 15 CHARS */
 .reason-cell {
-    max-width: 400px;
-    min-width: 150px;
-    max-height: 300px;
-    min-height: 30px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    word-break: break-word;
-    word-wrap: break-word;
-    hyphens: auto;
+    display: inline-block;
+    vertical-align: middle;
+    padding: 0 0.25rem;
     color: var(--text-primary) !important;
     line-height: 1.4;
-    padding: var(--space-xs) !important;
-    display: block;
-    white-space: pre-wrap;
+    cursor: help;
+    border-bottom: 1px dotted var(--border-color);
+    transition: color var(--transition-fast);
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.reason-cell:hover {
+    color: var(--primary) !important;
 }
 
 /* Desktop: Longer reason cell */
-@media (min-width: 1200px) {
-    .reason-cell {
-        max-width: 500px;
-        max-height: 350px;
-    }
-}
-
-/* Tablet: Medium reason cell */
-@media (max-width: 1199px) {
-    .reason-cell {
-        max-width: 300px;
-        max-height: 300px;
-    }
-}
-
-/* Mobile: Short reason cell */
-@media (max-width: 767px) {
-    .reason-cell {
-        max-width: 200px;
-        max-height: 250px;
-    }
-}
+/* Mediaqueries odebrány - używa se inline styles v HTML */
 
 /* Staff name color */
 .table .text-primary {
@@ -381,4 +360,3 @@
     color: var(--text-primary) !important;
     border-color: var(--border-color);
 }
-
