@@ -200,7 +200,7 @@ class HomeController extends BaseController
                                     GROUP BY uuid
                                 ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
                             ) h ON p.uuid = h.uuid
-                            WHERE (h.name LIKE :query OR p.reason LIKE :query OR LOWER(p.banned_by_name) LIKE LOWER(:query))
+                            WHERE (LOWER(h.name) LIKE LOWER(:query) OR LOWER(p.reason) LIKE LOWER(:query) OR LOWER(p.banned_by_name) LIKE LOWER(:query))
                             AND p.uuid IS NOT NULL AND p.uuid != '#'
                             GROUP BY p.id
                             ORDER BY p.time DESC
