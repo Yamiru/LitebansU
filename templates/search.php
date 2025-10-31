@@ -21,6 +21,7 @@
                                     placeholder="<?= htmlspecialchars($lang->get('search.placeholder'), ENT_QUOTES, 'UTF-8') ?>"
                                     autocomplete="off"
                                     maxlength="36"
+                                    minlength="2"
                                 >
                             </div>
                             <small class="form-text text-muted">
@@ -53,7 +54,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <h6>Search by Player Name</h6>
                             <ul class="list-unstyled">
                                 <li><i class="fas fa-check text-success"></i> <code>Steve</code></li>
@@ -61,12 +62,20 @@
                                 <li><i class="fas fa-check text-success"></i> <code>jeb_</code></li>
                             </ul>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <h6>Search by Punishment ID</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Ban ID: <code>12345</code></li>
+                                <li><i class="fas fa-check text-success"></i> Mute ID: <code>999</code></li>
+                                <li><i class="fas fa-info-circle text-info"></i> Any numeric ID</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
                             <h6>Search by UUID</h6>
                             <ul class="list-unstyled">
                                 <li><i class="fas fa-check text-success"></i> Full UUID format</li>
                                 <li><i class="fas fa-check text-success"></i> <code>550e8400-e29b-41d4-a716-446655440000</code></li>
-                                <li><i class="fas fa-info-circle text-info"></i> Minimum 3 characters required</li>
+                                <li><i class="fas fa-info-circle text-info"></i> Minimum 2 characters</li>
                             </ul>
                         </div>
                     </div>
