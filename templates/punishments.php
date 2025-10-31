@@ -28,16 +28,16 @@
         <table class="table table-hover">
             <thead>
                 <tr>
-                    <th><?= $lang->get('table.player') ?></th>
-                    <th>ID</th>
-                    <th><?= $lang->get('table.server') ?></th>
-                    <th><?= $lang->get('table.reason') ?></th>
-                    <th><?= $lang->get('table.staff') ?></th>
-                    <th><?= $lang->get('table.date') ?></th>
+                    <th><a href="?sort=name&order=<?= ($sortParams['sort'] === 'name' && $sortParams['order'] === 'ASC') ? 'DESC' : 'ASC' ?>" class="sort-link"><?= $lang->get('table.player') ?> <i class="fas fa-sort"></i></a></th>
+                    <th><a href="?sort=id&order=<?= ($sortParams['sort'] === 'id' && $sortParams['order'] === 'ASC') ? 'DESC' : 'ASC' ?>" class="sort-link">ID <i class="fas fa-sort"></i></a></th>
+                    <th><a href="?sort=server&order=<?= ($sortParams['sort'] === 'server' && $sortParams['order'] === 'ASC') ? 'DESC' : 'ASC' ?>" class="sort-link"><?= $lang->get('table.server') ?> <i class="fas fa-sort"></i></a></th>
+                    <th><a href="?sort=reason&order=<?= ($sortParams['sort'] === 'reason' && $sortParams['order'] === 'ASC') ? 'DESC' : 'ASC' ?>" class="sort-link"><?= $lang->get('table.reason') ?> <i class="fas fa-sort"></i></a></th>
+                    <th><a href="?sort=banned_by_name&order=<?= ($sortParams['sort'] === 'banned_by_name' && $sortParams['order'] === 'ASC') ? 'DESC' : 'ASC' ?>" class="sort-link"><?= $lang->get('table.staff') ?> <i class="fas fa-sort"></i></a></th>
+                    <th><a href="?sort=time&order=<?= ($sortParams['sort'] === 'time' && $sortParams['order'] === 'ASC') ? 'DESC' : 'ASC' ?>" class="sort-link"><?= $lang->get('table.date') ?> <i class="fas fa-sort"></i></a></th>
                     <?php if ($type !== 'kicks'): ?>
-                        <th><?= $lang->get('table.expires') ?></th>
+                        <th><a href="?sort=until&order=<?= ($sortParams['sort'] === 'until' && $sortParams['order'] === 'ASC') ? 'DESC' : 'ASC' ?>" class="sort-link"><?= $lang->get('table.expires') ?> <i class="fas fa-sort"></i></a></th>
                     <?php endif; ?>
-                    <th><?= $lang->get('table.status') ?></th>
+                    <th><a href="?sort=active&order=<?= ($sortParams['sort'] === 'active' && $sortParams['order'] === 'ASC') ? 'DESC' : 'ASC' ?>" class="sort-link"><?= $lang->get('table.status') ?> <i class="fas fa-sort"></i></a></th>
                     <th><?= $lang->get('table.actions') ?></th>
                 </tr>
             </thead>
