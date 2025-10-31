@@ -5,7 +5,7 @@
  *
  * Plugin Name:   LiteBansU
  * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       2.0
+ * Version:       2.3
  * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI:    https://yamiru.com
  * License:       MIT
@@ -25,23 +25,57 @@
 .table-responsive {
     border-radius: var(--radius-lg);
     box-shadow: var(--card-shadow);
-    overflow: hidden;
+    overflow: auto;
     background: var(--table-bg);
+    -webkit-overflow-scrolling: touch;
 }
 
 .table {
     margin-bottom: 0;
+    background: var(--table-bg);
+    table-layout: auto;
+}
+
+.table thead {
+    background: var(--bg-tertiary);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table thead th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary) !important;
+    border-bottom: 2px solid var(--border-color);
+    padding: var(--space-sm);
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table tbody {
     background: var(--table-bg);
 }
 
 .table tbody tr {
     cursor: pointer;
     transition: all var(--transition-fast);
+    background: transparent;
+    border-color: var(--border-color);
 }
 
 .table tbody tr:hover {
     background: var(--table-hover-bg);
     transform: translateX(2px);
+}
+
+.table tbody td {
+    background: transparent;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color);
+    padding: var(--space-sm);
+    vertical-align: middle;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 /* Player Info Cell - FIXED FOR DARK THEME */
@@ -75,13 +109,46 @@
     display: block;
 }
 
-/* Reason Cell */
+/* Reason Cell - LIMITED TO 15 LINES */
 .reason-cell {
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-width: 400px;
+    min-width: 150px;
+    max-height: 300px;
+    min-height: 30px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-break: break-word;
+    word-wrap: break-word;
+    hyphens: auto;
     color: var(--text-primary) !important;
+    line-height: 1.4;
+    padding: var(--space-xs) !important;
+    display: block;
+    white-space: pre-wrap;
+}
+
+/* Desktop: Longer reason cell */
+@media (min-width: 1200px) {
+    .reason-cell {
+        max-width: 500px;
+        max-height: 350px;
+    }
+}
+
+/* Tablet: Medium reason cell */
+@media (max-width: 1199px) {
+    .reason-cell {
+        max-width: 300px;
+        max-height: 300px;
+    }
+}
+
+/* Mobile: Short reason cell */
+@media (max-width: 767px) {
+    .reason-cell {
+        max-width: 200px;
+        max-height: 250px;
+    }
 }
 
 /* Staff name color */
@@ -115,8 +182,10 @@
     transition: all var(--transition-fast);
     margin: 0 var(--space-sm);
     background: var(--card-bg);
+    border-radius: var(--radius-lg);
 }
 
+.mobile-punishment-card:active .card,
 .mobile-punishment-card:hover .card {
     border-color: var(--primary);
     box-shadow: var(--shadow-md);
@@ -125,39 +194,55 @@
 .mobile-punishment-card .avatar {
     width: 48px;
     height: 48px;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
 }
 
 .mobile-punishment-card h6 {
     font-size: 1rem;
     color: var(--text-primary) !important;
     margin-bottom: 0.25rem;
+    word-break: break-word;
 }
 
 .mobile-punishment-card .badge {
     font-size: 0.75rem;
+    display: inline-block;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
 }
 
 .mobile-punishment-card .text-truncate {
     color: var(--text-primary) !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .mobile-punishment-card .text-muted {
     color: var(--text-secondary) !important;
+    font-size: 0.875rem;
 }
 
 .mobile-punishment-card strong {
     color: var(--text-secondary) !important;
+    font-weight: 600;
 }
 
 .mobile-punishment-card .row {
     margin-left: 0;
     margin-right: 0;
+    gap: var(--space-xs);
 }
 
 .mobile-punishment-card .col-6,
 .mobile-punishment-card .col-12 {
     padding-left: 0;
     padding-right: var(--space-sm);
+}
+
+.mobile-punishment-card .card-body {
+    padding: var(--space-md);
 }
 
 /* Status Badge Variants */
