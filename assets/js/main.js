@@ -5,7 +5,7 @@
  *
  * Plugin Name: LiteBansU
  * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version: 2.2
+ * Version: 2.3
  * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI: https://yamiru.com
  * License: MIT
@@ -92,8 +92,8 @@ class LiteBansUI {
     }
 
     // =====================================================================
-    // ZMENA 1: Pôvodná logika z form.addEventListener('submit') je presunutá 
-    // do tejto novej metódy, aby ju bolo možné volať priamo.
+    // ZMENA 1: PÃ´vodnÃ¡ logika z form.addEventListener('submit') je presunutÃ¡ 
+    // do tejto novej metÃ³dy, aby ju bolo moÅ¾nÃ© volaÅ¥ priamo.
     // =====================================================================
     async performSearch() {
         const input = document.getElementById('search-input');
@@ -102,8 +102,8 @@ class LiteBansUI {
         if (!input || !results) return;
 
         const query = input.value.trim();
-        if (!query || query.length < 3) {
-            results.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please enter at least 3 characters</div>';
+        if (!query || query.length < 2) {
+            results.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please enter at least 2 characters</div>';
             return;
         }
 
@@ -152,10 +152,10 @@ class LiteBansUI {
         });
 
         // =====================================================================
-        // ZMENA 2: Nahradenie celej pôvodnej logiky volaním novej metódy performSearch()
+        // ZMENA 2: Nahradenie celej pÃ´vodnej logiky volanÃ­m novej metÃ³dy performSearch()
         // =====================================================================
         form.addEventListener('submit', (e) => {
-            e.preventDefault(); // Zastaví štandardné odoslanie formulára
+            e.preventDefault(); // ZastavÃ­ Å¡tandardnÃ© odoslanie formulÃ¡ra
             this.performSearch();
         });
 
@@ -163,10 +163,10 @@ class LiteBansUI {
         // Auto-search with debounce
         input.addEventListener('input', () => {
             clearTimeout(this.debounceTimer);
-            if (input.value.length >= 3) {
+            if (input.value.length >= 2) {
                 this.debounceTimer = setTimeout(() => {
-                    // Pôvodné: form.dispatchEvent(new Event('submit'));
-                    // Nové: Priame volanie, ktoré Firefox nezablokuje
+                    // PÃ´vodnÃ©: form.dispatchEvent(new Event('submit'));
+                    // NovÃ©: Priame volanie, ktorÃ© Firefox nezablokuje
                     this.performSearch(); 
                 }, 500);
             } else if (input.value.length === 0) {
