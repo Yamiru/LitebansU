@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       2.3
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -32,7 +32,8 @@ return [
     'timezone' => EnvLoader::get('TIMEZONE', 'UTC'),
     'date_format' => EnvLoader::get('DATE_FORMAT', 'Y-m-d H:i:s'),
     'avatar_url' => EnvLoader::get('AVATAR_URL', 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true'),
-    'avatar_url_offline' => EnvLoader::get('AVATAR_URL_OFFLINE', 'https://minotar.net/avatar/{name}/64'),
+    'avatar_url_offline' => EnvLoader::get('AVATAR_URL_OFFLINE', 'https://crafatar.com/avatars/{uuid}?size=64'),
+    'avatar_provider' => EnvLoader::get('AVATAR_PROVIDER', 'crafatar'), // crafatar, cravatar, or custom
     'base_path' => defined('BASE_PATH') ? BASE_PATH : '',
     'debug' => EnvLoader::get('DEBUG', 'false') === 'true',
     'log_errors' => EnvLoader::get('LOG_ERRORS', 'true') === 'true',
