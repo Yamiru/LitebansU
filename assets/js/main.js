@@ -5,7 +5,7 @@
  *
  * Plugin Name: LiteBansU
  * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version: 2.3
+ * Version: 2.4
  * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI: https://yamiru.com
  * License: MIT
@@ -92,8 +92,8 @@ class LiteBansUI {
     }
 
     // =====================================================================
-    // ZMENA 1: PĂÂ´vodnĂÂˇ logika z form.addEventListener('submit') je presunutĂÂˇ 
-    // do tejto novej metĂÂłdy, aby ju bolo moĂ…ÂľnĂÂ© volaĂ…ÂĄ priamo.
+    // ZMENA 1: PĂ´vodnĂˇ logika z form.addEventListener('submit') je presunutĂˇ 
+    // do tejto novej metĂłdy, aby ju bolo moĹľnĂ© volaĹĄ priamo.
     // =====================================================================
     async performSearch() {
         const input = document.getElementById('search-input');
@@ -152,10 +152,10 @@ class LiteBansUI {
         });
 
         // =====================================================================
-        // ZMENA 2: Nahradenie celej pĂÂ´vodnej logiky volanĂÂ­m novej metĂÂłdy performSearch()
+        // ZMENA 2: Nahradenie celej pĂ´vodnej logiky volanĂ­m novej metĂłdy performSearch()
         // =====================================================================
         form.addEventListener('submit', (e) => {
-            e.preventDefault(); // ZastavĂÂ­ Ă…ÂˇtandardnĂÂ© odoslanie formulĂÂˇra
+            e.preventDefault(); // ZastavĂ­ ĹˇtandardnĂ© odoslanie formulĂˇra
             this.performSearch();
         });
 
@@ -165,8 +165,8 @@ class LiteBansUI {
             clearTimeout(this.debounceTimer);
             if (input.value.length >= 2) {
                 this.debounceTimer = setTimeout(() => {
-                    // PĂÂ´vodnĂÂ©: form.dispatchEvent(new Event('submit'));
-                    // NovĂÂ©: Priame volanie, ktorĂÂ© Firefox nezablokuje
+                    // PĂ´vodne: form.dispatchEvent(new Event('submit'));
+                    // NovĂ©: Priame volanie, ktorĂ© Firefox nezablokuje
                     this.performSearch(); 
                 }, 500);
             } else if (input.value.length === 0) {
@@ -269,6 +269,7 @@ class LiteBansUI {
                         <table class="table table-hover">
                             <thead>
                                 <tr>
+                                    <th>Player</th>
                                     <th>Type</th>
                                     <th>Reason</th>
                                     <th>Staff</th>
@@ -328,9 +329,17 @@ class LiteBansUI {
             <div class="search-result-card mb-3 punishment-row" data-type="${typeSingular}" data-id="${punishment.id || ''}" style="cursor: pointer;">
                 <div class="card">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="badge ${typeClass}">${this.escapeHtml(typeText)}</span>
-                            <span class="status-badge ${statusClass}">${this.escapeHtml(statusText)}</span>
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="fas fa-user text-primary me-2"></i>
+                                    <strong>${this.escapeHtml(punishment.player_name)}</strong>
+                                </h6>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <span class="badge ${typeClass}">${this.escapeHtml(typeText)}</span>
+                                <span class="status-badge ${statusClass}">${this.escapeHtml(statusText)}</span>
+                            </div>
                         </div>
                         <div class="mb-2">
                             <strong class="text-muted small">Reason:</strong>
@@ -392,6 +401,7 @@ class LiteBansUI {
 
         return `
             <tr class="punishment-row" data-type="${typeSingular}" data-id="${punishment.id || ''}" style="cursor: pointer;">
+                <td><strong>${this.escapeHtml(punishment.player_name)}</strong></td>
                 <td><span class="badge ${typeClass}">${this.escapeHtml(typeText)}</span></td>
                 <td class="text-truncate" style="max-width: 200px;" title="${this.escapeHtml(punishment.reason)}">${this.escapeHtml(punishment.reason)}</td>
                 <td>${this.escapeHtml(punishment.staff)}</td>
