@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.3
+ *  Version:       2.6
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -69,8 +69,8 @@ class HomeController extends BaseController
         }
         
         $query = trim($_POST['query'] ?? '');
-        if (empty($query) || strlen($query) < 2) {
-            $this->jsonResponse(['error' => 'Search query must be at least 2 characters'], 400);
+        if (empty($query) || strlen($query) < 1) {
+            $this->jsonResponse(['error' => 'Search query must be at least 1 character'], 400);
             return;
         }
         
