@@ -5,7 +5,7 @@
  *
  * Plugin Name:   LiteBansU
  * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       2.0
+ * Version:       2.6
  * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI:    https://yamiru.com
  * License:       MIT
@@ -774,4 +774,13 @@
     text-align: center;
     background-color: var(--gray-900);
     border-radius: var(--radius-sm);
+}
+
+/* Search Results - Fix scroll anchoring warnings */
+#search-results {
+    overflow-anchor: none;
+}
+
+.search-container {
+    overflow-anchor: none;
 }
