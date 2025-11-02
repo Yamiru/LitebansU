@@ -5,7 +5,7 @@
  *
  * Plugin Name: LiteBansU
  * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version: 2.4
+ * Version: 2.6
  * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI: https://yamiru.com
  * License: MIT
@@ -102,8 +102,8 @@ class LiteBansUI {
         if (!input || !results) return;
 
         const query = input.value.trim();
-        if (!query || query.length < 2) {
-            results.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please enter at least 2 characters</div>';
+        if (!query || query.length < 1) {
+            results.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> Please enter at least 1 character</div>';
             return;
         }
 
@@ -163,7 +163,7 @@ class LiteBansUI {
         // Auto-search with debounce
         input.addEventListener('input', () => {
             clearTimeout(this.debounceTimer);
-            if (input.value.length >= 2) {
+            if (input.value.length >= 1) {
                 this.debounceTimer = setTimeout(() => {
                     // PĂ´vodne: form.dispatchEvent(new Event('submit'));
                     // NovĂ©: Priame volanie, ktorĂ© Firefox nezablokuje
