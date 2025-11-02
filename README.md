@@ -239,7 +239,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Credits
 
-- **Original LiteBans Plugin**: [Ruben](https://www.spigotmc.org/resources/3715/)
+- **Original LiteBans Plugin**: [Ruan](https://www.spigotmc.org/resources/3715/)
 - **Author**: [Yamiru](https://github.com/Yamiru)
 - **Icons**: [Font Awesome](https://fontawesome.com/)
 - **Fonts**: [Inter](https://rsms.me/inter/) by Rasmus Andersson
