@@ -21,7 +21,7 @@
                                     placeholder="<?= htmlspecialchars($lang->get('search.placeholder'), ENT_QUOTES, 'UTF-8') ?>"
                                     autocomplete="off"
                                     maxlength="36"
-                                    minlength="2"
+                                    minlength="1"
                                 >
                             </div>
                             <small class="form-text text-muted">
@@ -75,7 +75,7 @@
                             <ul class="list-unstyled">
                                 <li><i class="fas fa-check text-success"></i> Full UUID format</li>
                                 <li><i class="fas fa-check text-success"></i> <code>550e8400-e29b-41d4-a716-446655440000</code></li>
-                                <li><i class="fas fa-info-circle text-info"></i> Minimum 2 characters</li>
+                                <li><i class="fas fa-info-circle text-info"></i> Minimum 1 character</li>
                             </ul>
                         </div>
                     </div>
