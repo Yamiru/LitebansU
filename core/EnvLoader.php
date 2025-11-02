@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       2.5
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -23,7 +23,7 @@ class EnvLoader
 {
     private static bool $loaded = false;
     
-    public static function load(string $path = null): void
+    public static function load(?string $path = null): void
     {
         if (self::$loaded) {
             return;
@@ -69,7 +69,7 @@ class EnvLoader
         self::$loaded = true;
     }
     
-    public static function get(string $key, $default = null)
+    public static function get(string $key, mixed $default = null): mixed
     {
         return $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: $default;
     }
