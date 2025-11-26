@@ -57,10 +57,19 @@
                 </h4>
                 <p><?= htmlspecialchars($lang->get('protest.step2_desc'), ENT_QUOTES, 'UTF-8') ?></p>
                 
-                <div class="row g-4 mt-3">
+                <div class="row g-4 mt-3 <?php 
+                    // Count enabled contact methods
+                    $enabledMethods = 0;
+                    if ($config['show_contact_discord'] ?? true) $enabledMethods++;
+                    if ($config['show_contact_email'] ?? true) $enabledMethods++;
+                    if ($config['show_contact_forum'] ?? true) $enabledMethods++;
+                    
+                    // Center if only one method is enabled
+                    echo ($enabledMethods === 1) ? 'justify-content-center' : '';
+                ?>">
                     <!-- Discord -->
                     <?php if (($config['show_contact_discord'] ?? true)): ?>
-                    <div class="col-md-4">
+                    <div class="col-md-4 <?= ($enabledMethods === 1) ? 'col-lg-4' : '' ?>">
                         <div class="contact-method-card h-100">
                             <div class="contact-icon bg-discord">
                                 <i class="fab fa-discord"></i>
@@ -80,7 +89,7 @@
                     
                     <!-- Email -->
                     <?php if (($config['show_contact_email'] ?? true)): ?>
-                    <div class="col-md-4">
+                    <div class="col-md-4 <?= ($enabledMethods === 1) ? 'col-lg-4' : '' ?>">
                         <div class="contact-method-card h-100">
                             <div class="contact-icon bg-email">
                                 <i class="fas fa-envelope"></i>
@@ -96,7 +105,7 @@
                     
                     <!-- Forum -->
                     <?php if (($config['show_contact_forum'] ?? true)): ?>
-                    <div class="col-md-4">
+                    <div class="col-md-4 <?= ($enabledMethods === 1) ? 'col-lg-4' : '' ?>">
                         <div class="contact-method-card h-100">
                             <div class="contact-icon bg-forum">
                                 <i class="fas fa-comments"></i>
