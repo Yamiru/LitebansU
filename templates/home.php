@@ -183,6 +183,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                             if (mb_strlen($reason) > 40) echo '...';
                                             ?>
                                         </small>
+                                        <?php if (($config['show_server_origin'] ?? true) && !empty($ban['server_origin']) && $ban['server_origin'] !== '*'): ?>
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-server text-info"></i> <?= htmlspecialchars($ban['server_origin'], ENT_QUOTES, 'UTF-8') ?>
+                                            <?php if (($config['show_server_scope'] ?? true) && !empty($ban['server_scope']) && $ban['server_scope'] !== '*'): ?>
+                                            <i class="fas fa-arrow-right mx-1"></i> <?= htmlspecialchars($ban['server_scope'], ENT_QUOTES, 'UTF-8') ?>
+                                            <?php endif; ?>
+                                        </small>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="text-end">
                                         <small class="text-muted d-block">
@@ -245,6 +253,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                             if (mb_strlen($reason) > 40) echo '...';
                                             ?>
                                         </small>
+                                        <?php if (($config['show_server_origin'] ?? true) && !empty($mute['server_origin']) && $mute['server_origin'] !== '*'): ?>
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-server text-info"></i> <?= htmlspecialchars($mute['server_origin'], ENT_QUOTES, 'UTF-8') ?>
+                                            <?php if (($config['show_server_scope'] ?? true) && !empty($mute['server_scope']) && $mute['server_scope'] !== '*'): ?>
+                                            <i class="fas fa-arrow-right mx-1"></i> <?= htmlspecialchars($mute['server_scope'], ENT_QUOTES, 'UTF-8') ?>
+                                            <?php endif; ?>
+                                        </small>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="text-end">
                                         <small class="text-muted d-block">

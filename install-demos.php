@@ -1,7 +1,7 @@
 <?php
 /**
  * Enhanced Demo & Video System Installer for LiteBansU
- * Version: 2.1
+ * Version: 3.0
  * * Project: LiteBansU by Yamiru.com
  * GitHub: https://github.com/Yamiru/LitebansU
  * Issues: https://github.com/Yamiru/LitebansU/issues
@@ -54,7 +54,7 @@ if (isset($_POST['install']) && $inCorrectLocation) {
 <?php
 /**
  * Enhanced Demo & Video System Installer for LiteBansU
- * Version: 2.1
+ * Version: 3.0
  * * Project: LiteBansU by Yamiru.com
  * GitHub: https://github.com/Yamiru/LitebansU
  * Issues: https://github.com/Yamiru/LitebansU/issues
@@ -1664,10 +1664,10 @@ location /demos {
                 <p>This installer must be placed in your LiteBansU root directory!</p>
                 <div class="code-block" style="text-align: left;">
 /your-website/
-+¦ index.php
-+¦ config/
-+¦ controllers/
-L¦ install-demos.php  &lt;-- Place here
++Â¦ index.php
++Â¦ config/
++Â¦ controllers/
+LÂ¦ install-demos.php  &lt;-- Place here
                 </div>
                 <p style="margin-top: 1rem;">Required files not found:</p>
                 <?php foreach ($requiredFiles as $file): ?>

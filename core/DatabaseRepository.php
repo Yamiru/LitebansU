@@ -6,12 +6,11 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.3
+ *  Version:       3.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
@@ -38,7 +37,7 @@ class DatabaseRepository
         return $this->tablePrefix;
     }
     
-    public function getBans(int $limit = 20, int $offset = 0, bool $activeOnly = true, string $sort = 'time', string $order = 'DESC'): array
+    public function getBans(int $limit = 20, int $offset = 0, bool $activeOnly = true, string $sort = 'time', string $order = 'DESC', bool $showSilent = true): array
     {
         try {
             $table = $this->tablePrefix . 'bans';
@@ -73,9 +72,15 @@ class DatabaseRepository
             
             $where = $activeOnly ? 'WHERE b.active = 1 AND b.uuid IS NOT NULL AND b.uuid != \'#\'' : 'WHERE b.uuid IS NOT NULL AND b.uuid != \'#\'';
             
+            // Add silent filter if needed
+            if (!$showSilent) {
+                $where .= ' AND (b.silent = 0 OR b.silent IS NULL)';
+            }
+            
             $sql = "SELECT b.id, b.uuid, b.reason, b.banned_by_name, b.banned_by_uuid, b.time, b.until, 
                            CAST(b.active AS UNSIGNED) as active, b.removed_by_name, b.removed_by_uuid, 
                            b.removed_by_date, CAST(b.silent AS UNSIGNED) as silent,
+                           b.server_origin, b.server_scope,
                            h.name as player_name
                     FROM {$table} b
                     LEFT JOIN (
@@ -103,7 +108,7 @@ class DatabaseRepository
         }
     }
     
-    public function getMutes(int $limit = 20, int $offset = 0, bool $activeOnly = true, string $sort = 'time', string $order = 'DESC'): array
+    public function getMutes(int $limit = 20, int $offset = 0, bool $activeOnly = true, string $sort = 'time', string $order = 'DESC', bool $showSilent = true): array
     {
         try {
             $table = $this->tablePrefix . 'mutes';
@@ -131,9 +136,15 @@ class DatabaseRepository
             
             $where = $activeOnly ? 'WHERE m.active = 1 AND m.uuid IS NOT NULL AND m.uuid != \'#\'' : 'WHERE m.uuid IS NOT NULL AND m.uuid != \'#\'';
             
+            // Add silent filter if needed
+            if (!$showSilent) {
+                $where .= ' AND (m.silent = 0 OR m.silent IS NULL)';
+            }
+            
             $sql = "SELECT m.id, m.uuid, m.reason, m.banned_by_name, m.banned_by_uuid, m.time, m.until, 
                            CAST(m.active AS UNSIGNED) as active, m.removed_by_name, m.removed_by_uuid, 
                            m.removed_by_date, CAST(m.silent AS UNSIGNED) as silent,
+                           m.server_origin, m.server_scope,
                            h.name as player_name
                     FROM {$table} m
                     LEFT JOIN (
@@ -188,6 +199,7 @@ class DatabaseRepository
             
             $sql = "SELECT w.id, w.uuid, w.reason, w.banned_by_name, w.banned_by_uuid, w.time, 
                            CAST(w.warned AS UNSIGNED) as warned, CAST(w.active AS UNSIGNED) as active,
+                           w.server_origin, w.server_scope,
                            h.name as player_name
                     FROM {$table} w
                     LEFT JOIN (
@@ -242,6 +254,7 @@ class DatabaseRepository
             
             $sql = "SELECT k.id, k.uuid, k.reason, k.banned_by_name, k.banned_by_uuid, k.time,
                            CAST(k.active AS UNSIGNED) as active,
+                           k.server_origin, k.server_scope,
                            h.name as player_name
                     FROM {$table} k
                     LEFT JOIN (

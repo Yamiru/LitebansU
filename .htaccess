@@ -13,8 +13,7 @@ ServerSignature Off
 Header always unset Server
 Header always unset X-Powered-By
 
-# UTF-8 encoding - FIXED VERSION
-# Note: Do NOT use ForceType with charset as it breaks PHP execution
+# UTF-8 encoding
 <IfModule mod_mime.c>
     AddDefaultCharset UTF-8
     AddCharset UTF-8 .html .css .js .txt .xml .json
@@ -29,29 +28,37 @@ Header always unset X-Powered-By
     Require all denied
 </Files>
 
+<Files "install.php">
+    Require all denied
+</Files>
+
+<Files "hash.php">
+    Require all denied
+</Files>
+
 <FilesMatch "\.(md|log|txt)$">
     Require all denied
 </FilesMatch>
 
-# Exception for robots.txt - must be accessible
+# Exception for robots.txt
 <Files "robots.txt">
     Require all granted
 </Files>
 
 # Hide directories from direct access
 <IfModule mod_rewrite.c>
-    RewriteRule ^(config|core|controllers|templates|lang)/ - [F,L]
+    RewriteRule ^(config|core|controllers|templates|lang|data)/ - [F,L]
 </IfModule>
 
 # Don't rewrite requests to index.php itself
 RewriteCond %{REQUEST_URI} !^/index\.php
 
-# Asset handling - serve static files directly (including robots.txt)
+# Asset handling - serve static files directly
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|txt)$ [NC]
 RewriteRule . - [L]
 
-# Redirect all other requests to index.php (except robots.txt)
+# Redirect all other requests to index.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !^/robots\.txt$
@@ -86,7 +93,7 @@ RewriteRule ^(.*)$ index.php [QSA,L]
     AddOutputFilterByType DEFLATE application/x-javascript
 </IfModule>
 
-# Ensure proper MIME types for CSS and JS
+# Ensure proper MIME types
 <IfModule mod_mime.c>
     AddType text/css .css
     AddType application/javascript .js

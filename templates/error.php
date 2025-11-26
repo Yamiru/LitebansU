@@ -25,11 +25,6 @@
         </div>
     </div>
 </div>
-<div style="text-align: center;">
-    <a href="https://github.com/Yamiru/LitebansU" target="_blank" rel="noopener noreferrer">
-        <i class="fab fa-github"></i> Github project
-    </a>
-</div>
 <style>
 .error-page {
     min-height: 60vh;

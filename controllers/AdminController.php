@@ -6,22 +6,33 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.3
+ *  Version:       3.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
 declare(strict_types=1);
+
+require_once __DIR__ . '/../core/AuthManager.php';
 
 class AdminController extends BaseController
 {
     private const ADMIN_SESSION_TIMEOUT = 3600; // 1 hour
     private const MAX_LOGIN_ATTEMPTS = 5;
     private const LOGIN_LOCKOUT_TIME = 900; // 15 minutes
+    
+    private ?\core\AuthManager $authManager = null;
+    
+    private function getAuthManager(): \core\AuthManager
+    {
+        if ($this->authManager === null) {
+            $this->authManager = new \core\AuthManager($this->config);
+        }
+        return $this->authManager;
+    }
     
     public function index(): void
     {
@@ -40,18 +51,33 @@ class AdminController extends BaseController
         // Log admin access
         $this->logAdminAction('dashboard_access', 'Accessed admin dashboard');
         
+        // Get current user for dashboard
+        $currentUser = $this->getCurrentUser();
+        
         // Show admin dashboard
         $this->render('admin/dashboard', [
             'title' => $this->lang->get('admin.dashboard'),
             'currentPage' => 'admin',
             'controller' => $this,
-            'stats' => $this->repository->getStats()
+            'stats' => $this->repository->getStats(),
+            'currentUser' => $currentUser,
+            'authManager' => $this->getAuthManager()
         ]);
     }
     
     public function login(): void
     {
         if (!SecurityManager::validateRequestMethod('POST')) {
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        // Check if password login is allowed
+        $allowPasswordLogin = $this->config['allow_password_login'] ?? true;
+        $googleAuthEnabled = $this->config['google_auth_enabled'] ?? false;
+        
+        if ($googleAuthEnabled && !$allowPasswordLogin) {
+            $_SESSION['admin_error'] = 'Password login is disabled. Please use Google authentication.';
             $this->redirect(url('admin'));
             return;
         }
@@ -324,6 +350,14 @@ class AdminController extends BaseController
             return;
         }
         
+        // Check if user has permission to remove punishments (admin or moderator only)
+        $currentUser = $this->getCurrentUser();
+        $userRole = $currentUser['role'] ?? 'admin';
+        if ($userRole === 'viewer') {
+            $this->jsonResponse(['error' => 'Permission denied. Viewers cannot remove punishments.'], 403);
+            return;
+        }
+        
         $input = json_decode(file_get_contents('php://input'), true);
         $type = $input['type'] ?? '';
         $id = (int)($input['id'] ?? 0);
@@ -390,6 +424,87 @@ class AdminController extends BaseController
         }
     }
     
+    public function modifyReason(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        
+        // Check if user has permission to modify punishments (admin or moderator only)
+        $currentUser = $this->getCurrentUser();
+        $userRole = $currentUser['role'] ?? 'admin';
+        if ($userRole === 'viewer') {
+            $this->jsonResponse(['error' => 'Permission denied. Viewers cannot modify punishments.'], 403);
+            return;
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $type = $input['type'] ?? '';
+        $id = (int)($input['id'] ?? 0);
+        $newReason = trim($input['reason'] ?? '');
+        
+        if (!in_array($type, ['ban', 'mute', 'warning', 'kick'])) {
+            $this->jsonResponse(['error' => 'Invalid punishment type'], 400);
+            return;
+        }
+        
+        if (empty($newReason)) {
+            $this->jsonResponse(['error' => 'Reason cannot be empty'], 400);
+            return;
+        }
+        
+        // Convert to table name
+        $tableName = $type . 's';
+        
+        try {
+            // Check if punishment exists
+            $checkSql = "SELECT id, uuid, reason FROM {$this->repository->getTablePrefix()}{$tableName} WHERE id = :id";
+            $stmt = $this->repository->getConnection()->prepare($checkSql);
+            $stmt->execute([':id' => $id]);
+            $punishment = $stmt->fetch();
+            
+            if (!$punishment) {
+                $this->jsonResponse(['error' => 'Punishment not found'], 404);
+                return;
+            }
+            
+            $oldReason = $punishment['reason'];
+            
+            // Update the reason
+            $table = $this->repository->getTablePrefix() . $tableName;
+            $sql = "UPDATE {$table} SET reason = :reason WHERE id = :id";
+            
+            $stmt = $this->repository->getConnection()->prepare($sql);
+            $result = $stmt->execute([
+                ':reason' => $newReason,
+                ':id' => $id
+            ]);
+            
+            if ($result) {
+                // Get player name for logging
+                $playerName = $this->repository->getPlayerName($punishment['uuid'] ?? '');
+                
+                $this->logAdminAction('modify_reason', "Modified reason for {$type} #{$id} for player {$playerName}", [
+                    'punishment_id' => $id,
+                    'punishment_type' => $type,
+                    'player_uuid' => $punishment['uuid'] ?? '',
+                    'player_name' => $playerName,
+                    'old_reason' => $oldReason,
+                    'new_reason' => $newReason
+                ]);
+                
+                $this->jsonResponse(['success' => true, 'message' => 'Reason updated successfully']);
+            } else {
+                $this->jsonResponse(['error' => 'Failed to update reason'], 500);
+            }
+            
+        } catch (Exception $e) {
+            error_log("Modify reason error: " . $e->getMessage());
+            $this->jsonResponse(['error' => 'Database error occurred'], 500);
+        }
+    }
+    
     public function saveSettings(): void
     {
         if (!$this->isAuthenticated()) {
@@ -411,7 +526,42 @@ class AdminController extends BaseController
                 'TIMEZONE' => $_POST['timezone'] ?? 'UTC',
                 'DATE_FORMAT' => $_POST['date_format'] ?? 'Y-m-d H:i:s',
                 'DEFAULT_THEME' => $_POST['default_theme'] ?? 'dark',
-                'SHOW_PLAYER_UUID' => isset($_POST['show_player_uuid']) ? 'true' : 'false'
+                'SHOW_PLAYER_UUID' => isset($_POST['show_player_uuid']) ? 'true' : 'false',
+                
+                // Protest Settings
+                'PROTEST_DISCORD' => $_POST['protest_discord'] ?? $this->config['protest_discord'] ?? '',
+                'PROTEST_EMAIL' => $_POST['protest_email'] ?? $this->config['protest_email'] ?? '',
+                'PROTEST_FORUM' => $_POST['protest_forum'] ?? $this->config['protest_forum'] ?? '',
+                
+                // Google Auth Settings
+                'GOOGLE_AUTH_ENABLED' => isset($_POST['google_auth_enabled']) ? 'true' : 'false',
+                'GOOGLE_CLIENT_ID' => $_POST['google_client_id'] ?? $this->config['google_client_id'] ?? '',
+                'GOOGLE_CLIENT_SECRET' => $_POST['google_client_secret'] ?? $this->config['google_client_secret'] ?? '',
+                'ALLOW_PASSWORD_LOGIN' => isset($_POST['allow_password_login']) ? 'true' : 'false',
+                
+                // Display Options
+                'SHOW_SILENT_PUNISHMENTS' => isset($_POST['show_silent_punishments']) ? 'true' : 'false',
+                'SHOW_SERVER_ORIGIN' => isset($_POST['show_server_origin']) ? 'true' : 'false',
+                'SHOW_SERVER_SCOPE' => isset($_POST['show_server_scope']) ? 'true' : 'false',
+                'SHOW_CONTACT_DISCORD' => isset($_POST['show_contact_discord']) ? 'true' : 'false',
+                'SHOW_CONTACT_EMAIL' => isset($_POST['show_contact_email']) ? 'true' : 'false',
+                'SHOW_CONTACT_FORUM' => isset($_POST['show_contact_forum']) ? 'true' : 'false',
+                'SHOW_MENU_PROTEST' => isset($_POST['show_menu_protest']) ? 'true' : 'false',
+                'SHOW_MENU_STATS' => isset($_POST['show_menu_stats']) ? 'true' : 'false',
+                
+                // SEO Settings
+                'SEO_ENABLE_SCHEMA' => isset($_POST['seo_enable_schema']) ? 'true' : 'false',
+                'SEO_ORGANIZATION_NAME' => $_POST['seo_organization_name'] ?? '',
+                'SEO_ORGANIZATION_LOGO' => $_POST['seo_organization_logo'] ?? '',
+                'SEO_SOCIAL_FACEBOOK' => $_POST['seo_social_facebook'] ?? '',
+                'SEO_SOCIAL_TWITTER' => $_POST['seo_social_twitter'] ?? '',
+                'SEO_SOCIAL_YOUTUBE' => $_POST['seo_social_youtube'] ?? '',
+                'SEO_CONTACT_EMAIL' => $_POST['seo_contact_email'] ?? '',
+                'SEO_CONTACT_PHONE' => $_POST['seo_contact_phone'] ?? '',
+                'SEO_LOCALE' => $_POST['seo_locale'] ?? 'en_US',
+                'SEO_GEO_REGION' => $_POST['seo_geo_region'] ?? '',
+                'SEO_GEO_PLACENAME' => $_POST['seo_geo_placename'] ?? '',
+                'SEO_AI_TRAINING' => isset($_POST['seo_ai_training']) ? 'true' : 'false'
             ];
             
             // Update .env file
@@ -431,6 +581,14 @@ class AdminController extends BaseController
             
             file_put_contents($envFile, $envContent);
             
+            // Force reload .env to apply changes immediately
+            \core\EnvLoader::reload();
+            
+            // Clear opcache to force reload of .env
+            if (function_exists('opcache_reset')) {
+                opcache_reset();
+            }
+            
             // Set cookie for show_uuid preference
             setcookie('show_uuid', $settings['SHOW_PLAYER_UUID'], [
                 'expires' => time() + 86400 * 365,
@@ -444,7 +602,7 @@ class AdminController extends BaseController
                 'updated_settings' => array_keys($settings)
             ]);
             
-            $this->jsonResponse(['success' => true]);
+            $this->jsonResponse(['success' => true, 'message' => 'Settings saved successfully!']);
             
         } catch (Exception $e) {
             error_log("Save settings error: " . $e->getMessage());
@@ -598,6 +756,7 @@ class AdminController extends BaseController
         // Check session timeout
         if (time() - ($_SESSION['admin_login_time'] ?? 0) > self::ADMIN_SESSION_TIMEOUT) {
             unset($_SESSION['admin_authenticated']);
+            unset($_SESSION['admin_user_id']);
             return false;
         }
         
@@ -605,6 +764,49 @@ class AdminController extends BaseController
         $_SESSION['admin_login_time'] = time();
         
         return true;
+    }
+    
+    /**
+     * Get current logged in user
+     */
+    public function getCurrentUser(): ?array
+    {
+        if (!$this->isAuthenticated()) {
+            return null;
+        }
+        
+        // If Google Auth is enabled and user has ID
+        if (isset($_SESSION['admin_user_id'])) {
+            return $this->getAuthManager()->getUserById($_SESSION['admin_user_id']);
+        }
+        
+        // Legacy password auth
+        return [
+            'id' => 'legacy',
+            'name' => $_SESSION['admin_user'] ?? 'Administrator',
+            'email' => '',
+            'role' => 'admin',
+            'permissions' => ['all'],
+            'picture' => ''
+        ];
+    }
+    
+    /**
+     * Check if current user has permission
+     */
+    public function hasPermission(string $permission): bool
+    {
+        $user = $this->getCurrentUser();
+        if (!$user) {
+            return false;
+        }
+        
+        // Legacy admin has all permissions
+        if ($user['id'] === 'legacy') {
+            return true;
+        }
+        
+        return $this->getAuthManager()->hasPermission($user, $permission);
     }
     
     private function checkLoginAttempts(): bool
@@ -641,13 +843,293 @@ class AdminController extends BaseController
     
     private function showLoginForm(): void
     {
+        $authManager = $this->getAuthManager();
+        $allowPasswordLogin = $this->config['allow_password_login'] ?? true;
+        
+        // Show password login if: not using OAuth, or explicitly allowed, and password is set
+        $showPasswordLogin = ((!$authManager->isGoogleAuthEnabled() && !$authManager->isDiscordAuthEnabled()) || $allowPasswordLogin) 
+                             && !empty($this->config['admin_password']);
+        
+        // Check if any users exist (for first user message)
+        $hasUsers = count($authManager->getAllUsers()) > 0;
+        
         $this->render('admin/login', [
             'title' => $this->lang->get('admin.login'),
             'error' => $_SESSION['admin_error'] ?? null,
-            'currentPage' => 'admin'
+            'currentPage' => 'admin',
+            'googleAuthEnabled' => $authManager->isGoogleAuthEnabled(),
+            'googleAuthUrl' => $authManager->isGoogleAuthEnabled() ? $authManager->getGoogleAuthUrl() : '',
+            'discordAuthEnabled' => $authManager->isDiscordAuthEnabled(),
+            'discordAuthUrl' => $authManager->isDiscordAuthEnabled() ? $authManager->getDiscordAuthUrl() : '',
+            'showPasswordLogin' => $showPasswordLogin,
+            'allowPasswordLogin' => $allowPasswordLogin,
+            'hasUsers' => $hasUsers
         ]);
         
         unset($_SESSION['admin_error']);
+    }
+    
+    /**
+     * Google OAuth callback
+     */
+    public function oauthCallback(): void
+    {
+        $authManager = $this->getAuthManager();
+        // Default to google for backward compatibility (when no provider param)
+        $provider = $_GET['provider'] ?? 'google';
+        
+        // Validate provider
+        if (!in_array($provider, ['google', 'discord'])) {
+            $_SESSION['admin_error'] = 'Invalid OAuth provider';
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        // Check if provider is enabled
+        if ($provider === 'google' && !$authManager->isGoogleAuthEnabled()) {
+            $_SESSION['admin_error'] = 'Google authentication is not enabled';
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        if ($provider === 'discord' && !$authManager->isDiscordAuthEnabled()) {
+            $_SESSION['admin_error'] = 'Discord authentication is not enabled';
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        $code = $_GET['code'] ?? '';
+        $error = $_GET['error'] ?? '';
+        
+        if ($error) {
+            $_SESSION['admin_error'] = ucfirst($provider) . ' login was cancelled or failed';
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        if (empty($code)) {
+            $_SESSION['admin_error'] = 'Invalid OAuth response';
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        // Process OAuth callback based on provider
+        if ($provider === 'google') {
+            $oauthUser = $authManager->processGoogleCallback($code);
+            $user = $oauthUser ? $authManager->authenticateGoogle($oauthUser) : null;
+        } else {
+            $oauthUser = $authManager->processDiscordCallback($code);
+            $user = $oauthUser ? $authManager->authenticateDiscord($oauthUser) : null;
+        }
+        
+        if (!$oauthUser) {
+            $_SESSION['admin_error'] = 'Failed to authenticate with ' . ucfirst($provider);
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        if (!$user) {
+            $_SESSION['admin_error'] = 'You are not authorized to access the admin panel. Contact an administrator.';
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        if (!($user['active'] ?? true)) {
+            $_SESSION['admin_error'] = 'Your account has been deactivated';
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        // Set session
+        $_SESSION['admin_authenticated'] = true;
+        $_SESSION['admin_login_time'] = time();
+        $_SESSION['admin_user'] = $user['name'];
+        $_SESSION['admin_user_id'] = $user['id'];
+        
+        $this->logAdminAction($provider . '_login_success', 'Successfully logged in via ' . ucfirst($provider), [
+            'user_id' => $user['id'],
+            'email' => $user['email']
+        ]);
+        
+        $this->redirect(url('admin'));
+    }
+    
+    /**
+     * Get all users (API)
+     */
+    public function getUsers(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        
+        if (!$this->hasPermission('users')) {
+            $this->jsonResponse(['error' => 'Permission denied'], 403);
+            return;
+        }
+        
+        $users = $this->getAuthManager()->getAllUsers();
+        $this->jsonResponse(['success' => true, 'users' => $users]);
+    }
+    
+    /**
+     * Add new user
+     */
+    public function addUser(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        
+        if (!$this->hasPermission('users')) {
+            $this->jsonResponse(['error' => 'Permission denied'], 403);
+            return;
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $email = trim($input['email'] ?? '');
+        $name = trim($input['name'] ?? '');
+        $role = $input['role'] ?? 'viewer';
+        
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->jsonResponse(['error' => 'Valid email is required'], 400);
+            return;
+        }
+        
+        // Check if email already exists
+        if ($this->getAuthManager()->getUserByEmail($email)) {
+            $this->jsonResponse(['error' => 'User with this email already exists'], 400);
+            return;
+        }
+        
+        $roles = \core\AuthManager::getRoles();
+        if (!isset($roles[$role])) {
+            $role = 'viewer';
+        }
+        
+        $user = $this->getAuthManager()->createUser([
+            'email' => $email,
+            'name' => $name ?: $email,
+            'role' => $role,
+            'permissions' => $roles[$role]['permissions']
+        ]);
+        
+        $this->logAdminAction('user_created', "Created user {$email}", [
+            'user_id' => $user['id'],
+            'email' => $email,
+            'role' => $role
+        ]);
+        
+        $this->jsonResponse(['success' => true, 'user' => $user]);
+    }
+    
+    /**
+     * Update user
+     */
+    public function updateUser(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        
+        if (!$this->hasPermission('users')) {
+            $this->jsonResponse(['error' => 'Permission denied'], 403);
+            return;
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $userId = $input['id'] ?? '';
+        $name = trim($input['name'] ?? '');
+        $role = $input['role'] ?? '';
+        $active = $input['active'] ?? true;
+        
+        if (empty($userId)) {
+            $this->jsonResponse(['error' => 'User ID is required'], 400);
+            return;
+        }
+        
+        $user = $this->getAuthManager()->getUserById($userId);
+        if (!$user) {
+            $this->jsonResponse(['error' => 'User not found'], 404);
+            return;
+        }
+        
+        // Cannot demote the last admin
+        $roles = \core\AuthManager::getRoles();
+        if ($user['role'] === 'admin' && $role !== 'admin' && $this->getAuthManager()->countAdmins() <= 1) {
+            $this->jsonResponse(['error' => 'Cannot demote the last administrator'], 400);
+            return;
+        }
+        
+        $updates = [];
+        if (!empty($name)) {
+            $updates['name'] = $name;
+        }
+        if (!empty($role) && isset($roles[$role])) {
+            $updates['role'] = $role;
+            $updates['permissions'] = $roles[$role]['permissions'];
+        }
+        $updates['active'] = (bool)$active;
+        
+        $this->getAuthManager()->updateUser($userId, $updates);
+        
+        $this->logAdminAction('user_updated', "Updated user {$user['email']}", [
+            'user_id' => $userId,
+            'updates' => array_keys($updates)
+        ]);
+        
+        $this->jsonResponse(['success' => true]);
+    }
+    
+    /**
+     * Delete user
+     */
+    public function deleteUser(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        
+        if (!$this->hasPermission('users')) {
+            $this->jsonResponse(['error' => 'Permission denied'], 403);
+            return;
+        }
+        
+        $input = json_decode(file_get_contents('php://input'), true);
+        $userId = $input['id'] ?? '';
+        
+        if (empty($userId)) {
+            $this->jsonResponse(['error' => 'User ID is required'], 400);
+            return;
+        }
+        
+        // Cannot delete yourself
+        if ($userId === ($_SESSION['admin_user_id'] ?? '')) {
+            $this->jsonResponse(['error' => 'Cannot delete your own account'], 400);
+            return;
+        }
+        
+        $user = $this->getAuthManager()->getUserById($userId);
+        if (!$user) {
+            $this->jsonResponse(['error' => 'User not found'], 404);
+            return;
+        }
+        
+        if (!$this->getAuthManager()->deleteUser($userId)) {
+            $this->jsonResponse(['error' => 'Cannot delete the last administrator'], 400);
+            return;
+        }
+        
+        $this->logAdminAction('user_deleted', "Deleted user {$user['email']}", [
+            'user_id' => $userId,
+            'email' => $user['email']
+        ]);
+        
+        $this->jsonResponse(['success' => true]);
     }
     
     private function gatherExportData(string $type, string $filter = 'all'): array

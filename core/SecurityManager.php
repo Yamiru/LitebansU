@@ -6,12 +6,11 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       3.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
@@ -129,13 +128,13 @@ class SecurityManager
     public static function preventXss(string $text): string
     {
         // Remove Minecraft color codes
-        $text = preg_replace('/[ง&][0-9a-fk-or]/i', '', $text);
+        $text = preg_replace('/[ยง&][0-9a-fk-or]/i', '', $text);
         
-        // Remove hex color codes
+        // Remove hex color codes  
         $text = preg_replace('/#[0-9a-f]{6}/i', '', $text);
         
-        // Escape HTML
-        $text = htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        // Escape HTML but preserve UTF-8 characters properly
+        $text = htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8', false);
         
         // Convert newlines to breaks
         $text = nl2br($text);

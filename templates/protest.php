@@ -59,6 +59,7 @@
                 
                 <div class="row g-4 mt-3">
                     <!-- Discord -->
+                    <?php if (($config['show_contact_discord'] ?? true)): ?>
                     <div class="col-md-4">
                         <div class="contact-method-card h-100">
                             <div class="contact-icon bg-discord">
@@ -75,8 +76,10 @@
                             <?php endif; ?>
                         </div>
                     </div>
+                    <?php endif; ?>
                     
                     <!-- Email -->
+                    <?php if (($config['show_contact_email'] ?? true)): ?>
                     <div class="col-md-4">
                         <div class="contact-method-card h-100">
                             <div class="contact-icon bg-email">
@@ -89,8 +92,10 @@
                             </div>
                         </div>
                     </div>
+                    <?php endif; ?>
                     
                     <!-- Forum -->
+                    <?php if (($config['show_contact_forum'] ?? true)): ?>
                     <div class="col-md-4">
                         <div class="contact-method-card h-100">
                             <div class="contact-icon bg-forum">
@@ -107,6 +112,7 @@
                             <?php endif; ?>
                         </div>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
 

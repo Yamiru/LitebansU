@@ -5,12 +5,11 @@
  *
  * Plugin Name: LiteBansU
  * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version: 2.6
+ * Version: 3.0
  * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI: https://yamiru.com
  * License: MIT
  * License URI: https://opensource.org/licenses/MIT
- * Repository https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 class LiteBansUI {
@@ -604,13 +603,23 @@ class LiteBansUI {
         // Initialize all Bootstrap tooltips
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
+            // Check if element has valid title attribute
+            const title = tooltipTriggerEl.getAttribute('title') || tooltipTriggerEl.getAttribute('data-bs-title');
+            if (title && title !== 'null' && title.trim() !== '') {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            }
+            return null;
         });
 
         // Initialize all Bootstrap popovers
         const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
         popoverTriggerList.map(function (popoverTriggerEl) {
-            return new bootstrap.Popover(popoverTriggerEl);
+            // Check if element has valid content
+            const content = popoverTriggerEl.getAttribute('data-bs-content');
+            if (content && content !== 'null' && content.trim() !== '') {
+                return new bootstrap.Popover(popoverTriggerEl);
+            }
+            return null;
         });
     }
 

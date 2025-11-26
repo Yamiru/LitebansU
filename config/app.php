@@ -6,12 +6,11 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.3
+ *  Version:       3.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
@@ -46,6 +45,18 @@ return [
     'default_theme' => EnvLoader::get('DEFAULT_THEME', 'dark'),
     'default_language' => EnvLoader::get('DEFAULT_LANGUAGE', 'en'),
     
+    // Google OAuth Configuration
+    'google_auth_enabled' => EnvLoader::get('GOOGLE_AUTH_ENABLED', 'false') === 'true',
+    'google_client_id' => EnvLoader::get('GOOGLE_CLIENT_ID', ''),
+    'google_client_secret' => EnvLoader::get('GOOGLE_CLIENT_SECRET', ''),
+    
+    // Discord OAuth Configuration
+    'discord_auth_enabled' => EnvLoader::get('DISCORD_AUTH_ENABLED', 'false') === 'true',
+    'discord_client_id' => EnvLoader::get('DISCORD_CLIENT_ID', ''),
+    'discord_client_secret' => EnvLoader::get('DISCORD_CLIENT_SECRET', ''),
+    
+    'allow_password_login' => EnvLoader::get('ALLOW_PASSWORD_LOGIN', 'true') === 'true',
+    
     // Protest Configuration
     'protest_discord' => EnvLoader::get('PROTEST_DISCORD', '#'),
     'protest_email' => EnvLoader::get('PROTEST_EMAIL', 'admin@example.com'),
@@ -72,4 +83,42 @@ return [
     'session_lifetime' => (int)EnvLoader::get('SESSION_LIFETIME', 3600),
     'rate_limit_requests' => (int)EnvLoader::get('RATE_LIMIT_REQUESTS', 60),
     'rate_limit_window' => (int)EnvLoader::get('RATE_LIMIT_WINDOW', 3600),
+    
+    // Display Options (v2.7)
+    'show_silent_punishments' => EnvLoader::get('SHOW_SILENT_PUNISHMENTS', 'true') === 'true',
+    'show_server_origin' => EnvLoader::get('SHOW_SERVER_ORIGIN', 'true') === 'true',
+    'show_server_scope' => EnvLoader::get('SHOW_SERVER_SCOPE', 'true') === 'true',
+    'show_contact_discord' => EnvLoader::get('SHOW_CONTACT_DISCORD', 'true') === 'true',
+    'show_contact_email' => EnvLoader::get('SHOW_CONTACT_EMAIL', 'true') === 'true',
+    'show_contact_forum' => EnvLoader::get('SHOW_CONTACT_FORUM', 'true') === 'true',
+    
+    // Menu Display Options (v2.7)
+    'show_menu_protest' => EnvLoader::get('SHOW_MENU_PROTEST', 'true') === 'true',
+    'show_menu_stats' => EnvLoader::get('SHOW_MENU_STATS', 'true') === 'true',
+    'show_menu_admin' => EnvLoader::get('SHOW_MENU_ADMIN', 'true') === 'true',
+    
+    // SEO Advanced Configuration (v2.7)
+    'seo_enable_schema' => EnvLoader::get('SEO_ENABLE_SCHEMA', 'true') === 'true',
+    'seo_organization_name' => EnvLoader::get('SEO_ORGANIZATION_NAME'),
+    'seo_organization_logo' => EnvLoader::get('SEO_ORGANIZATION_LOGO'),
+    'seo_social_facebook' => EnvLoader::get('SEO_SOCIAL_FACEBOOK'),
+    'seo_social_twitter' => EnvLoader::get('SEO_SOCIAL_TWITTER'),
+    'seo_social_youtube' => EnvLoader::get('SEO_SOCIAL_YOUTUBE'),
+    'seo_enable_breadcrumbs' => EnvLoader::get('SEO_ENABLE_BREADCRUMBS', 'true') === 'true',
+    'seo_enable_sitemap' => EnvLoader::get('SEO_ENABLE_SITEMAP', 'true') === 'true',
+    'seo_contact_type' => EnvLoader::get('SEO_CONTACT_TYPE', 'CustomerService'),
+    'seo_contact_phone' => EnvLoader::get('SEO_CONTACT_PHONE'),
+    'seo_contact_email' => EnvLoader::get('SEO_CONTACT_EMAIL'),
+    'seo_price_currency' => EnvLoader::get('SEO_PRICE_CURRENCY', 'EUR'),
+    'seo_locale' => EnvLoader::get('SEO_LOCALE', 'en_US'),
+    'seo_ai_training' => EnvLoader::get('SEO_AI_TRAINING', 'true') === 'true',
+    'seo_geo_region' => EnvLoader::get('SEO_GEO_REGION'),
+    'seo_geo_placename' => EnvLoader::get('SEO_GEO_PLACENAME'),
+    'seo_geo_position' => EnvLoader::get('SEO_GEO_POSITION'),
+    'seo_facebook_app_id' => EnvLoader::get('SEO_FACEBOOK_APP_ID'),
+    'seo_twitter_creator' => EnvLoader::get('SEO_TWITTER_CREATOR'),
+    
+    // Cache Configuration (v2.7)
+    'cache_enabled' => EnvLoader::get('CACHE_ENABLED', 'true') === 'true',
+    'cache_lifetime' => (int)EnvLoader::get('CACHE_LIFETIME', 3600),
 ];

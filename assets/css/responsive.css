@@ -5,7 +5,7 @@
  *
  * Plugin Name:   LiteBansU
  * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       2.3
+ * Version:       3.0
  * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI:    https://yamiru.com
  * License:       MIT
@@ -13,6 +13,53 @@
  * Repository:    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
+
+/* ==========================================
+   Cross-browser & Mobile Optimizations
+   ========================================== */
+
+/* Prevent text size adjustment on orientation change */
+* {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+/* Opera and Mobile fixes */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    /* Fix for iOS Safari viewport height with bottom bar */
+    body {
+        min-height: -webkit-fill-available;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase touch target sizes on touch devices */
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .btn:hover,
+    .card:hover {
+        transform: none;
+    }
+}
+
 /* Tablet - Medium devices */
 @media (max-width: 991px) {
     /* Container adjustments */
@@ -556,6 +603,37 @@
     .punishments-page .table td {
         padding: var(--space-xs);
         word-break: break-word;
+    }
+    
+    /* Fix for long reasons on mobile - better wrapping and display */
+    .mobile-punishment-card .reason-cell,
+    .punishments-page .mobile-punishment-card [title] {
+        white-space: normal !important;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+        display: block;
+        line-height: 1.4;
+    }
+    
+    /* Reason display in mobile cards */
+    .mobile-punishment-card .mt-1 {
+        white-space: normal !important;
+        text-overflow: clip !important;
+        overflow: visible !important;
+        max-width: 100% !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.4;
+        cursor: help;
+    }
+    
+    .mobile-punishment-card .mt-1:hover {
+        -webkit-line-clamp: unset;
+        overflow: visible;
     }
     
     /* Improved spacing for details */

@@ -1,0 +1,16 @@
+# Deny all access to data directory
+Require all denied
+
+# Additional protection
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Block all file types
+<FilesMatch ".*">
+    Require all denied
+</FilesMatch>

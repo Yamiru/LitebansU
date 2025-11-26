@@ -6,12 +6,11 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       3.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
@@ -164,11 +163,7 @@ function showErrorPage(int $code, string $title, string $message): string {
                         <a href="{$homeUrl}" class="btn btn-danger btn-lg"><i class="fas fa-home"></i> Go Home</a>
                     </div>
                 </div>
-            </div><div style="text-align: center;">
-    <a href="https://github.com/Yamiru/LitebansU" target="_blank" rel="noopener noreferrer">
-        <i class="fab fa-github"></i> Github project
-    </a>
-</div>
+            </div>
         </div>
     </div>
 
@@ -284,7 +279,13 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
             '/admin/phpinfo'            => $admin->phpinfo(),
             '/admin/search-punishments' => $admin->searchPunishments(),
             '/admin/remove-punishment'  => $admin->removePunishment(),
+            '/admin/modify-reason'      => $admin->modifyReason(),
             '/admin/save-settings'      => $admin->saveSettings(),
+            '/admin/oauth-callback'     => $admin->oauthCallback(),
+            '/admin/users'              => $admin->getUsers(),
+            '/admin/users/add'          => $admin->addUser(),
+            '/admin/users/update'       => $admin->updateUser(),
+            '/admin/users/delete'       => $admin->deleteUser(),
             default                     => print showErrorPage(404, 'Admin Page Not Found', 'The requested admin page does not exist.')
         };
     } else {

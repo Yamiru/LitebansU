@@ -111,6 +111,36 @@
                             </div>
                         </div>
                         
+                        <?php if (($config['show_server_origin'] ?? true) && !empty($punishment['server_origin']) && $punishment['server_origin'] !== '*'): ?>
+                        <!-- Server Origin -->
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-sign-in-alt"></i> Server Origin
+                            </label>
+                            <div class="detail-value">
+                                <span class="badge bg-info">
+                                    <?= htmlspecialchars($punishment['server_origin'], ENT_QUOTES, 'UTF-8') ?>
+                                </span>
+                                <small class="text-muted d-block mt-1">Where the punishment was issued</small>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        
+                        <?php if (($config['show_server_scope'] ?? true) && !empty($punishment['server_scope']) && $punishment['server_scope'] !== '*'): ?>
+                        <!-- Server Scope -->
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-globe"></i> Server Scope
+                            </label>
+                            <div class="detail-value">
+                                <span class="badge bg-primary">
+                                    <?= htmlspecialchars($punishment['server_scope'], ENT_QUOTES, 'UTF-8') ?>
+                                </span>
+                                <small class="text-muted d-block mt-1">Servers where this punishment applies</small>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        
                         <?php if (in_array($type, ['ban', 'mute']) && ($punishment['duration'] || $punishment['until'])): ?>
                             <!-- Duration -->
                             <div class="detail-item">

@@ -6,12 +6,11 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       3.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
- *  Repository:    https://github.com/Yamiru/LitebansU/
  *
  *  This tool generates a secure BCRYPT password hash for use in your .env file.
  *  ?? WARNING: Remove this file after generating your hash to prevent misuse.
@@ -23,7 +22,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Password Hash Generator – LiteBansU</title>
+    <title>Password Hash Generator - LiteBansU</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
@@ -157,7 +156,7 @@
         ?>
 
         <div class="footer">
-            &copy; <?= date("Y") ?> LiteBansU – built by <a href="https://yamiru.com" target="_blank">Yamiru</a>
+            &copy; <?= date("Y") ?> LiteBansU - built by <a href="https://yamiru.com" target="_blank">Yamiru</a>
         </div>
     </div>
 

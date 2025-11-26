@@ -5,17 +5,24 @@
  *
  * Plugin Name:   LiteBansU
  * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       2.0
+ * Version:       3.0
  * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI:    https://yamiru.com
  * License:       MIT
  * License URI:   https://opensource.org/licenses/MIT
  * Repository:    https://github.com/Yamiru/LitebansU/
  * ============================================================================
- */*,
+ */
+
+/* ==========================================
+   Cross-Browser Reset & Compatibility
+   ========================================== */
+*,
 *::before,
 *::after {
     box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
 }
 
 * {
@@ -23,14 +30,29 @@
     padding: 0;
 }
 
+/* ==========================================
+   Root HTML Optimizations
+   ========================================== */
 html {
     font-size: 16px;
+    /* iOS Safari fixes */
     -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Disable tap highlight on mobile */
     -webkit-tap-highlight-color: transparent;
+    /* Smooth scrolling */
     scroll-behavior: smooth;
+    /* Height */
     height: 100%;
+    /* iOS Safari momentum scrolling */
+    -webkit-overflow-scrolling: touch;
 }
 
+/* ==========================================
+   Body Optimizations
+   ========================================== */
 body {
     font-family: var(--font-sans);
     font-size: 1rem;
@@ -38,15 +60,30 @@ body {
     line-height: 1.6;
     color: var(--text-primary);
     background-color: var(--bg-primary);
+    
+    /* Font rendering optimizations */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    font-feature-settings: "kern" 1;
+    
+    /* Layout */
     min-height: 100vh;
+    min-height: -webkit-fill-available; /* iOS Safari */
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
+    
+    /* Transitions */
     transition: background-color var(--transition-base), color var(--transition-base);
+    
+    /* Prevent horizontal overflow */
+    overflow-x: hidden;
+    
+    /* iOS specific */
+    -webkit-user-select: text;
+    -webkit-touch-callout: default;
 }
 
 /* Main content should grow */
@@ -88,15 +125,35 @@ p {
     line-height: 1.7;
 }
 
+/* ==========================================
+   Links - Cross-browser optimizations
+   ========================================== */
 a {
     color: var(--link-color);
     text-decoration: none;
     transition: color var(--transition-fast);
+    /* Better touch targets */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    /* Prevent text decoration on touch */
+    -webkit-touch-callout: none;
 }
 
-a:hover {
+a:hover,
+a:focus {
     color: var(--link-hover);
     text-decoration: none;
+    outline: none;
+}
+
+a:active {
+    color: var(--link-hover);
+}
+
+/* Focus visible for keyboard navigation */
+a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 2px;
 }
 
 /* Code & Monospace */
@@ -106,6 +163,8 @@ pre,
 samp {
     font-family: var(--font-mono);
     font-size: 0.875em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 code {
@@ -127,14 +186,33 @@ li {
     margin-bottom: var(--space-xs);
 }
 
-/* Images */
+/* ==========================================
+   Images - Cross-platform optimizations
+   ========================================== */
 img {
     max-width: 100%;
     height: auto;
     display: block;
+    /* Prevent image dragging on mobile */
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    /* Better image rendering */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
-/* Selection */
+/* Avatar images */
+.avatar,
+img[class*="avatar"] {
+    image-rendering: auto;
+}
+
+/* ==========================================
+   Selection styles
+   ========================================== */
 ::selection {
     background: var(--primary);
     color: white;
@@ -161,6 +239,7 @@ img {
 .disabled {
     cursor: not-allowed !important;
     opacity: 0.6 !important;
+    pointer-events: none;
 }
 
 /* Hidden elements */
@@ -179,4 +258,92 @@ img {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+/* ==========================================
+   iOS Safari Specific Fixes
+   ========================================== */
+@supports (-webkit-touch-callout: none) {
+    /* iOS Safari specific */
+    body {
+        min-height: -webkit-fill-available;
+    }
+    
+    /* Fix for iOS Safari bottom bar */
+    .main-content {
+        min-height: calc(100vh - 200px);
+        min-height: calc(-webkit-fill-available - 200px);
+    }
+}
+
+/* ==========================================
+   Input & Button Normalization
+   ========================================== */
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin: 0;
+    /* iOS Safari fixes */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 0;
+}
+
+/* Remove inner border in Firefox */
+button::-moz-focus-inner,
+[type="button"]::-moz-focus-inner,
+[type="reset"]::-moz-focus-inner,
+[type="submit"]::-moz-focus-inner {
+    border-style: none;
+    padding: 0;
+}
+
+/* Restore focus styles in Firefox */
+button:-moz-focusring,
+[type="button"]:-moz-focusring,
+[type="reset"]:-moz-focusring,
+[type="submit"]:-moz-focusring {
+    outline: 1px dotted ButtonText;
+}
+
+/* iOS date/time input fixes */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* ==========================================
+   Scrollbar Styling (Webkit/Blink)
+   ========================================== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-secondary);
 }

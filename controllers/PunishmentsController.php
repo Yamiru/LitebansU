@@ -6,12 +6,11 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.3
+ *  Version:       3.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
@@ -58,7 +57,8 @@ class PunishmentsController extends BaseController
     public function bans(): void
     {
         $sortParams = $this->getSortParams();
-        $punishments = $this->repository->getBans($this->getLimit(), $this->getOffset(), false, $sortParams['sort'], $sortParams['order']);
+        $showSilent = ($this->config['show_silent_punishments'] ?? true) === true || ($this->config['show_silent_punishments'] ?? 'true') === 'true';
+        $punishments = $this->repository->getBans($this->getLimit(), $this->getOffset(), false, $sortParams['sort'], $sortParams['order'], $showSilent);
         
         $this->render('punishments', [
             'title' => $this->lang->get('nav.bans'),
@@ -73,7 +73,8 @@ class PunishmentsController extends BaseController
     public function mutes(): void
     {
         $sortParams = $this->getSortParams();
-        $punishments = $this->repository->getMutes($this->getLimit(), $this->getOffset(), false, $sortParams['sort'], $sortParams['order']);
+        $showSilent = ($this->config['show_silent_punishments'] ?? true) === true || ($this->config['show_silent_punishments'] ?? 'true') === 'true';
+        $punishments = $this->repository->getMutes($this->getLimit(), $this->getOffset(), false, $sortParams['sort'], $sortParams['order'], $showSilent);
         
         $this->render('punishments', [
             'title' => $this->lang->get('nav.mutes'),
@@ -135,7 +136,9 @@ class PunishmentsController extends BaseController
                 'active' => (bool)($punishment['active'] ?? false),
                 'removed_by' => isset($punishment['removed_by_name']) ? SecurityManager::preventXss($punishment['removed_by_name']) : null,
                 'avatar' => $this->getAvatarUrl($punishment['uuid'] ?? '', $playerName ?? 'Unknown'),
-                'server' => $punishment['server'] ?? 'Global'
+                'server' => $punishment['server_origin'] ?? $punishment['server_scope'] ?? 'Global',
+                'server_origin' => $punishment['server_origin'] ?? null,
+                'server_scope' => $punishment['server_scope'] ?? null
             ];
         }, $punishments);
     }

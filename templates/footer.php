@@ -19,9 +19,9 @@
             <div class="col-md-6 text-md-end">
                 <p class="mb-0">
                     Powered by 
-                    <strong>
-                        <a href="https://github.com/Yamiru/LitebansU" target="_blank" rel="noopener noreferrer" class="text-decoration-none"><strong>LitebansU</strong></a>
-                    </strong> 
+                    <a href="https://github.com/Yamiru/LitebansU" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+                        <strong>LitebansU</strong>
+                    </a> 
                     <span class="text-muted">-</span> 
                     A project by <a href="https://yamiru.com" target="_blank" rel="noopener noreferrer" class="text-decoration-none">Yamiru</a>
                 </p>

@@ -43,7 +43,7 @@
             </thead>
             <tbody>
                 <?php foreach ($punishments as $punishment): ?>
-                    <tr onclick="window.location.href='<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>'" style="cursor: pointer;">
+                    <tr>
                         <td>
                             <div class="player-info">
                                 <img src="<?= $punishment['avatar'] ?>" 
@@ -69,6 +69,16 @@
                             <span class="badge bg-secondary">
                                 <?= htmlspecialchars($punishment['server'] ?? 'Global', ENT_QUOTES, 'UTF-8') ?>
                             </span>
+                            <?php if (($config['show_server_origin'] ?? true) && !empty($punishment['server_origin']) && $punishment['server_origin'] !== '*' && $punishment['server_origin'] !== $punishment['server']): ?>
+                            <small class="d-block text-muted">
+                                <i class="fas fa-sign-in-alt"></i> <?= htmlspecialchars($punishment['server_origin'], ENT_QUOTES, 'UTF-8') ?>
+                            </small>
+                            <?php endif; ?>
+                            <?php if (($config['show_server_scope'] ?? true) && !empty($punishment['server_scope']) && $punishment['server_scope'] !== '*' && $punishment['server_scope'] !== $punishment['server']): ?>
+                            <small class="d-block text-muted">
+                                <i class="fas fa-globe"></i> <?= htmlspecialchars($punishment['server_scope'], ENT_QUOTES, 'UTF-8') ?>
+                            </small>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <span class="reason-cell" 
@@ -122,10 +132,12 @@
                                 <?php endif; ?>
                             <?php endif; ?>
                         </td>
-                        <td onclick="event.stopPropagation();">
+                        <td>
                             <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>" 
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye"></i> <?= $lang->get('table.view') ?>
+                               class="btn btn-sm btn-outline-primary"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                <i class="fas fa-external-link-alt"></i> <?= $lang->get('table.view') ?>
                             </a>
                         </td>
                     </tr>
@@ -174,6 +186,16 @@
                             <span class="badge bg-secondary">
                                 <i class="fas fa-server"></i> <?= htmlspecialchars($punishment['server'] ?? 'Global', ENT_QUOTES, 'UTF-8') ?>
                             </span>
+                            <?php if (($config['show_server_origin'] ?? true) && !empty($punishment['server_origin']) && $punishment['server_origin'] !== '*' && $punishment['server_origin'] !== $punishment['server']): ?>
+                            <small class="text-muted ms-2">
+                                <i class="fas fa-sign-in-alt"></i> <?= htmlspecialchars($punishment['server_origin'], ENT_QUOTES, 'UTF-8') ?>
+                            </small>
+                            <?php endif; ?>
+                            <?php if (($config['show_server_scope'] ?? true) && !empty($punishment['server_scope']) && $punishment['server_scope'] !== '*' && $punishment['server_scope'] !== $punishment['server']): ?>
+                            <small class="text-muted ms-2">
+                                <i class="fas fa-globe"></i> <?= htmlspecialchars($punishment['server_scope'], ENT_QUOTES, 'UTF-8') ?>
+                            </small>
+                            <?php endif; ?>
                         </div>
                         
                         <!-- Reason -->
@@ -221,10 +243,12 @@
                         </div>
                         
                         <!-- Action Button -->
-                        <div class="text-end mt-3" onclick="event.stopPropagation();">
+                        <div class="text-end mt-3">
                             <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>" 
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye"></i> <?= $lang->get('table.view') ?>
+                               class="btn btn-sm btn-outline-primary"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                <i class="fas fa-external-link-alt"></i> <?= $lang->get('table.view') ?>
                             </a>
                         </div>
                     </div>

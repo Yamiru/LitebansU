@@ -1,11 +1,11 @@
 <div class="stats-page">
-    <!-- Header - OPRAVENÉ -->
+    <!-- Header - OPRAVENÃ‰ -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>
             <i class="fas fa-chart-bar text-primary"></i>
             <?= htmlspecialchars($lang->get('nav.statistics'), ENT_QUOTES, 'UTF-8') ?>
         </h1>
-        <!-- ZMENENÉ ID z "stats-clear-cache-btn" na "clear-cache-btn" -->
+        <!-- ZMENENÃ‰ ID z "stats-clear-cache-btn" na "clear-cache-btn" -->
         <button id="clear-cache-btn" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-sync-alt"></i>
             <span class="d-none d-sm-inline">Clear Cache</span>
@@ -308,7 +308,7 @@
         </div>
     </div>
     <?php endif; ?>
-    <!-- Clear Cache Modal - NOVÝ -->
+    <!-- Clear Cache Modal - NOVÃ -->
     <div class="modal fade" id="cacheModal" tabindex="-1" aria-labelledby="cacheModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

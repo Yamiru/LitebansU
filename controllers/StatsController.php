@@ -6,12 +6,11 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       2.0
+ *  Version:       3.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
- *  Repository    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
@@ -42,37 +41,61 @@ class StatsController extends BaseController
     
     public function clearCache(): void
     {
+        // Check if request is from admin or authorized user
+        $isAdmin = false;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
+            $isAdmin = true;
+        }
+        
         // Verify CSRF token
-        if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
-            $this->jsonResponse(['error' => 'Invalid CSRF token'], 400);
+        if (!isset($_POST['csrf_token'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Missing CSRF token'], 400);
             return;
         }
         
-        // Rate limiting for cache clear requests
-        $clientIp = SecurityManager::getClientIp();
-        if (!SecurityManager::rateLimitCheck('cache_clear_' . $clientIp, 5, 300)) {
-            $this->jsonResponse(['error' => 'Too many cache clear requests. Please wait.'], 429);
+        if (!SecurityManager::validateCsrfToken($_POST['csrf_token'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid CSRF token'], 400);
             return;
+        }
+        
+        // Rate limiting only for non-admin users
+        if (!$isAdmin) {
+            $clientIp = SecurityManager::getClientIp();
+            if (!SecurityManager::rateLimitCheck('cache_clear_' . $clientIp, 5, 300)) {
+                $this->jsonResponse(['success' => false, 'message' => 'Too many cache clear requests. Please wait.'], 429);
+                return;
+            }
         }
         
         try {
-            $cleared = $this->clearStatsCache();
+            $clearAll = isset($_POST['clear_all']) && $_POST['clear_all'] === '1';
+            
+            if ($clearAll) {
+                // Clear all cache including opcache
+                $cleared = $this->clearAllCache();
+            } else {
+                // Clear only stats cache
+                $cleared = $this->clearStatsCache();
+            }
             
             if ($cleared) {
                 $this->jsonResponse([
                     'success' => true,
-                    'message' => 'Statistics cache cleared successfully'
+                    'message' => $clearAll ? 'All cache cleared successfully' : 'Statistics cache cleared successfully'
                 ]);
             } else {
                 $this->jsonResponse([
                     'success' => false,
-                    'message' => 'Failed to clear cache'
-                ], 500);
+                    'message' => 'No cache files were found or cleared'
+                ], 200); // Return 200 but with success: false
             }
             
         } catch (Exception $e) {
             error_log("Cache clear error: " . $e->getMessage());
-            $this->jsonResponse(['error' => 'Cache clear failed'], 500);
+            $this->jsonResponse(['success' => false, 'message' => 'Cache clear failed: ' . $e->getMessage()], 500);
         }
     }
     
@@ -355,9 +378,44 @@ class StatsController extends BaseController
                 apcu_clear_cache();
             }
             
-            return $cleared > 0;
+            return $cleared > 0 || true; // Return true even if no files (cache might be empty)
         } catch (Exception $e) {
             error_log("Error clearing cache: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    private function clearAllCache(): bool
+    {
+        try {
+            // Clear stats cache
+            $statsCleared = $this->clearStatsCache();
+            
+            // Clear OPcache if available
+            if (function_exists('opcache_reset')) {
+                opcache_reset();
+            }
+            
+            // Clear APCu completely if available
+            if (function_exists('apcu_enabled') && apcu_enabled()) {
+                apcu_clear_cache();
+            }
+            
+            // Clear session cache files
+            $sessionPattern = sys_get_temp_dir() . '/sess_*';
+            $sessionFiles = glob($sessionPattern);
+            if ($sessionFiles) {
+                foreach ($sessionFiles as $file) {
+                    // Only delete old sessions (older than 1 hour)
+                    if (filemtime($file) < (time() - 3600)) {
+                        @unlink($file);
+                    }
+                }
+            }
+            
+            return true;
+        } catch (Exception $e) {
+            error_log("Error clearing all cache: " . $e->getMessage());
             return false;
         }
     }
