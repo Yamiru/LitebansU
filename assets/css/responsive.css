@@ -5,7 +5,7 @@
  *
  * Plugin Name:   LiteBansU
  * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       3.0
+ * Version:       3.1
  * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI:    https://yamiru.com
  * License:       MIT
@@ -617,23 +617,16 @@ body {
         line-height: 1.4;
     }
     
-    /* Reason display in mobile cards */
+    /* Reason display in mobile cards - Allow full text display */
     .mobile-punishment-card .mt-1 {
         white-space: normal !important;
         text-overflow: clip !important;
         overflow: visible !important;
         max-width: 100% !important;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        display: block;
         line-height: 1.4;
-        cursor: help;
-    }
-    
-    .mobile-punishment-card .mt-1:hover {
-        -webkit-line-clamp: unset;
-        overflow: visible;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
     
     /* Improved spacing for details */
