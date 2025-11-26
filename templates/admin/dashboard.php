@@ -1,7 +1,7 @@
 <?php
 /**
  * ============================================================================
- *  LiteBansU - Secure Password Hash Generator
+ *  LiteBansU - Administration
  * ============================================================================
  *
  *  Plugin Name:   LiteBansU
@@ -12,8 +12,6 @@
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
  *
- *  This tool generates a secure BCRYPT password hash for use in your .env file.
- *  ?? WARNING: Remove this file after generating your hash to prevent misuse.
  * ============================================================================
  */
 
