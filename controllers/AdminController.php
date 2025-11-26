@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.1
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -20,7 +20,7 @@ require_once __DIR__ . '/../core/AuthManager.php';
 
 class AdminController extends BaseController
 {
-    private const ADMIN_SESSION_TIMEOUT = 3600; // 1 hour
+    private const ADMIN_SESSION_TIMEOUT = 7200; // 2 hours (increased from 1 hour)
     private const MAX_LOGIN_ATTEMPTS = 5;
     private const LOGIN_LOCKOUT_TIME = 900; // 15 minutes
     
@@ -519,52 +519,141 @@ class AdminController extends BaseController
         }
         
         try {
-            $settings = [
-                'SITE_NAME' => $_POST['site_name'] ?? $this->config['site_name'],
-                'FOOTER_SITE_NAME' => $_POST['footer_site_name'] ?? $this->config['footer_site_name'],
-                'ITEMS_PER_PAGE' => (int)($_POST['items_per_page'] ?? 20),
-                'TIMEZONE' => $_POST['timezone'] ?? 'UTC',
-                'DATE_FORMAT' => $_POST['date_format'] ?? 'Y-m-d H:i:s',
-                'DEFAULT_THEME' => $_POST['default_theme'] ?? 'dark',
-                'SHOW_PLAYER_UUID' => isset($_POST['show_player_uuid']) ? 'true' : 'false',
-                
-                // Protest Settings
-                'PROTEST_DISCORD' => $_POST['protest_discord'] ?? $this->config['protest_discord'] ?? '',
-                'PROTEST_EMAIL' => $_POST['protest_email'] ?? $this->config['protest_email'] ?? '',
-                'PROTEST_FORUM' => $_POST['protest_forum'] ?? $this->config['protest_forum'] ?? '',
-                
-                // Google Auth Settings
-                'GOOGLE_AUTH_ENABLED' => isset($_POST['google_auth_enabled']) ? 'true' : 'false',
-                'GOOGLE_CLIENT_ID' => $_POST['google_client_id'] ?? $this->config['google_client_id'] ?? '',
-                'GOOGLE_CLIENT_SECRET' => $_POST['google_client_secret'] ?? $this->config['google_client_secret'] ?? '',
-                'ALLOW_PASSWORD_LOGIN' => isset($_POST['allow_password_login']) ? 'true' : 'false',
-                
-                // Display Options
-                'SHOW_SILENT_PUNISHMENTS' => isset($_POST['show_silent_punishments']) ? 'true' : 'false',
-                'SHOW_SERVER_ORIGIN' => isset($_POST['show_server_origin']) ? 'true' : 'false',
-                'SHOW_SERVER_SCOPE' => isset($_POST['show_server_scope']) ? 'true' : 'false',
-                'SHOW_CONTACT_DISCORD' => isset($_POST['show_contact_discord']) ? 'true' : 'false',
-                'SHOW_CONTACT_EMAIL' => isset($_POST['show_contact_email']) ? 'true' : 'false',
-                'SHOW_CONTACT_FORUM' => isset($_POST['show_contact_forum']) ? 'true' : 'false',
-                'SHOW_MENU_PROTEST' => isset($_POST['show_menu_protest']) ? 'true' : 'false',
-                'SHOW_MENU_STATS' => isset($_POST['show_menu_stats']) ? 'true' : 'false',
-                
-                // SEO Settings
-                'SEO_ENABLE_SCHEMA' => isset($_POST['seo_enable_schema']) ? 'true' : 'false',
-                'SEO_ORGANIZATION_NAME' => $_POST['seo_organization_name'] ?? '',
-                'SEO_ORGANIZATION_LOGO' => $_POST['seo_organization_logo'] ?? '',
-                'SEO_SOCIAL_FACEBOOK' => $_POST['seo_social_facebook'] ?? '',
-                'SEO_SOCIAL_TWITTER' => $_POST['seo_social_twitter'] ?? '',
-                'SEO_SOCIAL_YOUTUBE' => $_POST['seo_social_youtube'] ?? '',
-                'SEO_CONTACT_EMAIL' => $_POST['seo_contact_email'] ?? '',
-                'SEO_CONTACT_PHONE' => $_POST['seo_contact_phone'] ?? '',
-                'SEO_LOCALE' => $_POST['seo_locale'] ?? 'en_US',
-                'SEO_GEO_REGION' => $_POST['seo_geo_region'] ?? '',
-                'SEO_GEO_PLACENAME' => $_POST['seo_geo_placename'] ?? '',
-                'SEO_AI_TRAINING' => isset($_POST['seo_ai_training']) ? 'true' : 'false'
-            ];
+            // Only update settings that are actually submitted
+            $settings = [];
             
-            // Update .env file
+            // Only add settings if they exist in POST
+            if (isset($_POST['site_name'])) {
+                $settings['SITE_NAME'] = $_POST['site_name'];
+            }
+            if (isset($_POST['footer_site_name'])) {
+                $settings['FOOTER_SITE_NAME'] = $_POST['footer_site_name'];
+            }
+            if (isset($_POST['items_per_page'])) {
+                $settings['ITEMS_PER_PAGE'] = (int)$_POST['items_per_page'];
+            }
+            if (isset($_POST['timezone'])) {
+                $settings['TIMEZONE'] = $_POST['timezone'];
+            }
+            if (isset($_POST['date_format'])) {
+                $settings['DATE_FORMAT'] = $_POST['date_format'];
+            }
+            if (isset($_POST['default_theme'])) {
+                $settings['DEFAULT_THEME'] = $_POST['default_theme'];
+            }
+            
+            // Checkboxes - only update if form was submitted with these fields
+            $settings['SHOW_PLAYER_UUID'] = isset($_POST['show_player_uuid']) ? 'true' : 'false';
+            
+            // Protest Settings
+            if (isset($_POST['protest_discord'])) {
+                $settings['PROTEST_DISCORD'] = $_POST['protest_discord'];
+            }
+            if (isset($_POST['protest_email'])) {
+                $settings['PROTEST_EMAIL'] = $_POST['protest_email'];
+            }
+            if (isset($_POST['protest_forum'])) {
+                $settings['PROTEST_FORUM'] = $_POST['protest_forum'];
+            }
+            
+            // Google Auth Settings
+            $settings['GOOGLE_AUTH_ENABLED'] = isset($_POST['google_auth_enabled']) ? 'true' : 'false';
+            if (isset($_POST['google_client_id'])) {
+                $settings['GOOGLE_CLIENT_ID'] = $_POST['google_client_id'];
+            }
+            if (isset($_POST['google_client_secret'])) {
+                $settings['GOOGLE_CLIENT_SECRET'] = $_POST['google_client_secret'];
+            }
+            $settings['ALLOW_PASSWORD_LOGIN'] = isset($_POST['allow_password_login']) ? 'true' : 'false';
+            
+            // Display Options
+            $settings['SHOW_SILENT_PUNISHMENTS'] = isset($_POST['show_silent_punishments']) ? 'true' : 'false';
+            $settings['SHOW_SERVER_ORIGIN'] = isset($_POST['show_server_origin']) ? 'true' : 'false';
+            $settings['SHOW_SERVER_SCOPE'] = isset($_POST['show_server_scope']) ? 'true' : 'false';
+            $settings['SHOW_CONTACT_DISCORD'] = isset($_POST['show_contact_discord']) ? 'true' : 'false';
+            $settings['SHOW_CONTACT_EMAIL'] = isset($_POST['show_contact_email']) ? 'true' : 'false';
+            $settings['SHOW_CONTACT_FORUM'] = isset($_POST['show_contact_forum']) ? 'true' : 'false';
+            $settings['SHOW_MENU_PROTEST'] = isset($_POST['show_menu_protest']) ? 'true' : 'false';
+            $settings['SHOW_MENU_STATS'] = isset($_POST['show_menu_stats']) ? 'true' : 'false';
+            
+            // SEO Settings
+            $settings['SEO_ENABLE_SCHEMA'] = isset($_POST['seo_enable_schema']) ? 'true' : 'false';
+            if (isset($_POST['seo_organization_name'])) {
+                $settings['SEO_ORGANIZATION_NAME'] = $_POST['seo_organization_name'];
+            }
+            if (isset($_POST['seo_organization_logo'])) {
+                $settings['SEO_ORGANIZATION_LOGO'] = $_POST['seo_organization_logo'];
+            }
+            if (isset($_POST['seo_social_facebook'])) {
+                $settings['SEO_SOCIAL_FACEBOOK'] = $_POST['seo_social_facebook'];
+            }
+            if (isset($_POST['seo_social_twitter'])) {
+                $settings['SEO_SOCIAL_TWITTER'] = $_POST['seo_social_twitter'];
+            }
+            if (isset($_POST['seo_social_youtube'])) {
+                $settings['SEO_SOCIAL_YOUTUBE'] = $_POST['seo_social_youtube'];
+            }
+            if (isset($_POST['seo_contact_email'])) {
+                $settings['SEO_CONTACT_EMAIL'] = $_POST['seo_contact_email'];
+            }
+            if (isset($_POST['seo_contact_phone'])) {
+                $settings['SEO_CONTACT_PHONE'] = $_POST['seo_contact_phone'];
+            }
+            if (isset($_POST['seo_locale'])) {
+                $settings['SEO_LOCALE'] = $_POST['seo_locale'];
+            }
+            if (isset($_POST['seo_geo_region'])) {
+                $settings['SEO_GEO_REGION'] = $_POST['seo_geo_region'];
+            }
+            if (isset($_POST['seo_geo_placename'])) {
+                $settings['SEO_GEO_PLACENAME'] = $_POST['seo_geo_placename'];
+            }
+            $settings['SEO_AI_TRAINING'] = isset($_POST['seo_ai_training']) ? 'true' : 'false';
+            
+            // Additional Site Settings
+            if (isset($_POST['site_url'])) {
+                $settings['SITE_URL'] = $_POST['site_url'];
+            }
+            if (isset($_POST['site_lang'])) {
+                $settings['SITE_LANG'] = $_POST['site_lang'];
+            }
+            if (isset($_POST['site_description'])) {
+                $settings['SITE_DESCRIPTION'] = $_POST['site_description'];
+            }
+            if (isset($_POST['site_title_template'])) {
+                $settings['SITE_TITLE_TEMPLATE'] = $_POST['site_title_template'];
+            }
+            if (isset($_POST['site_keywords'])) {
+                $settings['SITE_KEYWORDS'] = $_POST['site_keywords'];
+            }
+            if (isset($_POST['site_robots'])) {
+                $settings['SITE_ROBOTS'] = $_POST['site_robots'];
+            }
+            if (isset($_POST['site_theme_color'])) {
+                $settings['SITE_THEME_COLOR'] = $_POST['site_theme_color'];
+            }
+            if (isset($_POST['site_og_image'])) {
+                $settings['SITE_OG_IMAGE'] = $_POST['site_og_image'];
+            }
+            if (isset($_POST['site_twitter_site'])) {
+                $settings['SITE_TWITTER_SITE'] = $_POST['site_twitter_site'];
+            }
+            if (isset($_POST['default_language'])) {
+                $settings['DEFAULT_LANGUAGE'] = $_POST['default_language'];
+            }
+            
+            // Avatar Settings
+            if (isset($_POST['avatar_provider'])) {
+                $settings['AVATAR_PROVIDER'] = $_POST['avatar_provider'];
+            }
+            if (isset($_POST['avatar_url'])) {
+                $settings['AVATAR_URL'] = $_POST['avatar_url'];
+            }
+            if (isset($_POST['avatar_url_offline'])) {
+                $settings['AVATAR_URL_OFFLINE'] = $_POST['avatar_url_offline'];
+            }
+            
+            // Update .env file - only update provided settings
             $envFile = BASE_DIR . '/.env';
             $envContent = file_get_contents($envFile);
             
@@ -608,6 +697,23 @@ class AdminController extends BaseController
             error_log("Save settings error: " . $e->getMessage());
             $this->jsonResponse(['error' => 'Failed to save settings'], 500);
         }
+    }
+    
+    /**
+     * Keep-alive endpoint to prevent session timeout
+     */
+    public function keepAlive(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['authenticated' => false], 401);
+            return;
+        }
+        
+        // Session is automatically refreshed by isAuthenticated()
+        $this->jsonResponse([
+            'authenticated' => true,
+            'timestamp' => time()
+        ]);
     }
     
     public function export(): void
