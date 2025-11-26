@@ -9,7 +9,17 @@
     <meta name="robots" content="<?= htmlspecialchars($config['site_robots'] ?? 'index, follow', ENT_QUOTES, 'UTF-8') ?>">
     
     <!-- SEO Meta Tags -->
-    <title><?= isset($title) ? htmlspecialchars($config['site_title_template'] ? str_replace(['{page}', '{site}'], [$title, $config['site_name']], $config['site_title_template']) : $title . ' - ' . $config['site_name'], ENT_QUOTES, 'UTF-8') : htmlspecialchars($config['site_name'], ENT_QUOTES, 'UTF-8') ?></title>
+    <title><?php 
+        if (isset($title)) {
+            if (!empty($config['site_title_template'])) {
+                echo htmlspecialchars(str_replace(['{page}', '{site}'], [$title, $config['site_name']], $config['site_title_template']), ENT_QUOTES, 'UTF-8');
+            } else {
+                echo htmlspecialchars($title . ' - ' . $config['site_name'], ENT_QUOTES, 'UTF-8');
+            }
+        } else {
+            echo htmlspecialchars($config['site_name'], ENT_QUOTES, 'UTF-8');
+        }
+    ?></title>
     <meta name="description" content="<?= htmlspecialchars(isset($description) ? $description : $config['site_description'], ENT_QUOTES, 'UTF-8') ?>">
     
     <!-- Canonical URL -->
