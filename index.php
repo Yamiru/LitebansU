@@ -273,6 +273,7 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
             '/admin'                    => $admin->index(),
             '/admin/login'              => $admin->login(),
             '/admin/logout'             => $admin->logout(),
+            '/admin/keep-alive'         => $admin->keepAlive(),
             '/admin/clear-cache'        => $admin->clearCache(),  // Added clear-cache endpoint
             '/admin/export'             => $admin->export(),
             '/admin/import'             => $admin->import(),
