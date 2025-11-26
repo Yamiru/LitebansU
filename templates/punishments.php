@@ -201,19 +201,9 @@
                         <!-- Reason -->
                         <div class="mb-2">
                             <strong class="text-muted small"><?= $lang->get('table.reason') ?>:</strong>
-                            <div class="mt-1" 
-                                 title="<?= htmlspecialchars($punishment['reason'], ENT_QUOTES, 'UTF-8') ?>"
-                                 data-bs-toggle="tooltip" 
-                                 data-bs-title="<?= htmlspecialchars($punishment['reason'], ENT_QUOTES, 'UTF-8') ?>"
-                                 style="display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: help;">
-                                <?php 
-                                $reason = $punishment['reason'];
-                                if (strlen($reason) > 15) {
-                                    echo htmlspecialchars(substr($reason, 0, 15), ENT_QUOTES, 'UTF-8') . 'â€¦';
-                                } else {
-                                    echo htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
-                                }
-                                ?>
+                            <div class="mt-1 reason-text" 
+                                 style="display: block; max-width: 100%; word-wrap: break-word; word-break: break-word; white-space: normal; line-height: 1.4;">
+                                <?= htmlspecialchars($punishment['reason'], ENT_QUOTES, 'UTF-8') ?>
                             </div>
                         </div>
                         
