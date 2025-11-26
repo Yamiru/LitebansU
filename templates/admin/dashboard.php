@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.1
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -714,6 +714,122 @@ if (!$controller->isAuthenticated()) {
                             </div>
                         </div>
                         
+                        <!-- Advanced Site Settings -->
+                        <hr class="my-4">
+                        <h6 class="mb-3"><i class="fas fa-globe"></i> Advanced Site Settings</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Site URL</label>
+                                    <input type="url" class="form-control" name="site_url" 
+                                           value="<?= htmlspecialchars($config['site_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://yourdomain.com">
+                                    <small class="form-text text-muted">Full site URL with https:// (used for SEO and canonical links)</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Site Description</label>
+                                    <textarea class="form-control" name="site_description" rows="3"
+                                              placeholder="View and search player punishments on our Minecraft server"><?= htmlspecialchars($config['site_description'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+                                    <small class="form-text text-muted">Meta description for search engines (150-160 characters)</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Page Title Template</label>
+                                    <input type="text" class="form-control" name="site_title_template" 
+                                           value="<?= htmlspecialchars($config['site_title_template'] ?? '{page} - {site}', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="{page} - {site}">
+                                    <small class="form-text text-muted">Template for page titles. Use {page} for page name and {site} for site name</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Meta Keywords</label>
+                                    <input type="text" class="form-control" name="site_keywords" 
+                                           value="<?= htmlspecialchars($config['site_keywords'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="minecraft, litebans, punishments, bans, server">
+                                    <small class="form-text text-muted">Comma-separated keywords for SEO</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Robots Meta Tag</label>
+                                    <select class="form-control" name="site_robots">
+                                        <option value="index, follow" <?= ($config['site_robots'] ?? 'index, follow') === 'index, follow' ? 'selected' : '' ?>>Index, Follow (Recommended)</option>
+                                        <option value="noindex, follow" <?= ($config['site_robots'] ?? 'index, follow') === 'noindex, follow' ? 'selected' : '' ?>>No Index, Follow</option>
+                                        <option value="index, nofollow" <?= ($config['site_robots'] ?? 'index, follow') === 'index, nofollow' ? 'selected' : '' ?>>Index, No Follow</option>
+                                        <option value="noindex, nofollow" <?= ($config['site_robots'] ?? 'index, follow') === 'noindex, nofollow' ? 'selected' : '' ?>>No Index, No Follow</option>
+                                    </select>
+                                    <small class="form-text text-muted">Control search engine indexing</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Site Language Code</label>
+                                    <input type="text" class="form-control" name="site_lang" 
+                                           value="<?= htmlspecialchars($config['site_lang'] ?? 'en', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="en" maxlength="5">
+                                    <small class="form-text text-muted">HTML language attribute (e.g., en, sk, de, cs)</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Default Language</label>
+                                    <select class="form-control" name="default_language">
+                                        <option value="en" <?= ($config['default_language'] ?? 'en') === 'en' ? 'selected' : '' ?>>English</option>
+                                        <option value="sk" <?= ($config['default_language'] ?? 'en') === 'sk' ? 'selected' : '' ?>>Slovak</option>
+                                        <option value="cs" <?= ($config['default_language'] ?? 'en') === 'cs' ? 'selected' : '' ?>>Czech</option>
+                                        <option value="de" <?= ($config['default_language'] ?? 'en') === 'de' ? 'selected' : '' ?>>German</option>
+                                        <option value="es" <?= ($config['default_language'] ?? 'en') === 'es' ? 'selected' : '' ?>>Spanish</option>
+                                        <option value="fr" <?= ($config['default_language'] ?? 'en') === 'fr' ? 'selected' : '' ?>>French</option>
+                                        <option value="pl" <?= ($config['default_language'] ?? 'en') === 'pl' ? 'selected' : '' ?>>Polish</option>
+                                        <option value="ru" <?= ($config['default_language'] ?? 'en') === 'ru' ? 'selected' : '' ?>>Russian</option>
+                                    </select>
+                                    <small class="form-text text-muted">Default language for new visitors</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Theme Color</label>
+                                    <input type="color" class="form-control form-control-color" name="site_theme_color" 
+                                           value="<?= htmlspecialchars($config['site_theme_color'] ?? '#ef4444', ENT_QUOTES, 'UTF-8') ?>">
+                                    <small class="form-text text-muted">Browser theme color for mobile devices</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Avatar Configuration -->
+                        <hr class="my-4">
+                        <h6 class="mb-3"><i class="fas fa-user-circle"></i> Avatar Configuration</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Avatar Provider</label>
+                                    <select class="form-control" name="avatar_provider">
+                                        <option value="crafatar" <?= ($config['avatar_provider'] ?? 'crafatar') === 'crafatar' ? 'selected' : '' ?>>Crafatar</option>
+                                        <option value="cravatar" <?= ($config['avatar_provider'] ?? 'crafatar') === 'cravatar' ? 'selected' : '' ?>>Cravatar</option>
+                                        <option value="custom" <?= ($config['avatar_provider'] ?? 'crafatar') === 'custom' ? 'selected' : '' ?>>Custom</option>
+                                    </select>
+                                    <small class="form-text text-muted">Avatar service provider</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Avatar URL (Online)</label>
+                                    <input type="text" class="form-control" name="avatar_url" 
+                                           value="<?= htmlspecialchars($config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://crafatar.com/avatars/{uuid}?size=64&overlay=true">
+                                    <small class="form-text text-muted">URL for online mode avatars. Use {uuid} placeholder</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Avatar URL (Offline)</label>
+                                    <input type="text" class="form-control" name="avatar_url_offline" 
+                                           value="<?= htmlspecialchars($config['avatar_url_offline'] ?? 'https://crafatar.com/avatars/{uuid}?size=64', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://crafatar.com/avatars/{uuid}?size=64">
+                                    <small class="form-text text-muted">URL for offline mode avatars. Use {uuid} or {name} placeholder</small>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-save"></i> Save Settings
                         </button>
@@ -1194,14 +1310,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         const statusText = p.active ? 'Active' : 'Inactive';
                         const showRemoveBtn = p.active && ['ban', 'mute'].includes(p.type);
                         const typeColor = getTypeColor(p.type);
-                        const avatarUrl = (p.uuid && p.uuid !== '#' && p.uuid.length > 10) 
-                            ? 'https://crafatar.com/avatars/' + p.uuid + '?size=64&overlay=true'
-                            : 'https://cravatar.eu/avatar/' + (p.player_name || 'Steve') + '/64';
                         
                         html += `
                             <div class="punishment-item admin-search-result" style="cursor: pointer;" onclick="window.location.href='<?= url('detail') ?>?type=${p.type}&id=${p.id}'">
                                 <div class="d-flex align-items-center">
-                                    <img src="${avatarUrl}" alt="${escapeHtml(p.player_name)}" class="avatar me-3" style="width: 48px; height: 48px; border-radius: 8px;">
                                     <div class="flex-grow-1">
                                         <div class="fw-bold">
                                             ${escapeHtml(p.player_name)}
@@ -1483,8 +1595,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
                 
                 if (result.success) {
-                    cacheStatus.innerHTML = '<div class="alert alert-success"><i class="fas fa-check"></i> All cache cleared successfully! Reloading page...</div>';
-                    setTimeout(() => location.reload(), 2000);
+                    cacheStatus.innerHTML = '<div class="alert alert-success"><i class="fas fa-check"></i> All cache cleared successfully!</div>';
+                    setTimeout(() => cacheStatus.innerHTML = '', 5000);
                 } else {
                     throw new Error(result.message || 'Failed to clear cache');
                 }
@@ -1718,6 +1830,31 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.innerHTML = originalText;
         }
     });
+
+    // Session keep-alive mechanism
+    // Ping server every 5 minutes to keep session alive
+    setInterval(async () => {
+        try {
+            const response = await fetch('<?= url('admin/keep-alive') ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const result = await response.json();
+            
+            // If not authenticated, redirect to admin login
+            if (!result.authenticated) {
+                console.log('Session expired, redirecting to login...');
+                window.location.href = '<?= url('admin') ?>';
+            }
+        } catch (error) {
+            console.error('Keep-alive error:', error);
+            // Don't reload on network errors, just log them
+        }
+    }, 5 * 60 * 1000); // Run every 5 minutes
 
 });
 </script>
