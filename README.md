@@ -15,7 +15,7 @@
 
 
 ## Screenshot
-![Imgur Image](https://i.imgur.com/YJXukd9.png)
+![Imgur Image](https://i.imgur.com/9DV0RUB.png)
 
 
 ## ✨ Features
