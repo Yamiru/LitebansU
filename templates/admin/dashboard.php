@@ -65,11 +65,14 @@ if (!$controller->isAuthenticated()) {
                 <i class="fas fa-cog"></i> Settings
             </button>
         </li>
+       <?php if (($currentUser['role'] ?? 'admin') === 'admin'): ?>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button">
                 <i class="fas fa-info-circle"></i> System Info
             </button>
         </li>
+       <?php endif; ?>
+      <li class="nav-item" role="presentation"> <a class="nav-link" href="demos/"> <i class="fas fa-video"></i> Demo Management </a> </li>
     </ul>
 
     <!-- Tab Content -->
