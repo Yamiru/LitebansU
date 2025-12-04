@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.1
+ *  Version:       3.3
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -642,10 +642,7 @@ class AdminController extends BaseController
                 $settings['DEFAULT_LANGUAGE'] = $_POST['default_language'];
             }
             
-            // Avatar Settings
-            if (isset($_POST['avatar_provider'])) {
-                $settings['AVATAR_PROVIDER'] = $_POST['avatar_provider'];
-            }
+            // Avatar Settings - save URLs directly
             if (isset($_POST['avatar_url'])) {
                 $settings['AVATAR_URL'] = $_POST['avatar_url'];
             }
@@ -673,10 +670,18 @@ class AdminController extends BaseController
             // Force reload .env to apply changes immediately
             \core\EnvLoader::reload();
             
-            // Clear opcache to force reload of .env
+            // Clear opcache to force reload of .env and config files
             if (function_exists('opcache_reset')) {
                 opcache_reset();
             }
+            
+            // Clear APCu cache if available
+            if (function_exists('apcu_clear_cache')) {
+                apcu_clear_cache();
+            }
+            
+            // Reload config to apply new environment values
+            $this->config = require BASE_DIR . '/config/app.php';
             
             // Set cookie for show_uuid preference
             setcookie('show_uuid', $settings['SHOW_PLAYER_UUID'], [
@@ -691,7 +696,11 @@ class AdminController extends BaseController
                 'updated_settings' => array_keys($settings)
             ]);
             
-            $this->jsonResponse(['success' => true, 'message' => 'Settings saved successfully!']);
+            $this->jsonResponse([
+                'success' => true, 
+                'message' => 'Settings saved and config reloaded successfully! Refresh page to see changes.',
+                'reload_recommended' => true
+            ]);
             
         } catch (Exception $e) {
             error_log("Save settings error: " . $e->getMessage());
@@ -1453,5 +1462,362 @@ class AdminController extends BaseController
     public function getStats(): array
     {
         return $this->repository->getStats();
+    }
+    
+    /**
+     * Diagnostic endpoint - shows current avatar config
+     */
+    public function diagnosticAvatar(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        
+        try {
+            // Read .env file directly
+            $envFile = BASE_DIR . '/.env';
+            $envContent = file_get_contents($envFile);
+            
+            // Extract avatar settings from .env
+            $envAvatarProvider = null;
+            $envAvatarUrl = null;
+            $envAvatarUrlOffline = null;
+            
+            if (preg_match('/^AVATAR_PROVIDER=(.*)$/m', $envContent, $matches)) {
+                $envAvatarProvider = trim($matches[1]);
+            }
+            if (preg_match('/^AVATAR_URL=(.*)$/m', $envContent, $matches)) {
+                $envAvatarUrl = trim($matches[1]);
+            }
+            if (preg_match('/^AVATAR_URL_OFFLINE=(.*)$/m', $envContent, $matches)) {
+                $envAvatarUrlOffline = trim($matches[1]);
+            }
+            
+            // Get from EnvLoader
+            $envLoaderProvider = \core\EnvLoader::get('AVATAR_PROVIDER');
+            $envLoaderUrl = \core\EnvLoader::get('AVATAR_URL');
+            $envLoaderUrlOffline = \core\EnvLoader::get('AVATAR_URL_OFFLINE');
+            
+            // Get from current config
+            $configProvider = $this->config['avatar_provider'] ?? null;
+            $configUrl = $this->config['avatar_url'] ?? null;
+            $configUrlOffline = $this->config['avatar_url_offline'] ?? null;
+            
+            // Test getAvatarUrl
+            $testUuid = '069a79f4-44e9-4726-a5be-fca90e38aaf5'; // Notch
+            $testName = 'Notch';
+            $testAvatarUrl = $this->getAvatarUrl($testUuid, $testName);
+            
+            // Check if opcache is enabled
+            $opcacheEnabled = function_exists('opcache_get_status') && opcache_get_status();
+            $apcuEnabled = function_exists('apcu_cache_info') && apcu_enabled();
+            
+            $this->jsonResponse([
+                'success' => true,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'env_file' => [
+                    'exists' => file_exists($envFile),
+                    'readable' => is_readable($envFile),
+                    'writable' => is_writable($envFile),
+                    'avatar_provider' => $envAvatarProvider,
+                    'avatar_url' => $envAvatarUrl,
+                    'avatar_url_offline' => $envAvatarUrlOffline
+                ],
+                'env_loader' => [
+                    'avatar_provider' => $envLoaderProvider,
+                    'avatar_url' => $envLoaderUrl,
+                    'avatar_url_offline' => $envLoaderUrlOffline
+                ],
+                'config_array' => [
+                    'avatar_provider' => $configProvider,
+                    'avatar_url' => $configUrl,
+                    'avatar_url_offline' => $configUrlOffline
+                ],
+                'test_avatar' => [
+                    'uuid' => $testUuid,
+                    'name' => $testName,
+                    'generated_url' => $testAvatarUrl
+                ],
+                'cache_status' => [
+                    'opcache_enabled' => $opcacheEnabled,
+                    'apcu_enabled' => $apcuEnabled
+                ],
+                'recommendation' => $this->getAvatarDiagnosticRecommendation(
+                    $envAvatarProvider,
+                    $envLoaderProvider,
+                    $configProvider,
+                    $testAvatarUrl
+                )
+            ]);
+            
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    private function getAvatarDiagnosticRecommendation(
+        ?string $envProvider,
+        ?string $loaderProvider,
+        ?string $configProvider,
+        string $testUrl
+    ): string {
+        if ($envProvider !== $loaderProvider) {
+            return 'EnvLoader is not reading from .env correctly. Reload EnvLoader or restart PHP-FPM.';
+        }
+        
+        if ($loaderProvider !== $configProvider) {
+            return 'Config is not loading from EnvLoader. Clear OPcache and reload config.';
+        }
+        
+        // Check if test URL matches expected provider
+        if ($configProvider === 'mineatar' && strpos($testUrl, 'mineatar.io') === false) {
+            return 'getAvatarUrl() is not using the correct provider. Config is not being applied to BaseController.';
+        }
+        
+        if ($configProvider === 'crafatar' && strpos($testUrl, 'crafatar.com') === false) {
+            return 'getAvatarUrl() is not using the correct provider. Config is not being applied to BaseController.';
+        }
+        
+        if ($configProvider === 'cravatar' && strpos($testUrl, 'cravatar.eu') === false) {
+            return 'getAvatarUrl() is not using the correct provider. Config is not being applied to BaseController.';
+        }
+        
+        return 'All settings match correctly. Clear browser cache (Ctrl+F5) if avatars still appear old.';
+    }
+    
+    /**
+     * Test database structure and timestamps
+     */
+    public function testDatabase(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        
+        try {
+            $results = [
+                'success' => true,
+                'tables' => [],
+                'timestamp_test' => [],
+                'warnings' => []
+            ];
+            
+            $tables = ['bans', 'mutes', 'warnings', 'kicks', 'history'];
+            
+            // Test each table
+            foreach ($tables as $tableName) {
+                $fullTable = $this->repository->getTablePrefix() . $tableName;
+                
+                try {
+                    // Check if table exists
+                    $stmt = $this->repository->getConnection()->query(
+                        "SHOW TABLES LIKE '" . $fullTable . "'"
+                    );
+                    $exists = $stmt->rowCount() > 0;
+                    
+                    if (!$exists) {
+                        $results['tables'][$tableName] = [
+                            'exists' => false,
+                            'status' => 'missing'
+                        ];
+                        $results['warnings'][] = "Table {$fullTable} does not exist";
+                        continue;
+                    }
+                    
+                    // Get column info
+                    $stmt = $this->repository->getConnection()->query(
+                        "DESCRIBE {$fullTable}"
+                    );
+                    $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    $hasTime = false;
+                    $hasUntil = false;
+                    
+                    foreach ($columns as $col) {
+                        if ($col['Field'] === 'time') $hasTime = true;
+                        if ($col['Field'] === 'until') $hasUntil = true;
+                    }
+                    
+                    // Test timestamp if this table has time/until columns
+                    if ($hasTime && in_array($tableName, ['bans', 'mutes'])) {
+                        $stmt = $this->repository->getConnection()->query(
+                            "SELECT time, until, active FROM {$fullTable} ORDER BY time DESC LIMIT 1"
+                        );
+                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                        
+                        if ($row) {
+                            $timeInSeconds = intval($row['time'] / 1000);
+                            $untilInSeconds = $row['until'] > 0 ? intval($row['until'] / 1000) : 0;
+                            
+                            $results['timestamp_test'][$tableName] = [
+                                'raw_time' => $row['time'],
+                                'time_seconds' => $timeInSeconds,
+                                'time_date' => date('Y-m-d H:i:s', $timeInSeconds),
+                                'raw_until' => $row['until'],
+                                'until_seconds' => $untilInSeconds,
+                                'until_date' => $untilInSeconds > 0 ? date('Y-m-d H:i:s', $untilInSeconds) : 'Permanent',
+                                'active' => $row['active'],
+                                'is_valid' => $timeInSeconds > 0 && $timeInSeconds < 2147483647
+                            ];
+                            
+                            // Check for invalid timestamps
+                            if ($timeInSeconds <= 0) {
+                                $results['warnings'][] = "Invalid timestamp in {$tableName}: time={$row['time']}";
+                            }
+                            
+                            if ($untilInSeconds > 0 && $untilInSeconds < $timeInSeconds) {
+                                $results['warnings'][] = "Until time is before start time in {$tableName}";
+                            }
+                        }
+                    }
+                    
+                    $results['tables'][$tableName] = [
+                        'exists' => true,
+                        'status' => 'ok',
+                        'has_time' => $hasTime,
+                        'has_until' => $hasUntil,
+                        'columns' => count($columns)
+                    ];
+                    
+                } catch (PDOException $e) {
+                    $results['tables'][$tableName] = [
+                        'exists' => false,
+                        'status' => 'error',
+                        'error' => $e->getMessage()
+                    ];
+                    $results['warnings'][] = "Error testing {$tableName}: " . $e->getMessage();
+                }
+            }
+            
+            // Test current time
+            $results['server_info'] = [
+                'php_time' => time(),
+                'php_time_ms' => time() * 1000,
+                'php_date' => date('Y-m-d H:i:s'),
+                'timezone' => date_default_timezone_get()
+            ];
+            
+            $this->jsonResponse($results);
+            
+        } catch (Exception $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Clear all caches including opcache
+     */
+    public function clearAllCache(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        
+        // Validate CSRF token
+        if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $this->jsonResponse(['error' => 'Invalid security token'], 400);
+            return;
+        }
+        
+        try {
+            $cleared = [];
+            
+            // Clear opcache
+            if (function_exists('opcache_reset')) {
+                opcache_reset();
+                $cleared[] = 'OPcache';
+            }
+            
+            // Reload .env
+            \core\EnvLoader::reload();
+            $cleared[] = 'Environment config';
+            
+            // Clear APCu if available
+            if (function_exists('apcu_clear_cache')) {
+                apcu_clear_cache();
+                $cleared[] = 'APCu cache';
+            }
+            
+            $this->logAdminAction('cache_clear', 'Cleared all caches', [
+                'caches' => $cleared
+            ]);
+            
+            $this->jsonResponse([
+                'success' => true,
+                'message' => 'All caches cleared successfully',
+                'cleared' => $cleared
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("Clear cache error: " . $e->getMessage());
+            $this->jsonResponse(['error' => 'Failed to clear caches'], 500);
+        }
+    }
+    
+    /**
+     * Check latest version on GitHub
+     */
+    public function checkGitHubVersion(): void
+    {
+        try {
+            // GitHub repository info
+            $owner = 'Yamiru';
+            $repo = 'LiteBansU';
+            
+            // Try to read .version file from GitHub main branch
+            $url = "https://raw.githubusercontent.com/{$owner}/{$repo}/main/.version";
+            
+            // Set timeout and user agent
+            $context = stream_context_create([
+                'http' => [
+                    'timeout' => 5,
+                    'user_agent' => 'LiteBansU-Version-Checker'
+                ]
+            ]);
+            
+            // Fetch version from GitHub
+            $githubVersion = @file_get_contents($url, false, $context);
+            
+            if ($githubVersion === false) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'error' => 'Could not fetch GitHub version'
+                ]);
+                return;
+            }
+            
+            // Read local version
+            $localVersion = file_exists(BASE_DIR . '/.version') 
+                ? trim(file_get_contents(BASE_DIR . '/.version')) 
+                : '3.3';
+            
+            $githubVersion = trim($githubVersion);
+            
+            // Compare versions
+            $updateAvailable = version_compare($githubVersion, $localVersion, '>');
+            
+            $this->jsonResponse([
+                'success' => true,
+                'local_version' => $localVersion,
+                'github_version' => $githubVersion,
+                'update_available' => $updateAvailable
+            ]);
+            
+        } catch (Exception $e) {
+            error_log("GitHub version check error: " . $e->getMessage());
+            $this->jsonResponse([
+                'success' => false,
+                'error' => 'Failed to check GitHub version'
+            ]);
+        }
     }
 }
