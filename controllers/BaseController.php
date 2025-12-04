@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.3
  *  Author:        Yamiru <yamiru@yamiru.com>
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -133,23 +133,30 @@ abstract class BaseController
         // Default avatar SVG
         $default = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSI4IiBmaWxsPSIjNjY2Ii8+PHBhdGggZD0iTTMyIDE2Yy00LjQyIDAtOCAzLjU4LTggOHMzLjU4IDggOCA4IDgtMy41OCA4LTgtMy41OC04LTgtOHptMCAyMGMtOC44NCAwLTE2IDcuMTYtMTYgMTZ2NGg0di00YzAtNi42MiA1LjM3LTEyIDEyLTEyczEyIDUuMzggMTIgMTJ2NGg0di00YzAtOC44NC03LjE2LTE2LTE2LTE2eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
         
-        // Detect if offline UUID (UUID v3 - offline players)
-        // Offline UUID has '3' at position 14 (xxxxxxxx-xxxx-3xxx-xxxx-xxxxxxxxxxxx)
+        // CRITICAL FIX: Use EnvLoader to read avatar URLs from .env
+        // For offline players (cracked servers), use NAME to fetch original skin from Mojang
+        // For online players (premium), use UUID
+        
+        // Detect if offline UUID (UUID v3 - offline/cracked servers)
+        // Offline UUID has '3' at position 14: xxxxxxxx-xxxx-3xxx-xxxx-xxxxxxxxxxxx
+        // Online UUID has '4' at position 14:  xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx
         $isOffline = !empty($uuid) && strlen($uuid) === 36 && substr($uuid, 14, 1) === '3';
         
-        // OFFLINE PLAYER - Use name-based avatar
+        // OFFLINE PLAYER (UUID v3) - Use name to fetch original Mojang skin
         if ($isOffline && !empty($name)) {
-            // Use cravatar for offline players (works with player name)
-            return "https://cravatar.eu/avatar/{$name}/64";
+            // Crafatar/Mineatar can fetch original skin from Mojang using player name
+            // This works for premium players on cracked servers
+            $offlineUrl = \core\EnvLoader::get('AVATAR_URL_OFFLINE', 'https://cravatar.eu/avatar/{name}/64');
+            return str_replace(['{uuid}', '{name}'], [$uuid, $name], $offlineUrl);
         }
         
-        // ONLINE PLAYER - Use UUID-based avatar
+        // ONLINE PLAYER (UUID v4) - Use UUID directly
         if (!empty($uuid) && !$isOffline) {
-            // Use Crafatar for online players (works with UUID)
-            return "https://crafatar.com/avatars/{$uuid}?size=64&overlay=true";
+            $onlineUrl = \core\EnvLoader::get('AVATAR_URL', 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true');
+            return str_replace(['{uuid}', '{name}'], [$uuid, $name], $onlineUrl);
         }
         
-        // FALLBACK - Return default SVG
+        // FALLBACK - No valid UUID or name
         return $default;
     }
     
