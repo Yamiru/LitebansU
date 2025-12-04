@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.2
+ *  Version:       3.3
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -151,6 +151,27 @@ if (!$controller->isAuthenticated()) {
                         </div>
                         <div class="card-body">
                             <table class="table table-sm">
+                                <tr>
+                                    <td class="text-muted">LiteBansU Version</td>
+                                    <td class="admin-table-text">
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-code-branch"></i> 
+                                            <?php 
+                                            $version = file_exists(BASE_DIR . '/.version') ? trim(file_get_contents(BASE_DIR . '/.version')) : '3.3';
+                                            echo htmlspecialchars($version, ENT_QUOTES, 'UTF-8');
+                                            ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">GitHub Version</td>
+                                    <td class="admin-table-text">
+                                        <span id="github-version-badge">
+                                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                                            <small class="text-muted ms-2">Checking...</small>
+                                        </span>
+                                    </td>
+                                </tr>
                                 <tr>
                                     <td class="text-muted">OS Version</td>
                                     <td class="admin-table-text"><?= PHP_OS ?></td>
@@ -802,21 +823,11 @@ if (!$controller->isAuthenticated()) {
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">Avatar Provider</label>
-                                    <select class="form-control" name="avatar_provider">
-                                        <option value="crafatar" <?= ($config['avatar_provider'] ?? 'crafatar') === 'crafatar' ? 'selected' : '' ?>>Crafatar</option>
-                                        <option value="cravatar" <?= ($config['avatar_provider'] ?? 'crafatar') === 'cravatar' ? 'selected' : '' ?>>Cravatar</option>
-                                        <option value="custom" <?= ($config['avatar_provider'] ?? 'crafatar') === 'custom' ? 'selected' : '' ?>>Custom</option>
-                                    </select>
-                                    <small class="form-text text-muted">Avatar service provider</small>
-                                </div>
-                                
-                                <div class="mb-3">
                                     <label class="form-label">Avatar URL (Online)</label>
                                     <input type="text" class="form-control" name="avatar_url" 
-                                           value="<?= htmlspecialchars($config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="https://crafatar.com/avatars/{uuid}?size=64&overlay=true">
-                                    <small class="form-text text-muted">URL for online mode avatars. Use {uuid} placeholder</small>
+                                           value="<?= htmlspecialchars($config['avatar_url'] ?? 'https://mineskin.eu/helm/{name}', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://mineskin.eu/helm/{name}">
+                                    <small class="form-text text-muted">URL for online mode avatars. Use {name} or {uuid} placeholder</small>
                                 </div>
                             </div>
                             
@@ -824,9 +835,9 @@ if (!$controller->isAuthenticated()) {
                                 <div class="mb-3">
                                     <label class="form-label">Avatar URL (Offline)</label>
                                     <input type="text" class="form-control" name="avatar_url_offline" 
-                                           value="<?= htmlspecialchars($config['avatar_url_offline'] ?? 'https://crafatar.com/avatars/{uuid}?size=64', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="https://crafatar.com/avatars/{uuid}?size=64">
-                                    <small class="form-text text-muted">URL for offline mode avatars. Use {uuid} or {name} placeholder</small>
+                                           value="<?= htmlspecialchars($config['avatar_url_offline'] ?? 'https://mineskin.eu/helm/{name}', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://mineskin.eu/helm/{name}">
+                                    <small class="form-text text-muted">URL for offline mode avatars. Use {name} or {uuid} placeholder</small>
                                 </div>
                             </div>
                         </div>
@@ -878,6 +889,31 @@ if (!$controller->isAuthenticated()) {
                         
                         <div id="cache-status" class="mt-3"></div>
                     </div>
+                    
+                    <!-- Database Diagnostic Section -->
+                    <hr class="my-4">
+                    <div class="database-diagnostic">
+                        <h5 class="mb-3">
+                            <i class="fas fa-stethoscope"></i> Database Diagnostic
+                        </h5>
+                        <p class="text-muted">Test database structure and timestamp handling</p>
+                        
+                        <div class="card admin-cache-card">
+                            <div class="card-body">
+                                <h6><i class="fas fa-database text-info"></i> Database Structure Test</h6>
+                                <p class="small text-muted mb-3">Check tables, columns, and timestamp validity</p>
+                                <button type="button" id="test-database" class="btn btn-info">
+                                    <i class="fas fa-play"></i> Run Database Test
+                                </button>
+                                <button type="button" id="clear-opcache" class="btn btn-warning ms-2">
+                                    <i class="fas fa-broom"></i> Clear OPcache & Reload Config
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="database-test-results" class="mt-3"></div>
+                    </div>
+                    
                 </div>
             </div>
         </div>
@@ -1185,6 +1221,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const userRole = '<?= htmlspecialchars($currentUser['role'] ?? 'admin', ENT_QUOTES, 'UTF-8') ?>';
     const canModify = userRole === 'admin' || userRole === 'moderator';
     
+    // Check GitHub version
+    const githubVersionBadge = document.getElementById('github-version-badge');
+    if (githubVersionBadge) {
+        fetch('<?= url('admin/check-github-version') ?>')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    let html = '<span class="badge bg-secondary"><i class="fab fa-github"></i> ' + escapeHtml(data.github_version) + '</span>';
+                    
+                    if (data.update_available) {
+                        html += ' <span class="badge bg-success ms-2"><i class="fas fa-arrow-up"></i> Update Available!</span>';
+                    } else {
+                        html += ' <small class="text-muted ms-2"><i class="fas fa-check"></i> Up to date</small>';
+                    }
+                    
+                    githubVersionBadge.innerHTML = html;
+                } else {
+                    githubVersionBadge.innerHTML = '<small class="text-muted"><i class="fas fa-times"></i> Unable to check</small>';
+                }
+            })
+            .catch(error => {
+                console.error('GitHub version check failed:', error);
+                githubVersionBadge.innerHTML = '<small class="text-muted"><i class="fas fa-times"></i> Check failed</small>';
+            });
+    }
+    
     // Export form
     const exportForm = document.getElementById('export-form');
     if (exportForm) {
@@ -1252,7 +1314,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert('Settings saved successfully!');
+                    alert(result.message || 'Settings saved successfully!');
+                    // Reload page to apply avatar and other config changes
+                    if (result.reload_recommended) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
                 } else {
                     alert('Failed to save settings: ' + (result.error || 'Unknown error'));
                 }
@@ -1603,6 +1671,134 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 cacheStatus.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Error: ' + error.message + '</div>';
+                this.disabled = false;
+                this.innerHTML = originalText;
+            }
+        });
+    }
+
+    // Database Diagnostic
+    const testDatabaseBtn = document.getElementById('test-database');
+    const clearOpcacheBtn = document.getElementById('clear-opcache');
+    const databaseTestResults = document.getElementById('database-test-results');
+    
+    if (testDatabaseBtn) {
+        testDatabaseBtn.addEventListener('click', async function() {
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Testing...';
+            
+            try {
+                const response = await fetch('<?= url('admin/test-database') ?>');
+                const result = await response.json();
+                
+                if (result.success) {
+                    let html = '<div class="card mt-3"><div class="card-body">';
+                    html += '<h6 class="text-success"><i class="fas fa-check-circle"></i> Database Test Results</h6>';
+                    
+                    // Tables status
+                    html += '<h6 class="mt-3">Tables Status:</h6>';
+                    html += '<table class="table table-sm table-bordered">';
+                    html += '<thead><tr><th>Table</th><th>Status</th><th>Time Column</th><th>Until Column</th><th>Columns</th></tr></thead><tbody>';
+                    
+                    for (const [tableName, tableInfo] of Object.entries(result.tables)) {
+                        const statusBadge = tableInfo.status === 'ok' ? 'success' : 'danger';
+                        html += '<tr>';
+                        html += '<td>' + escapeHtml(tableName) + '</td>';
+                        html += '<td><span class="badge bg-' + statusBadge + '">' + escapeHtml(tableInfo.status) + '</span></td>';
+                        html += '<td>' + (tableInfo.has_time ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>') + '</td>';
+                        html += '<td>' + (tableInfo.has_until ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>') + '</td>';
+                        html += '<td>' + (tableInfo.columns || 'N/A') + '</td>';
+                        html += '</tr>';
+                    }
+                    html += '</tbody></table>';
+                    
+                    // Timestamp tests
+                    if (Object.keys(result.timestamp_test).length > 0) {
+                        html += '<h6 class="mt-3">Timestamp Tests (Latest Records):</h6>';
+                        html += '<table class="table table-sm table-bordered">';
+                        html += '<thead><tr><th>Table</th><th>Raw Time</th><th>Time (Seconds)</th><th>Date</th><th>Until Date</th><th>Valid</th></tr></thead><tbody>';
+                        
+                        for (const [tableName, timestampInfo] of Object.entries(result.timestamp_test)) {
+                            const validBadge = timestampInfo.is_valid ? 'success' : 'danger';
+                            html += '<tr>';
+                            html += '<td>' + escapeHtml(tableName) + '</td>';
+                            html += '<td><code>' + timestampInfo.raw_time + '</code></td>';
+                            html += '<td><code>' + timestampInfo.time_seconds + '</code></td>';
+                            html += '<td>' + escapeHtml(timestampInfo.time_date) + '</td>';
+                            html += '<td>' + escapeHtml(timestampInfo.until_date) + '</td>';
+                            html += '<td><span class="badge bg-' + validBadge + '">' + (timestampInfo.is_valid ? 'Valid' : 'Invalid') + '</span></td>';
+                            html += '</tr>';
+                        }
+                        html += '</tbody></table>';
+                    }
+                    
+                    // Server info
+                    if (result.server_info) {
+                        html += '<h6 class="mt-3">Server Time Info:</h6>';
+                        html += '<table class="table table-sm table-bordered">';
+                        html += '<tbody>';
+                        html += '<tr><td><strong>PHP Time (seconds)</strong></td><td>' + result.server_info.php_time + '</td></tr>';
+                        html += '<tr><td><strong>PHP Time (milliseconds)</strong></td><td>' + result.server_info.php_time_ms + '</td></tr>';
+                        html += '<tr><td><strong>Current Date</strong></td><td>' + escapeHtml(result.server_info.php_date) + '</td></tr>';
+                        html += '<tr><td><strong>Timezone</strong></td><td>' + escapeHtml(result.server_info.timezone) + '</td></tr>';
+                        html += '</tbody></table>';
+                    }
+                    
+                    // Warnings
+                    if (result.warnings && result.warnings.length > 0) {
+                        html += '<div class="alert alert-warning mt-3"><h6><i class="fas fa-exclamation-triangle"></i> Warnings:</h6><ul class="mb-0">';
+                        result.warnings.forEach(warning => {
+                            html += '<li>' + escapeHtml(warning) + '</li>';
+                        });
+                        html += '</ul></div>';
+                    }
+                    
+                    html += '</div></div>';
+                    databaseTestResults.innerHTML = html;
+                } else {
+                    throw new Error(result.error || 'Test failed');
+                }
+            } catch (error) {
+                databaseTestResults.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Error: ' + escapeHtml(error.message) + '</div>';
+            } finally {
+                this.disabled = false;
+                this.innerHTML = originalText;
+            }
+        });
+    }
+    
+    if (clearOpcacheBtn) {
+        clearOpcacheBtn.addEventListener('click', async function() {
+            if (!confirm('Clear OPcache and reload configuration? This will apply any changes made to .env file.')) return;
+            
+            const originalText = this.innerHTML;
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Clearing...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('csrf_token', csrfToken);
+                
+                const response = await fetch('<?= url('admin/clear-all-cache') ?>', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    databaseTestResults.innerHTML = '<div class="alert alert-success"><i class="fas fa-check"></i> ' + 
+                        escapeHtml(result.message) + '<br><small>Cleared: ' + result.cleared.join(', ') + '</small></div>';
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    throw new Error(result.error || 'Failed to clear cache');
+                }
+            } catch (error) {
+                databaseTestResults.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> Error: ' + escapeHtml(error.message) + '</div>';
+            } finally {
                 this.disabled = false;
                 this.innerHTML = originalText;
             }
