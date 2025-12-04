@@ -1,6 +1,6 @@
 <?php
 /**
- * LiteBansU v3.1 - Installation Wizard
+ * LiteBansU - Installation Wizard
  * Complete configuration setup with all fields
  */
 
@@ -8,6 +8,9 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 session_start();
+
+// Load version from .version file
+$version = file_exists(__DIR__ . '/.version') ? trim(file_get_contents(__DIR__ . '/.version')) : '3.3';
 
 // Initialize step
 if (!isset($_SESSION['step'])) {
@@ -40,8 +43,9 @@ function getVal($name, $default = '') {
 }
 
 function generateEnv($config) {
+    global $version;
     $env = "# ============================================================================
-# LiteBansU 3.1 - Configuration File
+# LiteBansU $version - Configuration File
 # ============================================================================
 
 # Database Configuration
@@ -62,9 +66,8 @@ DATE_FORMAT=Y-m-d H:i:s
 BASE_URL=" . ($config['base_url'] ?? '') . "
 
 # Avatar Configuration
-AVATAR_PROVIDER=" . ($config['avatar_provider'] ?? 'crafatar') . "
-AVATAR_URL=https://crafatar.com/avatars/{uuid}?size=64&overlay=true
-AVATAR_URL_OFFLINE=https://cravatar.eu/avatar/{name}/64
+AVATAR_URL=" . ($config['avatar_url'] ?? 'https://mineskin.eu/helm/{name}') . "
+AVATAR_URL_OFFLINE=" . ($config['avatar_url_offline'] ?? 'https://mineskin.eu/helm/{name}') . "
 
 # Default Settings
 DEFAULT_THEME=" . ($config['default_theme'] ?? 'dark') . "
@@ -165,7 +168,7 @@ DEMO_MODE=false
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiteBansU 3.1 - Installation Wizard</title>
+    <title>LiteBansU <?= $version ?> - Installation Wizard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
@@ -256,7 +259,7 @@ DEMO_MODE=false
         <div class="install-card p-5">
             <!-- Header -->
             <div class="text-center mb-4">
-                <h1 class="mb-2"><i class="fas fa-rocket text-primary"></i> LiteBansU 3.1</h1>
+                <h1 class="mb-2"><i class="fas fa-rocket text-primary"></i> LiteBansU <?= $version ?></h1>
                 <p class="text-muted">Installation Wizard</p>
             </div>
 
@@ -280,7 +283,7 @@ DEMO_MODE=false
                 <!-- Step 1: Welcome -->
                 <div class="text-center">
                     <i class="fas fa-shield-alt fa-5x text-primary mb-4"></i>
-                    <h3>Welcome to LiteBansU 3.1</h3>
+                    <h3>Welcome to LiteBansU <?= $version ?></h3>
                     <p class="lead mb-4">Modern web interface for LiteBans punishment management system</p>
                     
                     <div class="alert alert-info text-start">
@@ -425,16 +428,17 @@ DEMO_MODE=false
                                 <small class="form-text">Default theme for new visitors</small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Avatar Provider</label>
-                                <select class="form-control" name="avatar_provider">
-                                    <option value="crafatar">Crafatar (Recommended)</option>
-                                    <option value="cravatar">Cravatar</option>
-                                    <option value="custom">Custom</option>
-                                </select>
-                                <small class="form-text">Service for player avatars</small>
+                                <label class="form-label">Avatar URL (Online)</label>
+                                <input type="text" class="form-control" name="avatar_url" value="https://mineskin.eu/helm/{name}" placeholder="https://mineskin.eu/helm/{name}">
+                                <small class="form-text">URL for online avatars. Use {name} or {uuid}</small>
                             </div>
                         </div>
                         <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Avatar URL (Offline)</label>
+                                <input type="text" class="form-control" name="avatar_url_offline" value="https://mineskin.eu/helm/{name}" placeholder="https://mineskin.eu/helm/{name}">
+                                <small class="form-text">URL for offline avatars. Use {name} or {uuid}</small>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Theme Color</label>
                                 <input type="color" class="form-control form-control-color" name="site_theme_color" value="#ef4444">
