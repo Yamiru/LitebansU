@@ -360,7 +360,7 @@ DEMO_MODE=false
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Footer Site Name</label>
                                 <input type="text" class="form-control" name="footer_site_name">
-                                <small class="form-text">Name in footer copyright (Â© Your Server 2024)</small>
+                                <small class="form-text">Name in footer copyright (Ă‚Â© Your Server 2024)</small>
                             </div>
                         </div>
                         <div class="row">
@@ -564,7 +564,7 @@ DEMO_MODE=false
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Place Name</label>
-                                <input type="text" class="form-control" name="seo_geo_placename" placeholder="KoĹˇice">
+                                <input type="text" class="form-control" name="seo_geo_placename" placeholder="KoÄąË‡ice">
                                 <small class="form-text">City or location name</small>
                             </div>
                         </div>
