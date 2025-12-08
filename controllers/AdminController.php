@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.3
+ *  Version:       3.4
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -1819,5 +1819,42 @@ class AdminController extends BaseController
                 'error' => 'Failed to check GitHub version'
             ]);
         }
+    }
+    
+    /**
+     * Generate sitemap XML for SEO
+     */
+    public function generateSitemap(): string
+    {
+        $baseUrl = rtrim($this->config['site_url'] ?? 'https://yoursite.com', '/');
+        $currentDate = date('Y-m-d\TH:i:sP');
+        
+        $urls = [
+            ['loc' => '/', 'priority' => '1.0'],
+            ['loc' => '/bans', 'priority' => '0.9'],
+            ['loc' => '/mutes', 'priority' => '0.9'],
+            ['loc' => '/warnings', 'priority' => '0.8'],
+            ['loc' => '/kicks', 'priority' => '0.7'],
+            ['loc' => '/stats', 'priority' => '0.8'],
+            ['loc' => '/protest', 'priority' => '0.6'],
+        ];
+        
+        $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' . "\n";
+        $xml .= '        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"' . "\n";
+        $xml .= '        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9' . "\n";
+        $xml .= '        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">' . "\n";
+        
+        foreach ($urls as $url) {
+            $xml .= "    <url>\n";
+            $xml .= "        <loc>" . htmlspecialchars($baseUrl . $url['loc'], ENT_XML1, 'UTF-8') . "</loc>\n";
+            $xml .= "        <lastmod>{$currentDate}</lastmod>\n";
+            $xml .= "        <priority>" . htmlspecialchars($url['priority'], ENT_XML1, 'UTF-8') . "</priority>\n";
+            $xml .= "    </url>\n";
+        }
+        
+        $xml .= "</urlset>";
+        
+        return $xml;
     }
 }
