@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.4
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -146,9 +146,7 @@ class DetailController extends BaseController
                 ? SecurityManager::preventXss($punishment['removed_by_name']) 
                 : null,
             'removed_by_uuid' => $punishment['removed_by_uuid'] ?? null,
-            'removed_date' => isset($punishment['removed_by_date']) && $punishment['removed_by_date'] > 0
-                ? $this->formatDate((int)$punishment['removed_by_date'])
-                : null,
+            'removed_date' => $this->formatRemovedDate($punishment['removed_by_date'] ?? null),
             'silent' => (bool)($punishment['silent'] ?? false),
             'ipban' => (bool)($punishment['ipban'] ?? false),
             'warned' => (bool)($punishment['warned'] ?? false),
@@ -187,6 +185,31 @@ class DetailController extends BaseController
         }
         
         return implode(' ', $parts);
+    }
+    
+    private function formatRemovedDate($removedDate): ?string
+    {
+        // Handle NULL or empty values
+        if (empty($removedDate) || $removedDate === 'NULL' || $removedDate === '#expired') {
+            return null;
+        }
+        
+        // Check if it's a numeric timestamp
+        if (!is_numeric($removedDate)) {
+            return null;
+        }
+        
+        $timestamp = (int)$removedDate;
+        
+        // Validate timestamp - must be greater than 1000000000 (Sep 2001)
+        // This filters out invalid small numbers that would result in 1970 dates
+        if ($timestamp < 1000000000) {
+            return null;
+        }
+        
+        // LiteBans stores removed_by_date in seconds (not milliseconds like other timestamps)
+        // So we need to multiply by 1000 before passing to formatDate
+        return $this->formatDate($timestamp * 1000);
     }
     
     protected function formatPunishments(array $punishments): array
