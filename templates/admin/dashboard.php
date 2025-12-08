@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.3
+ *  Version:       3.4
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -949,6 +949,102 @@ if (!$controller->isAuthenticated()) {
 
         <!-- System Info Tab -->
         <div class="tab-pane fade" id="info" role="tabpanel">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">
+                        <i class="fas fa-sitemap"></i> SEO Sitemap
+                    </h5>
+                    
+                    <!-- Dynamic website information -->
+                    <div class="alert alert-info mb-3" role="alert">
+                        <div class="row">
+                            <div class="col-md-6 mb-2 mb-md-0">
+                                <strong><i class="fas fa-globe"></i> Website:</strong>
+                                <code class="ms-2"><?= htmlspecialchars($config['site_url'] ?? 'https://yoursite.com', ENT_QUOTES, 'UTF-8') ?></code>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-clock"></i> Generated at:</strong>
+                                <code class="ms-2" id="sitemap-time"><?= date('Y-m-d H:i:s') ?></code>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted mb-3">
+                        Copy this XML code and save it as <code>sitemap.xml</code> in your website's root directory.
+                    </p>
+                    <div class="d-flex justify-content-end mb-2">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="copySitemapToClipboard()">
+                            <i class="fas fa-copy"></i> Copy to Clipboard
+                        </button>
+                    </div>
+                    <div class="sitemap-container">
+                        <pre id="sitemap-content" class="mb-0"><code><?= htmlspecialchars($controller->generateSitemap(), ENT_QUOTES, 'UTF-8') ?></code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">
+                        <i class="fas fa-robot"></i> Robots.txt Configuration
+                    </h5>
+                    
+                    <div class="alert alert-warning mb-3" role="alert">
+                        <strong><i class="fas fa-info-circle"></i> Setup Instructions:</strong>
+                        <ol class="mb-0 mt-2">
+                            <li>Copy the robots.txt content below</li>
+                            <li>Create or edit <code>robots.txt</code> in your website's root directory</li>
+                            <li>Make sure to update the Sitemap URL to match your domain</li>
+                            <li>Adjust crawl-delay if needed (optional)</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mb-2">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="copyRobotsToClipboard()">
+                            <i class="fas fa-copy"></i> Copy to Clipboard
+                        </button>
+                    </div>
+                    <div class="sitemap-container">
+                        <pre id="robots-content" class="mb-0"><code><?php
+$siteUrl = rtrim($config['site_url'] ?? 'https://yoursite.com', '/');
+$robotsTxt = <<<ROBOTS
+# robots.txt for LiteBansU
+User-agent: *
+
+# Allow public pages
+Allow: /
+Allow: /bans
+Allow: /mutes
+Allow: /warnings
+Allow: /kicks
+Allow: /stats
+Allow: /protest
+Allow: /search
+Allow: /assets/
+
+# Disallow admin and system directories
+Disallow: /admin
+Disallow: /config/
+Disallow: /core/
+Disallow: /controllers/
+Disallow: /templates/
+Disallow: /lang/
+Disallow: /.env
+Disallow: /hash.php
+Disallow: /install-demos.php
+
+# Sitemap location
+Sitemap: {$siteUrl}/sitemap.xml
+
+# Crawl-delay (optional, adjust as needed)
+Crawl-delay: 1
+ROBOTS;
+echo htmlspecialchars($robotsTxt, ENT_QUOTES, 'UTF-8');
+?></code></pre>
+                    </div>
+                </div>
+            </div>
+            
             <div class="card">
                 <div class="card-body">
                     <h5 class="mb-3">PHP Information</h5>
@@ -1031,6 +1127,27 @@ if (!$controller->isAuthenticated()) {
     color: var(--primary);
     margin-top: 1.5rem;
     margin-bottom: 1rem;
+}
+
+.sitemap-container {
+    max-height: 400px;
+    overflow-y: auto;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.sitemap-container pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.sitemap-container code {
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-family: 'Courier New', monospace;
 }
 
 .admin-search-result {
@@ -1216,6 +1333,76 @@ if (!$controller->isAuthenticated()) {
 
 <!-- Admin Dashboard JavaScript -->
 <script>
+// Copy sitemap to clipboard
+function copySitemapToClipboard() {
+    const sitemapContent = document.getElementById('sitemap-content');
+    if (!sitemapContent) return;
+    
+    const textArea = document.createElement('textarea');
+    textArea.value = sitemapContent.textContent;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        
+        // Show success feedback
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy sitemap:', err);
+        alert('Failed to copy. Please use manual copy (Ctrl+C).');
+    } finally {
+        document.body.removeChild(textArea);
+    }
+}
+
+// Copy robots.txt to clipboard
+function copyRobotsToClipboard() {
+    const robotsContent = document.getElementById('robots-content');
+    if (!robotsContent) return;
+    
+    const textArea = document.createElement('textarea');
+    textArea.value = robotsContent.textContent;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        
+        // Show success feedback
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-primary');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy robots.txt:', err);
+        alert('Failed to copy. Please use manual copy (Ctrl+C).');
+    } finally {
+        document.body.removeChild(textArea);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     const userRole = '<?= htmlspecialchars($currentUser['role'] ?? 'admin', ENT_QUOTES, 'UTF-8') ?>';
