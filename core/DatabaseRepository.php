@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.5
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -197,8 +197,15 @@ class DatabaseRepository
             
             $orderClause = "{$sortColumn} {$order}";
             
+            $currentTime = time() * 1000; // Current time in milliseconds
+            
             $sql = "SELECT w.id, w.uuid, w.reason, w.banned_by_name, w.banned_by_uuid, w.time, 
-                           CAST(w.warned AS UNSIGNED) as warned, CAST(w.active AS UNSIGNED) as active,
+                           CAST(w.warned AS UNSIGNED) as warned, 
+                           w.until,
+                           CASE 
+                               WHEN w.until IS NOT NULL AND w.until > 0 AND w.until <= :current_time THEN 0
+                               ELSE CAST(w.active AS UNSIGNED)
+                           END as active,
                            w.server_origin, w.server_scope,
                            h.name as player_name
                     FROM {$table} w
@@ -216,6 +223,7 @@ class DatabaseRepository
                     LIMIT :limit OFFSET :offset";
             
             $stmt = $this->connection->prepare($sql);
+            $stmt->bindValue(':current_time', $currentTime, PDO::PARAM_INT);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
