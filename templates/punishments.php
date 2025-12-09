@@ -102,8 +102,10 @@
                             <small><?= $punishment['date'] ?></small>
                         </td>
                         <?php if ($type !== 'kicks'): ?>
-                            <td>
-                                <?php if ($punishment['until']): ?>
+                            <td class="text-center">
+                                <?php if ($punishment['removed_by']): ?>
+                                    <span class="text-muted">-</span>
+                                <?php elseif ($punishment['until']): ?>
                                     <?php 
                                     if (strpos($punishment['until'], $lang->get('punishment.permanent')) !== false): ?>
                                         <span class="badge bg-danger"><?= $punishment['until'] ?></span>
@@ -217,7 +219,8 @@
                                 <strong><?= $lang->get('table.date') ?>:</strong><br>
                                 <?= date('M j, Y', strtotime($punishment['date'])) ?>
                             </div>
-                            <?php if ($type !== 'kicks' && $punishment['until']): ?>
+                            <?php if ($type !== 'kicks' && !$punishment['removed_by']): ?>
+                                <?php if ($punishment['until']): ?>
                                 <div class="col-12 mt-2">
                                     <strong><?= $lang->get('table.expires') ?>:</strong>
                                     <?php 
@@ -229,6 +232,12 @@
                                         <span class="badge bg-warning ms-1"><?= $punishment['until'] ?></span>
                                     <?php endif; ?>
                                 </div>
+                                <?php else: ?>
+                                <div class="col-12 mt-2">
+                                    <strong><?= $lang->get('table.expires') ?>:</strong>
+                                    <span class="badge bg-danger ms-1"><?= $lang->get('punishment.permanent') ?></span>
+                                </div>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                         
