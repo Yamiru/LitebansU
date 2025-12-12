@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.4
+ *  Version:       3.6
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -145,7 +145,7 @@ class AdminController extends BaseController
         $type = $input['type'] ?? '';
         
         try {
-            if (empty($query) || strlen($query) < 2) {
+            if (empty($query) || strlen($query) < 1) {
                 $this->jsonResponse(['success' => true, 'punishments' => []]);
                 return;
             }
@@ -209,7 +209,7 @@ class AdminController extends BaseController
             $tables = ['bans', 'mutes', 'warnings', 'kicks'];
         }
         
-        // Check if query is numeric (ID search)
+        // Check if query is numeric (for direct ID match)
         $isNumeric = is_numeric($query);
         
         // Check if query is a UUID
@@ -218,7 +218,7 @@ class AdminController extends BaseController
         foreach ($tables as $table) {
             $fullTable = $this->repository->getTablePrefix() . $table;
             
-            // 1. ID SEARCH (NEW - case-insensitive, numeric)
+            // 1. NUMERIC ID SEARCH (exact match for numbers like "1", "123", etc.)
             if ($isNumeric) {
                 $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
                         FROM {$fullTable} p
@@ -239,7 +239,32 @@ class AdminController extends BaseController
                         $seenIds[$key] = true;
                     }
                 }
-                continue; // Skip other searches for ID
+                continue; // Skip other searches for numeric IDs
+            }
+            
+            // 1b. ALPHANUMERIC ID SEARCH (for IDs like "ban123", "mute456")
+            $couldBeAlphanumericId = strlen($query) <= 20 && preg_match('/^[a-zA-Z0-9]+$/', $query);
+            if ($couldBeAlphanumericId && !$isUuid) {
+                $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
+                        FROM {$fullTable} p
+                        LEFT JOIN {$historyTable} h ON p.uuid = h.uuid 
+                            AND h.date = (SELECT MAX(date) FROM {$historyTable} WHERE uuid = p.uuid)
+                        WHERE CAST(p.id AS CHAR) = :id
+                        AND p.uuid IS NOT NULL AND p.uuid != '#'
+                        LIMIT 1";
+                
+                $stmt = $this->repository->getConnection()->prepare($sql);
+                $stmt->execute([':id' => $query]);
+                $row = $stmt->fetch();
+                
+                if ($row) {
+                    $key = $row['id'] . '_' . $table;
+                    if (!isset($seenIds[$key])) {
+                        $results[] = $row;
+                        $seenIds[$key] = true;
+                    }
+                }
+                // Don't continue - still try name/reason searches for partial matches
             }
             
             // 2. UUID SEARCH
@@ -261,8 +286,10 @@ class AdminController extends BaseController
                         $seenIds[$key] = true;
                     }
                 }
-            } else {
-                // 3. NAME SEARCH (case-insensitive)
+                continue; // Skip name/reason searches for UUID
+            }
+            
+            // 3. NAME SEARCH (case-insensitive)
                 $nameSql = "SELECT DISTINCT p.uuid FROM {$historyTable} p
                            WHERE (LOWER(p.name) = LOWER(:exact_name) 
                            OR LOWER(p.name) LIKE LOWER(:partial_name))
@@ -337,7 +364,6 @@ class AdminController extends BaseController
                         $seenIds[$key] = true;
                     }
                 }
-            }
         }
         
         return $results;
