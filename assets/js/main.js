@@ -5,7 +5,7 @@
  *
  * Plugin Name: LiteBansU
  * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version: 3.0
+ * Version: 3.6
  * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI: https://yamiru.com
  * License: MIT
@@ -41,6 +41,8 @@ class LiteBansUI {
         this.setupClearCache();
         this.setupModals();
         this.setupTables();
+        this.setupClickableRows();
+        this.setupBackButton();
         
         // Initialize Bootstrap components
         this.initializeBootstrapComponents();
@@ -597,6 +599,30 @@ class LiteBansUI {
     setupTableSort() {
         // Placeholder for table sorting functionality
         // Can be implemented later if needed
+    }
+
+    setupClickableRows() {
+        // Handle clickable rows with data-href attribute
+        document.addEventListener('click', (e) => {
+            const clickableRow = e.target.closest('.clickable-row');
+            if (clickableRow && clickableRow.dataset.href) {
+                // Don't navigate if clicking on a link or button inside the row
+                if (e.target.closest('a, button')) {
+                    return;
+                }
+                window.location.href = clickableRow.dataset.href;
+            }
+        });
+    }
+
+    setupBackButton() {
+        // Handle back buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.back-button')) {
+                e.preventDefault();
+                window.history.back();
+            }
+        });
     }
 
     initializeBootstrapComponents() {
