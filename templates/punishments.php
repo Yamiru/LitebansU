@@ -151,7 +151,7 @@
     <!-- Mobile Card Layout -->
     <div class="mobile-punishment-list d-lg-none">
         <?php foreach ($punishments as $punishment): ?>
-            <div class="mobile-punishment-card" onclick="window.location.href='<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>'">
+            <div class="mobile-punishment-card clickable-row" data-href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="card mb-3">
                     <div class="card-body">
                         <!-- Player Header -->
