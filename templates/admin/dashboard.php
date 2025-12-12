@@ -178,7 +178,18 @@ if (!$controller->isAuthenticated()) {
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Web Server</td>
-                                    <td class="admin-table-text"><i class="fas fa-server text-success"></i> Web Server</td>
+                                    <td class="admin-table-text">
+                                        <?php
+                                        $server = $_SERVER['SERVER_SOFTWARE'] ?? '';
+                                        if (stripos($server, 'nginx') !== false) {
+                                            echo '<i class="fas fa-server text-success"></i> Nginx';
+                                        } elseif (stripos($server, 'apache') !== false) {
+                                            echo '<i class="fas fa-server text-success"></i> Apache';
+                                        } else {
+                                            echo '<i class="fas fa-server text-warning"></i> ' . htmlspecialchars($server ?: 'Unknown', ENT_QUOTES, 'UTF-8');
+                                        }
+                                        ?>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="text-muted">PHP Version</td>
