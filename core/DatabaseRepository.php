@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.5
+ *  Version:       3.6
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -311,8 +311,8 @@ class DatabaseRepository
                     return [];
                 }
                 
-                // If searching by name, first get UUID from history
-                $stmt = $this->connection->prepare("SELECT uuid FROM {$historyTable} WHERE name = :name ORDER BY date DESC LIMIT 1");
+                // If searching by name, first get UUID from history (case-insensitive search)
+                $stmt = $this->connection->prepare("SELECT uuid FROM {$historyTable} WHERE LOWER(name) = LOWER(:name) ORDER BY date DESC LIMIT 1");
                 $stmt->bindValue(':name', $identifier, PDO::PARAM_STR);
                 $stmt->execute();
                 $result = $stmt->fetch();
