@@ -14,7 +14,7 @@
                                 <i class="fas fa-home"></i>
                                 <?= htmlspecialchars($lang->get('nav.home'), ENT_QUOTES, 'UTF-8') ?>
                             </a>
-                            <button onclick="history.back()" class="btn btn-outline-secondary btn-lg">
+                            <button class="btn btn-outline-secondary btn-lg back-button">
                                 <i class="fas fa-arrow-left"></i>
                                 Go Back
                             </button>
