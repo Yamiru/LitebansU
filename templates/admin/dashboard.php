@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.4
+ *  Version:       3.6
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -1702,6 +1702,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = document.getElementById('modify-id').value;
         const newReason = document.getElementById('modify-reason-input').value.trim();
         
+        // Enhanced validation
+        if (!type || !['ban', 'mute', 'warning', 'kick'].includes(type)) {
+            alert('Invalid punishment type');
+            console.error('Invalid type:', type);
+            return;
+        }
+        
+        if (!id || isNaN(parseInt(id))) {
+            alert('Invalid punishment ID');
+            console.error('Invalid ID:', id);
+            return;
+        }
+        
         if (!newReason) {
             alert('Please enter a reason');
             return;
@@ -1713,16 +1726,29 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
         
         try {
+            const requestData = { 
+                type, 
+                id: parseInt(id), 
+                reason: newReason 
+            };
+            
+            console.log('Sending modify reason request:', requestData);
+            
             const response = await fetch('<?= url('admin/modify-reason') ?>', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ type, id: parseInt(id), reason: newReason })
+                body: JSON.stringify(requestData)
             });
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
+            console.log('Modify reason response:', result);
             
             if (result.success) {
                 bootstrap.Modal.getInstance(document.getElementById('modifyReasonModal')).hide();
@@ -1734,7 +1760,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Modify reason error:', error);
-            alert('Error: ' + error.message);
+            alert('Error updating reason: ' + error.message);
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalText;
