@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             $playerName = $ban['player_name'] ?? $ban['name'] ?? 'Unknown';
                             $uuid = $ban['uuid'] ?? '';
                             ?>
-                            <div class="punishment-item" style="cursor: pointer;" onclick="window.location.href='<?= htmlspecialchars(url('detail?type=ban&id=' . $ban['id']), ENT_QUOTES, 'UTF-8') ?>'">
+                            <div class="punishment-item clickable-row" style="cursor: pointer;" data-href="<?= htmlspecialchars(url('detail?type=ban&id=' . $ban['id']), ENT_QUOTES, 'UTF-8') ?>">
                                 <div class="d-flex align-items-center">
                                     <img src="<?= htmlspecialchars($controller->getAvatarUrl($uuid, $playerName), ENT_QUOTES, 'UTF-8') ?>" 
                                          alt="<?= htmlspecialchars($playerName, ENT_QUOTES, 'UTF-8') ?>" 
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             $playerName = $mute['player_name'] ?? $mute['name'] ?? 'Unknown';
                             $uuid = $mute['uuid'] ?? '';
                             ?>
-                            <div class="punishment-item" style="cursor: pointer;" onclick="window.location.href='<?= htmlspecialchars(url('detail?type=mute&id=' . $mute['id']), ENT_QUOTES, 'UTF-8') ?>'">
+                            <div class="punishment-item clickable-row" style="cursor: pointer;" data-href="<?= htmlspecialchars(url('detail?type=mute&id=' . $mute['id']), ENT_QUOTES, 'UTF-8') ?>">
                                 <div class="d-flex align-items-center">
                                     <img src="<?= htmlspecialchars($controller->getAvatarUrl($uuid, $playerName), ENT_QUOTES, 'UTF-8') ?>" 
                                          alt="<?= htmlspecialchars($playerName, ENT_QUOTES, 'UTF-8') ?>" 
