@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   Google OAuth and user management for admin panel
- *  Version:       3.0
+ *  Version:       3.6
  *  License:       MIT
  * ============================================================================
  */
@@ -207,16 +207,22 @@ class AuthManager
      */
     public function getRedirectUri(string $provider = 'google'): string
     {
-        $baseUrl = rtrim($this->config['site_url'] ?? '', '/');
-        $basePath = $this->config['base_path'] ?? '';
+        // Automatically detect the full base URL including subfolder
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? '';
+        $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
+        $basePath = ($scriptPath === '/' || $scriptPath === '\\') ? '' : $scriptPath;
+        
+        // Construct full base URL
+        $baseUrl = $protocol . '://' . $host . $basePath;
         
         // For Google, use URI without provider param (backward compatibility)
         // For Discord, add provider param
         if ($provider === 'discord') {
-            return $baseUrl . $basePath . '/admin/oauth-callback?provider=discord';
+            return $baseUrl . '/admin/oauth-callback?provider=discord';
         }
         
-        return $baseUrl . $basePath . '/admin/oauth-callback';
+        return $baseUrl . '/admin/oauth-callback';
     }
     
     /**
