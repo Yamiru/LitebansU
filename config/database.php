@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.7
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -77,13 +77,28 @@ class DatabaseConfig
         }
     }
     
+    /**
+     * Get MySQL init command attribute constant
+     * PHP 8.5+ deprecated PDO::MYSQL_ATTR_INIT_COMMAND in favor of Pdo\Mysql::ATTR_INIT_COMMAND
+     */
+    private function getMysqlInitCommandAttribute(): int
+    {
+        // Check if we're on PHP 8.5+ where Pdo\Mysql class exists
+        if (class_exists('Pdo\\Mysql') && defined('Pdo\\Mysql::ATTR_INIT_COMMAND')) {
+            return \Pdo\Mysql::ATTR_INIT_COMMAND;
+        }
+        
+        // Fallback for PHP < 8.5
+        return \PDO::MYSQL_ATTR_INIT_COMMAND;
+    }
+    
     private function setOptions(): void
     {
         $this->options = [
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             \PDO::ATTR_EMULATE_PREPARES => false,
-            \PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
+            $this->getMysqlInitCommandAttribute() => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
             \PDO::ATTR_TIMEOUT => 30,
             \PDO::ATTR_PERSISTENT => false,
         ];
