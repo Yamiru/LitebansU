@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.7
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -44,6 +44,9 @@ return [
     'admin_password' => EnvLoader::get('ADMIN_PASSWORD', ''),
     'default_theme' => EnvLoader::get('DEFAULT_THEME', 'dark'),
     'default_language' => EnvLoader::get('DEFAULT_LANGUAGE', 'en'),
+    
+    // Require Login - When enabled, all pages require admin authentication
+    'require_login' => EnvLoader::get('REQUIRE_LOGIN', 'false') === 'true',
     
     // Google OAuth Configuration
     'google_auth_enabled' => EnvLoader::get('GOOGLE_AUTH_ENABLED', 'false') === 'true',
