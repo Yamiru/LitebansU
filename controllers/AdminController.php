@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.6
+ *  Version:       3.7
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -119,7 +119,15 @@ class AdminController extends BaseController
         // Log successful login
         $this->logAdminAction('login_success', 'Successfully logged in');
         
-        $this->redirect(url('admin'));
+        // Check for redirect after login (require_login feature)
+        $redirectUrl = $_SESSION['redirect_after_login'] ?? null;
+        unset($_SESSION['redirect_after_login']);
+        
+        if ($redirectUrl && strpos($redirectUrl, '/admin') !== 0) {
+            $this->redirect($redirectUrl);
+        } else {
+            $this->redirect(url('admin'));
+        }
     }
     
     public function logout(): void
@@ -601,6 +609,9 @@ class AdminController extends BaseController
             $settings['SHOW_CONTACT_FORUM'] = isset($_POST['show_contact_forum']) ? 'true' : 'false';
             $settings['SHOW_MENU_PROTEST'] = isset($_POST['show_menu_protest']) ? 'true' : 'false';
             $settings['SHOW_MENU_STATS'] = isset($_POST['show_menu_stats']) ? 'true' : 'false';
+            
+            // Require Login - all pages require authentication
+            $settings['REQUIRE_LOGIN'] = isset($_POST['require_login']) ? 'true' : 'false';
             
             // SEO Settings
             $settings['SEO_ENABLE_SCHEMA'] = isset($_POST['seo_enable_schema']) ? 'true' : 'false';
@@ -1092,7 +1103,15 @@ class AdminController extends BaseController
             'email' => $user['email']
         ]);
         
-        $this->redirect(url('admin'));
+        // Check for redirect after login (require_login feature)
+        $redirectUrl = $_SESSION['redirect_after_login'] ?? null;
+        unset($_SESSION['redirect_after_login']);
+        
+        if ($redirectUrl && strpos($redirectUrl, '/admin') !== 0) {
+            $this->redirect($redirectUrl);
+        } else {
+            $this->redirect(url('admin'));
+        }
     }
     
     /**
