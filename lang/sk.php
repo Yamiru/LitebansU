@@ -200,7 +200,11 @@ return [
         'settings' => 'Nastavenia',
         'show_player_uuid' => 'Zobraziť UUID hráča',
         'footer_site_name' => 'Názov stránky v pätičke',
-'footer_site_name_desc' => 'Názov stránky zobrazený v texte autorských práv v pätičke',
+        'footer_site_name_desc' => 'Názov stránky zobrazený v texte autorských práv v pätičke',
+        'require_login' => 'Vyžadovať prihlásenie',
+        'require_login_desc' => 'Vyžadovať autentifikáciu pre zobrazenie všetkých stránok',
+        'login_required' => 'Vyžaduje sa prihlásenie',
+        'login_required_desc' => 'Pre prístup k tejto stránke sa prosím prihláste',
     ],
 ];
 
