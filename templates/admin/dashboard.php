@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.6
+ *  Version:       3.7
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -542,6 +542,32 @@ if (!$controller->isAuthenticated()) {
                                     <label class="form-check-label" for="show_menu_stats">
                                         Show Statistics in Menu
                                     </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Access Control Settings -->
+                        <hr class="my-4">
+                        <h6 class="mb-3"><i class="fas fa-lock"></i> Access Control</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" name="require_login" 
+                                           id="require_login" <?= ($config['require_login'] ?? false) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="require_login">
+                                        <i class="fas fa-user-lock"></i> Require Login for All Pages
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        When enabled, visitors must log in through the admin panel to view any page. 
+                                        Useful for private servers or internal use.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-warning mb-0">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Note:</strong> Make sure you have admin authentication configured before enabling this option, 
+                                    otherwise you may lock yourself out!
                                 </div>
                             </div>
                         </div>
