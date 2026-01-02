@@ -201,5 +201,9 @@ return [
         'show_player_uuid' => 'Show Player UUID',
         'footer_site_name' => 'Footer Site Name',
         'footer_site_name_desc' => 'Site name displayed in the footer copyright text',
+        'require_login' => 'Require Login',
+        'require_login_desc' => 'Require authentication to view all pages',
+        'login_required' => 'Login Required',
+        'login_required_desc' => 'Please log in to access this page',
     ],
 ];
