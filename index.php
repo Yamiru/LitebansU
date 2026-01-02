@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.3
+ *  Version:       3.7
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -175,6 +175,27 @@ function showErrorPage(int $code, string $title, string $message): string {
 HTML;
 }
 
+/**
+ * Check if user is authenticated for require_login feature
+ */
+function isUserAuthenticated(): bool {
+    if (!isset($_SESSION['admin_authenticated'])) {
+        return false;
+    }
+    
+    // Check session timeout (2 hours)
+    if (time() - ($_SESSION['admin_login_time'] ?? 0) > 7200) {
+        unset($_SESSION['admin_authenticated']);
+        unset($_SESSION['admin_user_id']);
+        return false;
+    }
+    
+    // Refresh session time on activity
+    $_SESSION['admin_login_time'] = time();
+    
+    return true;
+}
+
 try {
     // Language switch
     if (isset($_GET['lang'])) {
@@ -237,6 +258,17 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
 
     $GLOBALS['stats'] = $stats;
     $GLOBALS['config'] = $config;
+
+    // Check require_login setting - redirect to admin login if not authenticated
+    $requireLogin = $config['require_login'] ?? false;
+    $isAdminRoute = str_starts_with($requestUri, '/admin');
+    
+    if ($requireLogin && !$isAdminRoute && !isUserAuthenticated()) {
+        // Store the original requested URL for redirect after login
+        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+        header("Location: " . url('admin'));
+        exit;
+    }
 
 // Routing
     if ($requestUri === '/' || $requestUri === '/index.php') {
