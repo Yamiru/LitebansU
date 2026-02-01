@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.7
+ *  Version:       3.8
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -16,12 +16,12 @@
 
 declare(strict_types=1);
 
-// Error handling
+// Error handling - capture all errors
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 
-// Load environment
+// Load environment first
 $envLoaderPath = __DIR__ . '/core/EnvLoader.php';
 if (!file_exists($envLoaderPath)) {
     die('EnvLoader.php not found at: ' . $envLoaderPath);
@@ -32,6 +32,119 @@ try {
     core\EnvLoader::load();
 } catch (Exception $e) {
     die('Failed to load environment: ' . $e->getMessage());
+}
+
+// Load Logger immediately after EnvLoader so we can log errors
+require_once __DIR__ . '/core/Logger.php';
+$logger = \core\Logger::getInstance();
+$logger->rotateIfNeeded();
+
+// Helper function for error pages - defined early so it's available everywhere
+function showErrorPage(int $code, string $title, string $message, ?string $details = null): string {
+    http_response_code($code);
+    $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+    $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+    
+    // Get base path for home link
+    $scriptPath = dirname($_SERVER['SCRIPT_NAME'] ?? '');
+    $basePath = ($scriptPath === '/' || $scriptPath === '\\') ? '' : $scriptPath;
+    $homeUrl = htmlspecialchars($basePath ?: '/', ENT_QUOTES, 'UTF-8');
+    
+    // Show details in debug mode
+    $detailsHtml = '';
+    $debug = core\EnvLoader::get('DEBUG', 'false') === 'true';
+    if ($details && $debug) {
+        $safeDetails = htmlspecialchars($details, ENT_QUOTES, 'UTF-8');
+        $detailsHtml = "<div class='alert alert-secondary mt-3 text-start'><small><strong>Debug info:</strong><br><pre style='white-space: pre-wrap; word-break: break-all; margin: 0; font-size: 12px;'>{$safeDetails}</pre></small></div>";
+    }
+
+    return <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{$code} - {$safeTitle}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .error-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; }
+        .copyright-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); color: white; text-align: center; padding: 0.5rem; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12">
+                <div class="card error-card mx-auto">
+                    <div class="card-body text-center p-5">
+                        <h1 class="display-1 text-danger mb-4">{$code}</h1>
+                        <h2 class="mb-3">{$safeTitle}</h2>
+                        <p class="lead text-muted mb-4">{$safeMessage}</p>
+                        {$detailsHtml}
+                        <a href="{$homeUrl}" class="btn btn-danger btn-lg mt-3"><i class="fas fa-home"></i> Go Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="copyright-footer">Powered by <strong>LitebansU</strong> by <strong>Yamiru</strong></div>
+</body>
+</html>
+HTML;
+}
+
+/**
+ * Parse database error and return user-friendly message with details
+ */
+function parseDatabaseError(PDOException $e): array {
+    $code = $e->getCode();
+    $message = $e->getMessage();
+    
+    // Default
+    $userMessage = 'Unable to connect to the database.';
+    $details = "Error: {$message}";
+    
+    // Parse specific MySQL error codes
+    if ($code == 1045 || stripos($message, 'Access denied') !== false) {
+        $userMessage = 'Database access denied - invalid username or password.';
+        $details = "Check DB_USER and DB_PASS in your .env file.\n\nOriginal error: {$message}";
+    } 
+    elseif ($code == 1049 || stripos($message, 'Unknown database') !== false) {
+        $userMessage = 'Database does not exist.';
+        $details = "Check DB_NAME in your .env file - the specified database was not found.\n\nOriginal error: {$message}";
+    }
+    elseif ($code == 1044) {
+        $userMessage = 'Database access denied - user lacks privileges.';
+        $details = "The database user does not have permission to access this database.\n\nOriginal error: {$message}";
+    }
+    elseif ($code == 2002 || stripos($message, 'Connection refused') !== false || stripos($message, 'No such file') !== false) {
+        $userMessage = 'Cannot connect to database server.';
+        $details = "Check DB_HOST and DB_PORT in your .env file.\nThe database server may be down or not accepting connections.\n\nOriginal error: {$message}";
+    }
+    elseif ($code == 1146 || stripos($message, "doesn't exist") !== false || stripos($message, "does not exist") !== false) {
+        $userMessage = 'Database table not found.';
+        $details = "Check TABLE_PREFIX in your .env file.\nMake sure LiteBans plugin has created the tables.\n\nOriginal error: {$message}";
+    }
+    elseif ($code == 2006 || $code == 2013 || stripos($message, 'gone away') !== false) {
+        $userMessage = 'Database connection lost.';
+        $details = "The connection to database was lost. Server may be overloaded.\n\nOriginal error: {$message}";
+    }
+    elseif ($code == 1040) {
+        $userMessage = 'Too many database connections.';
+        $details = "The database server has too many connections. Try again later.\n\nOriginal error: {$message}";
+    }
+    elseif (stripos($message, 'timeout') !== false) {
+        $userMessage = 'Database connection timeout.';
+        $details = "Connection to database timed out. Server may be slow or unreachable.\n\nOriginal error: {$message}";
+    }
+    
+    return [
+        'userMessage' => $userMessage,
+        'details' => $details . "\n\nError code: {$code}\nFile: {$e->getFile()}\nLine: {$e->getLine()}"
+    ];
 }
 
 // Session start
@@ -68,6 +181,7 @@ $requiredFiles = [
     'core/LanguageManager.php',
     'core/ThemeManager.php',
     'core/DatabaseRepository.php',
+    'core/RememberMeManager.php',
     'controllers/BaseController.php',
     'controllers/HomeController.php',
     'controllers/PunishmentsController.php',
@@ -80,6 +194,7 @@ $requiredFiles = [
 foreach ($requiredFiles as $file) {
     $fullPath = BASE_DIR . '/' . $file;
     if (!file_exists($fullPath)) {
+        $logger->critical("Required file missing: {$file}");
         die(showErrorPage(500, 'System Error', 'Required system file missing: ' . $file));
     }
     require_once $fullPath;
@@ -91,14 +206,22 @@ try {
     if (!is_array($config)) {
         throw new RuntimeException('Configuration file must return an array');
     }
-    
-    // Add database config to main config
+} catch (Exception $e) {
+    $logger->critical("Config load error: " . $e->getMessage());
+    die(showErrorPage(500, 'Configuration Error', 'Failed to load configuration.', $e->getMessage()));
+}
+
+// Initialize database config - this can throw if .env has invalid values
+try {
     $dbConfig = new DatabaseConfig();
     $config['db_name'] = $dbConfig->getDatabase();
     $config['db_driver'] = $dbConfig->getDriver();
-    
-} catch (Exception $e) {
-    die(showErrorPage(500, 'Configuration Error', 'Failed to load configuration: ' . $e->getMessage()));
+} catch (InvalidArgumentException $e) {
+    $logger->error("Database config error: " . $e->getMessage());
+    die(showErrorPage(500, 'Configuration Error', $e->getMessage(), "Check your .env file for correct database settings."));
+} catch (RuntimeException $e) {
+    $logger->error("Database config error: " . $e->getMessage());
+    die(showErrorPage(500, 'Configuration Error', $e->getMessage()));
 }
 
 // Set timezone
@@ -113,7 +236,6 @@ function url(string $path = ''): string {
         return $basePath ?: '/';
     }
     
-    // Prevent duplicate base paths
     if ($basePath && strpos($path, ltrim($basePath, '/')) === 0) {
         return '/' . $path;
     }
@@ -128,79 +250,59 @@ function asset(string $path): string {
     return rtrim(BASE_PATH, '/') . '/' . $path . $version;
 }
 
-function showErrorPage(int $code, string $title, string $message): string {
-    http_response_code($code);
-    $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
-    $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
-    $homeUrl = htmlspecialchars(url(), ENT_QUOTES, 'UTF-8');
-
-    return <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="generator" content="LitebansU">
-    <meta name="author" content="Yamiru">
-    <title>{$code} - {$safeTitle}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <style>
-        body { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .error-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-        .copyright-footer { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.8); color: white; text-align: center; padding: 0.5rem; font-size: 0.8rem; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card error-card">
-                    <div class="card-body text-center p-5">
-                        <h1 class="display-1 text-danger mb-4">{$code}</h1>
-                        <h2 class="mb-3">{$safeTitle}</h2>
-                        <p class="lead text-muted mb-4">{$safeMessage}</p>
-                        <a href="{$homeUrl}" class="btn btn-danger btn-lg"><i class="fas fa-home"></i> Go Home</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="copyright-footer" data-copyright="litebansU">
-        Powered by <strong>LitebansU</strong> by <strong>Yamiru</strong> - MIT License
-    </div>
-</body>
-</html>
-HTML;
-}
-
 /**
  * Check if user is authenticated for require_login feature
  */
 function isUserAuthenticated(): bool {
     if (!isset($_SESSION['admin_authenticated'])) {
+        // Try remember me
+        $rememberMe = new \core\RememberMeManager();
+        $tokenData = $rememberMe->validateToken();
+        
+        if ($tokenData !== null) {
+            $_SESSION['admin_authenticated'] = true;
+            $_SESSION['admin_login_time'] = time();
+            
+            if ($tokenData['user_id'] === 'legacy') {
+                $_SESSION['admin_user'] = 'Administrator';
+            } else {
+                require_once BASE_DIR . '/core/AuthManager.php';
+                $config = require BASE_DIR . '/config/app.php';
+                $authManager = new \core\AuthManager($config);
+                $user = $authManager->getUserById($tokenData['user_id']);
+                
+                if ($user && ($user['active'] ?? true)) {
+                    $_SESSION['admin_user'] = $user['name'];
+                    $_SESSION['admin_user_id'] = $user['id'];
+                } else {
+                    $rememberMe->clearCurrentToken();
+                    return false;
+                }
+            }
+            
+            \core\Logger::getInstance()->info('Session restored from remember me token');
+            return true;
+        }
+        
         return false;
     }
     
-    // Check session timeout (2 hours)
     if (time() - ($_SESSION['admin_login_time'] ?? 0) > 7200) {
         unset($_SESSION['admin_authenticated']);
         unset($_SESSION['admin_user_id']);
         return false;
     }
     
-    // Refresh session time on activity
     $_SESSION['admin_login_time'] = time();
-    
     return true;
 }
 
+// Main application logic
 try {
     // Language switch
     if (isset($_GET['lang'])) {
         $selectedLang = preg_replace('/[^a-z]/', '', substr($_GET['lang'], 0, 2));
-if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it', 'ja', 'pl', 'ro', 'ru', 'sk', 'sr', 'tr', 'cn'])) {
+        if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it', 'ja', 'pl', 'ro', 'ru', 'sk', 'sr', 'tr', 'cn'])) {
             $_SESSION['selected_lang'] = $selectedLang;
             setcookie('selected_lang', $selectedLang, [
                 'expires' => time() + 86400 * 30,
@@ -215,7 +317,7 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
         exit;
     }
 
-    // Theme switch - Fixed to properly handle theme changes
+    // Theme switch
     if (isset($_GET['theme'])) {
         $selectedTheme = preg_replace('/[^a-z]/', '', strtolower($_GET['theme']));
         if (in_array($selectedTheme, ['light', 'dark'])) {
@@ -228,7 +330,6 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
             ]);
             $_COOKIE['selected_theme'] = $selectedTheme;
         }
-        // Remove theme parameter from URL but keep other parameters
         $cleanUrl = $_SERVER['REQUEST_URI'];
         $cleanUrl = preg_replace('/[?&]theme=[^&]*/', '', $cleanUrl);
         $cleanUrl = str_replace('&&', '&', $cleanUrl);
@@ -237,17 +338,30 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
         exit;
     }
 
-    // DB init
-    $connection = $dbConfig->createConnection();
-    $repository = new DatabaseRepository($connection, $dbConfig->getTablePrefix());
-    if (!$repository->testConnection()) {
-        throw new RuntimeException('Database connection test failed');
+    // Database connection - with detailed error handling
+    try {
+        $connection = $dbConfig->createConnection();
+        $repository = new DatabaseRepository($connection, $dbConfig->getTablePrefix());
+        
+        if (!$repository->testConnection()) {
+            throw new RuntimeException('Database connection test failed');
+        }
+    } catch (PDOException $e) {
+        $errorInfo = parseDatabaseError($e);
+        $logger->databaseError($e, 'connection');
+        die(showErrorPage(500, 'Database Error', $errorInfo['userMessage'], $errorInfo['details']));
     }
 
     // Init managers
     $lang = new LanguageManager(LanguageManager::detectLanguage());
     $theme = new ThemeManager();
-    $stats = $repository->getStats();
+    
+    try {
+        $stats = $repository->getStats();
+    } catch (PDOException $e) {
+        $logger->databaseError($e, 'getStats');
+        $stats = ['bans' => 0, 'mutes' => 0, 'warnings' => 0, 'kicks' => 0];
+    }
 
     $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
     if (!empty(BASE_PATH) && strpos($requestUri, BASE_PATH) === 0) {
@@ -259,18 +373,17 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
     $GLOBALS['stats'] = $stats;
     $GLOBALS['config'] = $config;
 
-    // Check require_login setting - redirect to admin login if not authenticated
+    // Check require_login
     $requireLogin = $config['require_login'] ?? false;
     $isAdminRoute = str_starts_with($requestUri, '/admin');
     
     if ($requireLogin && !$isAdminRoute && !isUserAuthenticated()) {
-        // Store the original requested URL for redirect after login
         $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
         header("Location: " . url('admin'));
         exit;
     }
 
-// Routing
+    // Routing
     if ($requestUri === '/' || $requestUri === '/index.php') {
         (new HomeController($repository, $lang, $theme, $config))->index();
     } elseif ($requestUri === '/search') {
@@ -294,7 +407,6 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
     } elseif ($requestUri === '/protest/submit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         (new ProtestController($repository, $lang, $theme, $config))->submit();
     } elseif (str_starts_with($requestUri, '/admin')) {
-        // Check if admin is enabled first
         if (!($config['admin_enabled'] ?? false)) {
             echo showErrorPage(403, 'Forbidden', 'Admin panel is disabled.');
             exit;
@@ -318,24 +430,25 @@ if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it
             '/admin/modify-reason'      => $admin->modifyReason(),
             '/admin/save-settings'      => $admin->saveSettings(),
             '/admin/oauth-callback'     => $admin->oauthCallback(),
+            '/admin/oauth-prepare'      => $admin->oauthPrepare(),
             '/admin/users'              => $admin->getUsers(),
             '/admin/users/add'          => $admin->addUser(),
             '/admin/users/update'       => $admin->updateUser(),
             '/admin/users/delete'       => $admin->deleteUser(),
-            default                     => print showErrorPage(404, 'Admin Page Not Found', 'The requested admin page does not exist.')
+            default                     => print showErrorPage(404, 'Not Found', 'The requested admin page does not exist.')
         };
     } else {
-        // Handle 404
+        $logger->debug('404 Not Found', ['uri' => $requestUri]);
         echo showErrorPage(404, 'Page Not Found', 'The requested page does not exist.');
     }
+
 } catch (PDOException $e) {
-    error_log("Database error: " . $e->getMessage());
-    echo showErrorPage(500, 'Database Error', 'Unable to connect to the database. Please check your configuration.');
+    $errorInfo = parseDatabaseError($e);
+    $logger->databaseError($e, 'runtime');
+    echo showErrorPage(500, 'Database Error', $errorInfo['userMessage'], $errorInfo['details']);
+    
 } catch (Exception $e) {
-    error_log("Application error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
-    if ($config['debug'] ?? false) {
-        echo "<pre>Debug Error:\nMessage: " . htmlspecialchars($e->getMessage()) . "\nFile: " . htmlspecialchars($e->getFile()) . "\nLine: " . $e->getLine() . "\nTrace:\n" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
-    } else {
-        echo showErrorPage(500, 'Server Error', 'An unexpected error occurred. Please try again later.');
-    }
+    $logger->exception($e, 'Application error');
+    $details = "Message: {$e->getMessage()}\nFile: {$e->getFile()}\nLine: {$e->getLine()}";
+    echo showErrorPage(500, 'Server Error', 'An unexpected error occurred.', $details);
 }
