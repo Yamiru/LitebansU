@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.7
+ *  Version:       3.8
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -17,6 +17,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../core/AuthManager.php';
+require_once __DIR__ . '/../core/RememberMeManager.php';
+require_once __DIR__ . '/../core/Logger.php';
 
 class AdminController extends BaseController
 {
@@ -25,6 +27,8 @@ class AdminController extends BaseController
     private const LOGIN_LOCKOUT_TIME = 900; // 15 minutes
     
     private ?\core\AuthManager $authManager = null;
+    private ?\core\RememberMeManager $rememberMeManager = null;
+    private ?\core\Logger $logger = null;
     
     private function getAuthManager(): \core\AuthManager
     {
@@ -32,6 +36,22 @@ class AdminController extends BaseController
             $this->authManager = new \core\AuthManager($this->config);
         }
         return $this->authManager;
+    }
+    
+    private function getRememberMeManager(): \core\RememberMeManager
+    {
+        if ($this->rememberMeManager === null) {
+            $this->rememberMeManager = new \core\RememberMeManager();
+        }
+        return $this->rememberMeManager;
+    }
+    
+    private function getLogger(): \core\Logger
+    {
+        if ($this->logger === null) {
+            $this->logger = \core\Logger::getInstance();
+        }
+        return $this->logger;
     }
     
     public function index(): void
@@ -97,6 +117,7 @@ class AdminController extends BaseController
         }
         
         $password = $_POST['password'] ?? '';
+        $rememberMe = isset($_POST['remember_me']) && $_POST['remember_me'] === '1';
         
         // Verify password
         $adminPassword = $this->config['admin_password'] ?? '';
@@ -104,6 +125,9 @@ class AdminController extends BaseController
             $this->incrementLoginAttempts();
             $_SESSION['admin_error'] = 'Invalid password';
             $this->logAdminAction('login_failed', 'Failed login attempt', ['severity' => 'warning']);
+            $this->getLogger()->warning('Failed password login attempt', [
+                'ip' => SecurityManager::getClientIp()
+            ]);
             $this->redirect(url('admin'));
             return;
         }
@@ -113,11 +137,21 @@ class AdminController extends BaseController
         $_SESSION['admin_login_time'] = time();
         $_SESSION['admin_user'] = 'Administrator';
         
+        // Handle Remember Me
+        if ($rememberMe) {
+            $this->getRememberMeManager()->createToken('legacy', 'password');
+            $this->getLogger()->info('Remember me token created for password login');
+        }
+        
         // Clear login attempts
         $this->clearLoginAttempts();
         
         // Log successful login
         $this->logAdminAction('login_success', 'Successfully logged in');
+        $this->getLogger()->info('Successful password login', [
+            'ip' => SecurityManager::getClientIp(),
+            'remember_me' => $rememberMe
+        ]);
         
         // Check for redirect after login (require_login feature)
         $redirectUrl = $_SESSION['redirect_after_login'] ?? null;
@@ -133,10 +167,17 @@ class AdminController extends BaseController
     public function logout(): void
     {
         $this->logAdminAction('logout', 'Logged out');
+        $this->getLogger()->info('User logged out', [
+            'user' => $_SESSION['admin_user'] ?? 'unknown'
+        ]);
+        
+        // Clear remember me token
+        $this->getRememberMeManager()->clearCurrentToken();
         
         unset($_SESSION['admin_authenticated']);
         unset($_SESSION['admin_login_time']);
         unset($_SESSION['admin_user']);
+        unset($_SESSION['admin_user_id']);
         
         $this->redirect(url('/'));
     }
@@ -901,21 +942,64 @@ class AdminController extends BaseController
     
     public function isAuthenticated(): bool
     {
-        if (!isset($_SESSION['admin_authenticated'])) {
-            return false;
+        // First check session
+        if (isset($_SESSION['admin_authenticated'])) {
+            // Check session timeout
+            if (time() - ($_SESSION['admin_login_time'] ?? 0) > self::ADMIN_SESSION_TIMEOUT) {
+                unset($_SESSION['admin_authenticated']);
+                unset($_SESSION['admin_user_id']);
+                $this->getLogger()->debug('Session expired');
+                // Don't return yet - check remember me
+            } else {
+                // Refresh session time on activity
+                $_SESSION['admin_login_time'] = time();
+                return true;
+            }
         }
         
-        // Check session timeout
-        if (time() - ($_SESSION['admin_login_time'] ?? 0) > self::ADMIN_SESSION_TIMEOUT) {
-            unset($_SESSION['admin_authenticated']);
-            unset($_SESSION['admin_user_id']);
-            return false;
+        // Try remember me token
+        $rememberMe = $this->getRememberMeManager();
+        $tokenData = $rememberMe->validateToken();
+        
+        if ($tokenData !== null) {
+            $userId = $tokenData['user_id'];
+            $provider = $tokenData['provider'];
+            
+            // Restore session based on provider
+            if ($userId === 'legacy') {
+                // Password login remember me
+                $_SESSION['admin_authenticated'] = true;
+                $_SESSION['admin_login_time'] = time();
+                $_SESSION['admin_user'] = 'Administrator';
+                
+                $this->getLogger()->info('Session restored from remember me token (password)');
+                return true;
+            } else {
+                // OAuth login remember me
+                $user = $this->getAuthManager()->getUserById($userId);
+                
+                if ($user && ($user['active'] ?? true)) {
+                    $_SESSION['admin_authenticated'] = true;
+                    $_SESSION['admin_login_time'] = time();
+                    $_SESSION['admin_user'] = $user['name'];
+                    $_SESSION['admin_user_id'] = $user['id'];
+                    
+                    $this->getLogger()->info('Session restored from remember me token', [
+                        'user_id' => $userId,
+                        'provider' => $provider
+                    ]);
+                    return true;
+                } else {
+                    // User no longer valid - clear token
+                    $rememberMe->clearCurrentToken();
+                    $this->getLogger()->warning('Remember me token invalid - user not found or inactive', [
+                        'user_id' => $userId
+                    ]);
+                }
+            }
         }
         
-        // Refresh session time on activity
-        $_SESSION['admin_login_time'] = time();
-        
-        return true;
+        return false;
     }
     
     /**
@@ -1030,6 +1114,10 @@ class AdminController extends BaseController
         // Default to google for backward compatibility (when no provider param)
         $provider = $_GET['provider'] ?? 'google';
         
+        // Check for remember me from session (set in oauthPrepare)
+        $rememberMe = $_SESSION['oauth_remember_me'] ?? false;
+        unset($_SESSION['oauth_remember_me']);
+        
         // Validate provider
         if (!in_array($provider, ['google', 'discord'])) {
             $_SESSION['admin_error'] = 'Invalid OAuth provider';
@@ -1055,6 +1143,10 @@ class AdminController extends BaseController
         
         if ($error) {
             $_SESSION['admin_error'] = ucfirst($provider) . ' login was cancelled or failed';
+            $this->getLogger()->warning('OAuth cancelled or failed', [
+                'provider' => $provider,
+                'error' => $error
+            ]);
             $this->redirect(url('admin'));
             return;
         }
@@ -1076,12 +1168,17 @@ class AdminController extends BaseController
         
         if (!$oauthUser) {
             $_SESSION['admin_error'] = 'Failed to authenticate with ' . ucfirst($provider);
+            $this->getLogger()->error('OAuth authentication failed', ['provider' => $provider]);
             $this->redirect(url('admin'));
             return;
         }
         
         if (!$user) {
             $_SESSION['admin_error'] = 'You are not authorized to access the admin panel. Contact an administrator.';
+            $this->getLogger()->warning('OAuth user not authorized', [
+                'provider' => $provider,
+                'email' => $oauthUser['email'] ?? 'unknown'
+            ]);
             $this->redirect(url('admin'));
             return;
         }
@@ -1098,9 +1195,24 @@ class AdminController extends BaseController
         $_SESSION['admin_user'] = $user['name'];
         $_SESSION['admin_user_id'] = $user['id'];
         
+        // Handle Remember Me for OAuth
+        if ($rememberMe) {
+            $this->getRememberMeManager()->createToken($user['id'], $provider);
+            $this->getLogger()->info('Remember me token created for OAuth login', [
+                'user_id' => $user['id'],
+                'provider' => $provider
+            ]);
+        }
+        
         $this->logAdminAction($provider . '_login_success', 'Successfully logged in via ' . ucfirst($provider), [
             'user_id' => $user['id'],
             'email' => $user['email']
+        ]);
+        
+        $this->getLogger()->info('OAuth login successful', [
+            'provider' => $provider,
+            'user_id' => $user['id'],
+            'remember_me' => $rememberMe
         ]);
         
         // Check for redirect after login (require_login feature)
@@ -1110,6 +1222,47 @@ class AdminController extends BaseController
         if ($redirectUrl && strpos($redirectUrl, '/admin') !== 0) {
             $this->redirect($redirectUrl);
         } else {
+            $this->redirect(url('admin'));
+        }
+    }
+    
+    /**
+     * Prepare OAuth login - stores remember me preference before redirect
+     */
+    public function oauthPrepare(): void
+    {
+        if (!SecurityManager::validateRequestMethod('POST')) {
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        // Validate CSRF token
+        if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
+            $_SESSION['admin_error'] = 'Invalid security token';
+            $this->redirect(url('admin'));
+            return;
+        }
+        
+        $provider = $_POST['provider'] ?? 'google';
+        $rememberMe = isset($_POST['remember_me']) && $_POST['remember_me'] === '1';
+        
+        // Store remember me preference in session
+        $_SESSION['oauth_remember_me'] = $rememberMe;
+        
+        $this->getLogger()->debug('OAuth prepare', [
+            'provider' => $provider,
+            'remember_me' => $rememberMe
+        ]);
+        
+        // Redirect to OAuth provider
+        $authManager = $this->getAuthManager();
+        
+        if ($provider === 'google' && $authManager->isGoogleAuthEnabled()) {
+            $this->redirect($authManager->getGoogleAuthUrl());
+        } elseif ($provider === 'discord' && $authManager->isDiscordAuthEnabled()) {
+            $this->redirect($authManager->getDiscordAuthUrl());
+        } else {
+            $_SESSION['admin_error'] = 'Invalid OAuth provider';
             $this->redirect(url('admin'));
         }
     }
