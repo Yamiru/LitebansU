@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.6
+ *  Version:       3.9
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -373,6 +373,22 @@ class DatabaseRepository
     
     public function getStats(): array
     {
+        // 60-sekundový file cache - staty sa nemenia každú sekundu,
+        // a táto metóda je v slow logu zďaleka najčastejšia.
+        $cacheDir = dirname(__DIR__) . '/data';
+        $cacheFile = $cacheDir . '/.stats_cache.json';
+        $cacheTtl = 60;
+
+        if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTtl) {
+            $cached = @file_get_contents($cacheFile);
+            if ($cached !== false) {
+                $decoded = json_decode($cached, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
+        }
+
         $tables = ['bans', 'mutes', 'warnings', 'kicks'];
         $stats = [];
         
@@ -397,7 +413,12 @@ class DatabaseRepository
                 }
             }
         }
-        
+
+        // Ulož cache (tichý fail ak nie je write access)
+        if (is_dir($cacheDir) && is_writable($cacheDir)) {
+            @file_put_contents($cacheFile, json_encode($stats), LOCK_EX);
+        }
+
         return $stats;
     }
     
