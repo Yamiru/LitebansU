@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.9
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -241,9 +241,11 @@ class HomeController extends BaseController
                 $playerName = $this->repository->getPlayerName($punishment['uuid']);
             }
             
+            $rowType = $punishment['type'] ?? 'unknown';
+            
             return [
                 'id' => $punishment['id'] ?? null,
-                'type' => $punishment['type'] ?? 'unknown',
+                'type' => $rowType,
                 'player_name' => SecurityManager::preventXss($playerName ?? 'Unknown'),
                 'reason' => SecurityManager::preventXss($punishment['reason'] ?? 'No reason provided'),
                 'staff' => SecurityManager::preventXss($punishment['banned_by_name'] ?? 'Console'),
@@ -251,7 +253,8 @@ class HomeController extends BaseController
                 'until' => isset($punishment['until']) && $punishment['until'] > 0 
                     ? $this->formatDuration((int)$punishment['until']) 
                     : null,
-                'active' => (bool)($punishment['active'] ?? false)
+                // Effective active status (handles expired temp bans/mutes whose DB flag is still 1)
+                'active' => $this->isPunishmentActive($punishment, $rowType)
             ];
         }, $punishments);
     }
@@ -280,6 +283,12 @@ class HomeController extends BaseController
             $punishment['reason'] = $punishment['reason'] ?? 'No reason provided';
             $punishment['time'] = $punishment['time'] ?? 0;
             $punishment['active'] = $punishment['active'] ?? 0;
+            
+            // Override active flag with effective state so "Recent" widgets on the home page
+            // do not show "Active" for temp punishments whose `until` is already in the past.
+            // Type is inferred from presence of `until` column - both bans and mutes have it.
+            $inferredType = isset($punishment['until']) ? 'ban' : 'warning';
+            $punishment['active'] = $this->isPunishmentActive($punishment, $inferredType) ? 1 : 0;
         }
         
         return $punishments;
