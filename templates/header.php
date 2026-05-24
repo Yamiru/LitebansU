@@ -22,8 +22,31 @@
     ?></title>
     <meta name="description" content="<?= htmlspecialchars(isset($description) ? $description : $config['site_description'], ENT_QUOTES, 'UTF-8') ?>">
     
-    <!-- Canonical URL -->
-    <link rel="canonical" href="<?= htmlspecialchars($config['site_url'] . $_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
+    <!-- Canonical URL (strip transient query params like ?lang/?theme/?sort, keep ?page for paginated content) -->
+    <?php 
+        $canonicalUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
+        $canonicalQuery = '';
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            parse_str($_SERVER['QUERY_STRING'], $qsParams);
+            // Only keep page parameter, drop transient ones (lang, theme, sort, order, search, etc.)
+            if (isset($qsParams['page']) && ctype_digit((string)$qsParams['page']) && (int)$qsParams['page'] > 1) {
+                $canonicalQuery = '?page=' . (int)$qsParams['page'];
+            }
+        }
+        // Resolve site base URL. Priority:
+        //   1. Operator-configured $config['site_url'] (absolute, may include subdir)
+        //   2. Auto-detected scheme + host + BASE_PATH (works on any subdirectory deployment)
+        if (!empty($config['site_url'])) {
+            $siteUrlBase = rtrim($config['site_url'], '/');
+        } else {
+            $autoScheme = (($_SERVER['HTTPS'] ?? 'off') === 'on' || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') ? 'https' : 'http';
+            $autoHost = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $autoBase = defined('BASE_PATH') ? rtrim(BASE_PATH, '/') : '';
+            $siteUrlBase = $autoScheme . '://' . $autoHost . $autoBase;
+        }
+        $canonicalUrl = $siteUrlBase . $canonicalUri . $canonicalQuery;
+    ?>
+    <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8') ?>">
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="<?= htmlspecialchars($config['site_favicon'] ?? asset('favicon.ico'), ENT_QUOTES, 'UTF-8') ?>">
@@ -32,7 +55,7 @@
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="<?= htmlspecialchars(isset($title) ? $title . ' - ' . $config['site_name'] : $config['site_name'], ENT_QUOTES, 'UTF-8') ?>">
     <meta property="og:description" content="<?= htmlspecialchars(isset($description) ? $description : $config['site_description'], ENT_QUOTES, 'UTF-8') ?>">
-    <meta property="og:url" content="<?= htmlspecialchars($config['site_url'] . $_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8') ?>">
+    <meta property="og:url" content="<?= htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8') ?>">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="<?= htmlspecialchars($config['site_name'], ENT_QUOTES, 'UTF-8') ?>">
     <?php if (isset($config['site_og_image'])): ?>
@@ -105,13 +128,30 @@
     <meta name="ICBM" content="<?= htmlspecialchars($config['seo_geo_position'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     
-    <!-- AI Search Engine Tags -->
+    <!-- AI / Search Engine Tags -->
     <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="googlebot-news" content="index, follow">
     <?php if (isset($config['seo_ai_training']) && $config['seo_ai_training'] === false): ?>
+    <!-- Explicit AI opt-out (overrides per-bot defaults) -->
     <meta name="robots" content="noai, noimageai">
+    <meta name="GPTBot" content="noindex, nofollow">
+    <meta name="ClaudeBot" content="noindex, nofollow">
+    <meta name="PerplexityBot" content="noindex, nofollow">
+    <meta name="CCBot" content="noindex, nofollow">
+    <?php else: ?>
+    <!-- AI agent / LLM crawler hints (positive opt-in for public ban list visibility) -->
+    <meta name="GPTBot" content="index, follow">
+    <meta name="ClaudeBot" content="index, follow">
+    <meta name="PerplexityBot" content="index, follow">
+    <meta name="Google-Extended" content="index, follow">
     <?php endif; ?>
+    
+    <!-- Machine-readable endpoints for AI agents and crawlers -->
+    <link rel="alternate" type="text/plain" title="LLM site description" href="<?= htmlspecialchars($siteUrlBase . '/llms.txt', ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="alternate" type="application/json" title="AI agent manifest" href="<?= htmlspecialchars($siteUrlBase . '/agent.json', ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="alternate" type="application/json" title="Punishment statistics (JSON)" href="<?= htmlspecialchars($siteUrlBase . '/ai/stats.json', ENT_QUOTES, 'UTF-8') ?>">
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="<?= htmlspecialchars($siteUrlBase . '/sitemap.xml', ENT_QUOTES, 'UTF-8') ?>">
     
     <!-- Open Graph Enhanced -->
     <meta property="og:locale" content="<?= htmlspecialchars($config['seo_locale'] ?? 'en_US', ENT_QUOTES, 'UTF-8') ?>">
@@ -139,6 +179,18 @@
     <?php foreach ($config['seo_alternate_languages'] as $langCode => $langUrl): ?>
     <link rel="alternate" hreflang="<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>" href="<?= htmlspecialchars($langUrl, ENT_QUOTES, 'UTF-8') ?>">
     <?php endforeach; ?>
+    <?php else: ?>
+    <?php 
+        // Auto-generate hreflang tags for all supported languages on the current canonical path
+        $sep = $canonicalQuery === '' ? '?' : '&';
+        foreach ($lang->getSupportedLanguages() as $altCode):
+            // Use 'zh' as the standard ISO code for Chinese in hreflang while keeping 'cn' internally
+            $hreflangCode = $altCode === 'cn' ? 'zh' : $altCode;
+            $altUrl = $canonicalUrl . $sep . 'lang=' . $altCode;
+    ?>
+    <link rel="alternate" hreflang="<?= htmlspecialchars($hreflangCode, ENT_QUOTES, 'UTF-8') ?>" href="<?= htmlspecialchars($altUrl, ENT_QUOTES, 'UTF-8') ?>">
+    <?php endforeach; ?>
+    <link rel="alternate" hreflang="x-default" href="<?= htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     
     <!-- JSON-LD for SEO -->
@@ -326,33 +378,37 @@
                             <?php 
                             $currentLang = $lang->getCurrentLanguage();
                             $langNames = [
-'ar' => 'AR',
-'cs' => 'CS',
-'de' => 'DE',
-'gr' => 'GR',
-'en' => 'EN',
-'es' => 'ES',
-'fr' => 'FR',
-'hu' => 'HU',
-'it' => 'IT',
-'ja' => 'JA',
-'pl' => 'PL',
-'ro' => 'RO',
-'ru' => 'RU',
-'sk' => 'SK',
-'sr' => 'SR',
-'tr' => 'TR',
-'zh' => 'ZH'                            ];
+                                'ar' => 'AR',
+                                'cs' => 'CS',
+                                'de' => 'DE',
+                                'gr' => 'GR',
+                                'en' => 'EN',
+                                'es' => 'ES',
+                                'fr' => 'FR',
+                                'hu' => 'HU',
+                                'it' => 'IT',
+                                'ja' => 'JA',
+                                'pl' => 'PL',
+                                'ro' => 'RO',
+                                'ru' => 'RU',
+                                'sk' => 'SK',
+                                'sr' => 'SR',
+                                'tr' => 'TR',
+                                'cn' => 'CN',
+                            ];
                             ?>
                             <i class="fas fa-globe"></i>
-                            <span><?= $langNames[$currentLang] ?? 'EN' ?></span>
+                            <span><?= htmlspecialchars($langNames[$currentLang] ?? 'EN', ENT_QUOTES, 'UTF-8') ?></span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
                                 <li>
                                     <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>" 
-                                       href="?lang=<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>">
-                                        <?= $langNames[$langCode] ?? strtoupper($langCode) ?>
+                                       href="?lang=<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>"
+                                       hreflang="<?= htmlspecialchars($langCode === 'cn' ? 'zh' : $langCode, ENT_QUOTES, 'UTF-8') ?>"
+                                       title="<?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>">
+                                        <strong><?= htmlspecialchars($langNames[$langCode] ?? strtoupper($langCode), ENT_QUOTES, 'UTF-8') ?></strong>
+                                        <span class="text-muted small ms-1"><?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?></span>
                                     </a>
                                 </li>
                             <?php endforeach; ?>
