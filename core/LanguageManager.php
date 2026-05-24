@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.9
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -109,23 +109,24 @@ class LanguageManager
     public function getLanguageName(string $code): string
     {
         $names = [
-'ar' => '???????',
-'cs' => 'Èetina',
-'de' => 'Deutsch',
-'gr' => '????????',
-'en' => 'English',
-'es' => 'Espanol',
-'fr' => 'Français',
-'hu' => 'Magyar',
-'it' => 'Italiano',
-'ja' => '???',
-'pl' => 'Polski',
-'ro' => 'Românã',
-'ru' => '???????',
-'sk' => 'Slovenèina',
-'sr' => 'Srpski',
-'tr' => 'Türkçe',
-'cn' => '?? (??)'        ];
+            'ar' => 'العربية',
+            'cs' => 'Čeština',
+            'de' => 'Deutsch',
+            'gr' => 'Ελληνικά',
+            'en' => 'English',
+            'es' => 'Español',
+            'fr' => 'Français',
+            'hu' => 'Magyar',
+            'it' => 'Italiano',
+            'ja' => '日本語',
+            'pl' => 'Polski',
+            'ro' => 'Română',
+            'ru' => 'Русский',
+            'sk' => 'Slovenčina',
+            'sr' => 'Srpski',
+            'tr' => 'Türkçe',
+            'cn' => '中文 (简体)',
+        ];
         
         return $names[$code] ?? strtoupper($code);
     }
