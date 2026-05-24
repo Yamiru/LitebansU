@@ -197,9 +197,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <?= htmlspecialchars($controller->formatDate((int)$ban['time']), ENT_QUOTES, 'UTF-8') ?>
                                         </small>
                                         <?php if ($ban['active'] ?? false): ?>
-                                            <span class="badge bg-danger">Active</span>
+                                            <span class="badge bg-danger"><?= htmlspecialchars($lang->get('status.active'), ENT_QUOTES, 'UTF-8') ?></span>
                                         <?php else: ?>
-                                            <span class="badge bg-success">Inactive</span>
+                                            <span class="badge bg-success"><?= htmlspecialchars($lang->get('status.expired'), ENT_QUOTES, 'UTF-8') ?></span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -267,9 +267,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <?= htmlspecialchars($controller->formatDate((int)$mute['time']), ENT_QUOTES, 'UTF-8') ?>
                                         </small>
                                         <?php if ($mute['active'] ?? false): ?>
-                                            <span class="badge bg-warning">Active</span>
+                                            <span class="badge bg-warning"><?= htmlspecialchars($lang->get('status.active'), ENT_QUOTES, 'UTF-8') ?></span>
                                         <?php else: ?>
-                                            <span class="badge bg-success">Inactive</span>
+                                            <span class="badge bg-success"><?= htmlspecialchars($lang->get('status.expired'), ENT_QUOTES, 'UTF-8') ?></span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
