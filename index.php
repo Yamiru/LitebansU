@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.8
+ *  Version:       3.9
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -188,7 +188,8 @@ $requiredFiles = [
     'controllers/DetailController.php',
     'controllers/StatsController.php',
     'controllers/AdminController.php',
-    'controllers/ProtestController.php'
+    'controllers/ProtestController.php',
+    'controllers/AiController.php'
 ];
 
 foreach ($requiredFiles as $file) {
@@ -311,9 +312,17 @@ try {
                 'httponly' => true,
                 'samesite' => 'Lax'
             ]);
+            // Make value available in current request too (in case anything reads $_COOKIE before next request)
+            $_COOKIE['selected_lang'] = $selectedLang;
         }
+        // Ensure session is flushed to disk before the redirect so the next request sees it
+        session_write_close();
+        // Prevent the browser from serving a cached (old-language) version of the destination
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
         $cleanUrl = strtok($_SERVER['REQUEST_URI'], '?');
-        header("Location: " . $cleanUrl);
+        // 303 See Other forces a GET on the new URL and discourages caching of this response
+        header("Location: " . $cleanUrl, true, 303);
         exit;
     }
 
@@ -330,11 +339,14 @@ try {
             ]);
             $_COOKIE['selected_theme'] = $selectedTheme;
         }
+        session_write_close();
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
         $cleanUrl = $_SERVER['REQUEST_URI'];
         $cleanUrl = preg_replace('/[?&]theme=[^&]*/', '', $cleanUrl);
         $cleanUrl = str_replace('&&', '&', $cleanUrl);
         $cleanUrl = rtrim($cleanUrl, '?&');
-        header("Location: " . $cleanUrl);
+        header("Location: " . $cleanUrl, true, 303);
         exit;
     }
 
@@ -406,6 +418,16 @@ try {
         (new ProtestController($repository, $lang, $theme, $config))->index();
     } elseif ($requestUri === '/protest/submit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         (new ProtestController($repository, $lang, $theme, $config))->submit();
+    } elseif ($requestUri === '/ai/stats.json' || $requestUri === '/ai/stats') {
+        (new AiController($repository, $lang, $theme, $config))->stats();
+    } elseif ($requestUri === '/agent.json' || $requestUri === '/agent') {
+        (new AiController($repository, $lang, $theme, $config))->manifest();
+    } elseif ($requestUri === '/sitemap.xml' || $requestUri === '/sitemap') {
+        (new AiController($repository, $lang, $theme, $config))->sitemap();
+    } elseif ($requestUri === '/robots.txt') {
+        (new AiController($repository, $lang, $theme, $config))->robots();
+    } elseif ($requestUri === '/llms.txt') {
+        (new AiController($repository, $lang, $theme, $config))->llms();
     } elseif (str_starts_with($requestUri, '/admin')) {
         if (!($config['admin_enabled'] ?? false)) {
             echo showErrorPage(403, 'Forbidden', 'Admin panel is disabled.');
