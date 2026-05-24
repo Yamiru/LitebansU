@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.7
+ *  Version:       3.9
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -100,7 +100,8 @@ class DatabaseConfig
             \PDO::ATTR_EMULATE_PREPARES => false,
             $this->getMysqlInitCommandAttribute() => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
             \PDO::ATTR_TIMEOUT => 30,
-            \PDO::ATTR_PERSISTENT => false,
+            // Persistent connection
+            \PDO::ATTR_PERSISTENT => true,
         ];
     }
     
