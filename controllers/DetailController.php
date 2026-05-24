@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.4
+ *  Version:       3.9
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -140,7 +140,8 @@ class DetailController extends BaseController
             'duration' => $duration,
             'timeLeft' => $timeLeft,
             'progress' => $progress,
-            'active' => (bool)($punishment['active'] ?? false),
+            // Effective active status (respects expired temp bans/mutes even if DB flag still says 1)
+            'active' => $this->isPunishmentActive($punishment, $type),
             'removed' => !empty($punishment['removed_by_name']),
             'removed_by' => isset($punishment['removed_by_name']) 
                 ? SecurityManager::preventXss($punishment['removed_by_name']) 
@@ -220,16 +221,19 @@ class DetailController extends BaseController
                 $playerName = $this->repository->getPlayerName($punishment['uuid']);
             }
             
+            // Type is needed so isPunishmentActive can check `until` only for bans/mutes
+            $rowType = $punishment['type'] ?? 'unknown';
+            
             return [
                 'id' => (int)$punishment['id'],
-                'type' => $punishment['type'] ?? 'unknown',
+                'type' => $rowType,
                 'uuid' => $punishment['uuid'] ?? '',
                 'name' => SecurityManager::preventXss($playerName ?? 'Unknown'),
                 'reason' => SecurityManager::preventXss($punishment['reason'] ?? 'No reason provided'),
                 'staff' => SecurityManager::preventXss($punishment['banned_by_name'] ?? 'Console'),
                 'date' => $this->formatDate((int)($punishment['time'] ?? 0)),
                 'until' => isset($punishment['until']) ? $this->formatDuration((int)$punishment['until']) : null,
-                'active' => (bool)($punishment['active'] ?? false),
+                'active' => $this->isPunishmentActive($punishment, $rowType),
                 'removed_by' => isset($punishment['removed_by_name']) ? SecurityManager::preventXss($punishment['removed_by_name']) : null,
                 'avatar' => $this->getAvatarUrl($punishment['uuid'] ?? '', $playerName ?? 'Unknown')
             ];
