@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.8
+ *  Version:       3.9
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -215,15 +215,18 @@ class AdminController extends BaseController
                     $playerName = $this->repository->getPlayerName($p['uuid']);
                 }
                 
+                $rowType = rtrim($p['type'], 's'); // Normalize to singular
+                
                 return [
                     'id' => (int)$p['id'],
-                    'type' => rtrim($p['type'], 's'), // Normalize to singular
+                    'type' => $rowType,
                     'player_name' => $playerName ?? 'Unknown',
                     'uuid' => $p['uuid'] ?? '',
                     'reason' => $p['reason'] ?? 'No reason provided',
                     'staff' => $p['banned_by_name'] ?? 'Console',
                     'date' => $this->formatDate((int)($p['time'] ?? 0)),
-                    'active' => (bool)($p['active'] ?? false),
+                    // Effective active status - prevents expired temp bans/mutes showing as "Active"
+                    'active' => $this->isPunishmentActive($p, $rowType),
                     'until' => isset($p['until']) && $p['until'] > 0 
                         ? $this->formatDate((int)$p['until']) 
                         : null,
