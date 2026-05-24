@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.0
+ *  Version:       3.9
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -18,6 +18,9 @@ declare(strict_types=1);
 
 class PunishmentsController extends BaseController
 {
+    /** Tracks which punishment type is being rendered (bans/mutes/warnings/kicks). Used to decide whether `until` should affect active status. */
+    private string $currentType = '';
+    
     private function getSort(): string
     {
         $sort = $_GET['sort'] ?? 'time';
@@ -56,6 +59,7 @@ class PunishmentsController extends BaseController
     
     public function bans(): void
     {
+        $this->currentType = 'bans';
         $sortParams = $this->getSortParams();
         $showSilent = ($this->config['show_silent_punishments'] ?? true) === true || ($this->config['show_silent_punishments'] ?? 'true') === 'true';
         $punishments = $this->repository->getBans($this->getLimit(), $this->getOffset(), false, $sortParams['sort'], $sortParams['order'], $showSilent);
@@ -72,6 +76,7 @@ class PunishmentsController extends BaseController
     
     public function mutes(): void
     {
+        $this->currentType = 'mutes';
         $sortParams = $this->getSortParams();
         $showSilent = ($this->config['show_silent_punishments'] ?? true) === true || ($this->config['show_silent_punishments'] ?? 'true') === 'true';
         $punishments = $this->repository->getMutes($this->getLimit(), $this->getOffset(), false, $sortParams['sort'], $sortParams['order'], $showSilent);
@@ -88,6 +93,7 @@ class PunishmentsController extends BaseController
     
     public function warnings(): void
     {
+        $this->currentType = 'warnings';
         $sortParams = $this->getSortParams();
         $punishments = $this->repository->getWarnings($this->getLimit(), $this->getOffset(), $sortParams['sort'], $sortParams['order']);
         
@@ -103,6 +109,7 @@ class PunishmentsController extends BaseController
     
     public function kicks(): void
     {
+        $this->currentType = 'kicks';
         $sortParams = $this->getSortParams();
         $punishments = $this->repository->getKicks($this->getLimit(), $this->getOffset(), $sortParams['sort'], $sortParams['order']);
         
@@ -118,7 +125,13 @@ class PunishmentsController extends BaseController
     
     private function formatPunishments(array $punishments): array
     {
-        return array_map(function($punishment) {
+        // $this->currentType is set in each action (bans/mutes/warnings/kicks/info) before rendering
+        return $this->formatPunishmentsTyped($punishments, $this->currentType);
+    }
+    
+    private function formatPunishmentsTyped(array $punishments, string $type): array
+    {
+        return array_map(function($punishment) use ($type) {
             // Get player name - handle null values properly
             $playerName = $punishment['player_name'] ?? $punishment['name'] ?? null;
             if (!$playerName && !empty($punishment['uuid'])) {
@@ -133,7 +146,8 @@ class PunishmentsController extends BaseController
                 'staff' => SecurityManager::preventXss($punishment['banned_by_name'] ?? 'Console'),
                 'date' => $this->formatDate((int)($punishment['time'] ?? 0)),
                 'until' => isset($punishment['until']) ? $this->formatDuration((int)$punishment['until']) : null,
-                'active' => (bool)($punishment['active'] ?? false),
+                // Use effective active status - prevents "Active + Expired" mismatch for expired temp bans/mutes
+                'active' => $this->isPunishmentActive($punishment, $type),
                 'removed_by' => isset($punishment['removed_by_name']) ? SecurityManager::preventXss($punishment['removed_by_name']) : null,
                 'avatar' => $this->getAvatarUrl($punishment['uuid'] ?? '', $playerName ?? 'Unknown'),
                 'server' => $punishment['server_origin'] ?? $punishment['server_scope'] ?? 'Global',
@@ -207,6 +221,7 @@ class PunishmentsController extends BaseController
                 return;
             }
             
+            $this->currentType = $type;
             $this->render('punishment_info', [
                 'title' => $this->lang->get('nav.' . $type) . ' #' . $id,
                 'punishment' => $this->formatPunishments([$punishment])[0],
