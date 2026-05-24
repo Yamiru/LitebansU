@@ -1,4 +1,10 @@
 # robots.txt for LiteBansU
+# Public punishment history is intended to be indexable by both
+# traditional search engines and modern AI/LLM crawlers.
+
+# ---------------------------------------------------------------------------
+# Default policy: allow all paths except internal admin/system directories
+# ---------------------------------------------------------------------------
 User-agent: *
 Allow: /
 Allow: /bans
@@ -8,19 +14,118 @@ Allow: /kicks
 Allow: /stats
 Allow: /protest
 Allow: /search
+Allow: /detail
 Allow: /assets/
+Allow: /llms.txt
+Allow: /agent.json
+Allow: /ai/stats.json
+Allow: /sitemap.xml
 
 Disallow: /admin
 Disallow: /config/
 Disallow: /core/
 Disallow: /controllers/
 Disallow: /lang/
+Disallow: /templates/
+Disallow: /data/
+Disallow: /logs/
 Disallow: /.env
 Disallow: /hash.php
+Disallow: /install.php
 Disallow: /install-demos.php
 
-# Sitemap location
-Sitemap: https://YourSite.com/sitemap.php
+# Reduce churn: avoid crawling transient query params (language switch, theme toggle, sort)
+Disallow: /*?lang=
+Disallow: /*?theme=
+Disallow: /*&lang=
+Disallow: /*&theme=
 
-# Crawl-delay (optional, adjust as needed)
+# ---------------------------------------------------------------------------
+# Traditional search engines (explicit allows for crawl tuning)
+# ---------------------------------------------------------------------------
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# ---------------------------------------------------------------------------
+# AI / LLM crawlers - per-bot policy. Operators can override globally
+# by setting seo_ai_training=false in .env (emits noai/noimageai meta tags).
+# ---------------------------------------------------------------------------
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: cohere-training-data-crawler
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+User-agent: ImagesiftBot
+Allow: /
+
+User-agent: Omgilibot
+Allow: /
+
+User-agent: PetalBot
+Allow: /
+
+# ---------------------------------------------------------------------------
+# Sitemap & host
+# ---------------------------------------------------------------------------
+Sitemap: /sitemap.xml
+
+# Crawl-delay (seconds) - polite default; ignored by Googlebot
 Crawl-delay: 1
