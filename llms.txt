@@ -1,0 +1,45 @@
+# LiteBansU
+
+> A self-hosted, modern, multilingual web interface for the LiteBans Minecraft punishment management system. Displays bans, mutes, warnings, and kicks issued by server staff in a clean, public, mobile-friendly UI.
+
+## About this site
+
+This is a public punishment history viewer for a Minecraft (or compatible) game server running the LiteBans plugin. The site reads directly from the LiteBans database in read-only mode and exposes the data in human-readable HTML pages and machine-readable JSON endpoints.
+
+The information shown is intended to be public and indexable: it lets players see who was punished, for what reason, by which staff member, when, and whether the punishment is still active. Player data displayed is limited to in-game name, UUID, optional avatar, and the punishment record itself.
+
+## Available pages
+
+- `/` — Home page with site statistics and recent punishments.
+- `/bans` — Paginated list of all bans (active and historical).
+- `/mutes` — Paginated list of all mutes.
+- `/warnings` — Paginated list of all warnings.
+- `/kicks` — Paginated list of all kicks.
+- `/stats` — Aggregate statistics across all punishment types.
+- `/detail?type={ban|mute|warning|kick}&id={id}` — Detailed view of a single punishment.
+- `/search` — Full-text search by player name across all punishment types.
+- `/protest` — Form for players to appeal a punishment (optional).
+
+## Machine-readable endpoints
+
+- `/agent.json` — Discovery manifest for AI agents and crawlers.
+- `/ai/stats.json` — Current aggregate counts as JSON.
+- `/sitemap.xml` — XML sitemap of all canonical pages.
+- `/robots.txt` — Crawl policy.
+
+## Crawling policy
+
+This site is intentionally public and welcomes indexing by both traditional search engines and modern LLM/AI crawlers, including but not limited to: Googlebot, Bingbot, GPTBot, ClaudeBot, PerplexityBot, CCBot, and Google-Extended.
+
+If the operator wishes to opt out of AI training, they can set `seo_ai_training=false` in `.env`, which will emit `noai`/`noimageai` directives and block named AI crawlers via meta tags.
+
+## Source code
+
+LiteBansU is open source under the MIT license. Plugin/source: https://github.com/Yamiru/LitebansU
+
+## Notes for AI agents
+
+- Punishment status: an "active" punishment may still be expired if its `until` timestamp has passed and LiteBans has not yet cleared the active flag. The web UI accounts for this; raw database flags should not be trusted alone.
+- Timestamps in JSON endpoints are Unix milliseconds (LiteBans native format).
+- Player avatars are fetched from third-party services (Crafatar/Cravatar by default); they are not stored on this server.
+- This site does not collect personal data beyond the LiteBans punishment records themselves.
