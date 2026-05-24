@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.3
+ *  Version:       3.9
  *  Author:        Yamiru <yamiru@yamiru.com>
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -122,6 +122,44 @@ abstract class BaseController
         } else {
             return $this->lang->get('time.minutes', ['count' => (string)max(1, $minutes)]);
         }
+    }
+    
+    /**
+     * Resolve the effective active status of a punishment.
+     *
+     * LiteBans does not always clear the `active` flag in the database the instant a
+     * temporary ban/mute expires (it happens when the server checks the row, or never
+     * at all if the player is offline). The DB column can therefore stay at 1 even
+     * though `until` is already in the past. To avoid showing "Active" next to an
+     * "Expired" duration in the UI, we compute the real state here without touching
+     * the database.
+     *
+     * @param array  $punishment Raw or formatted punishment row (must contain `active` and optionally `until`)
+     * @param string $type       'ban', 'mute', 'warning', 'kick' or their plural forms
+     */
+    protected function isPunishmentActive(array $punishment, string $type = ''): bool
+    {
+        // Already removed by staff -> not active
+        if (!empty($punishment['removed_by_name']) || !empty($punishment['removed_by'])) {
+            return false;
+        }
+        
+        $rawActive = (bool)($punishment['active'] ?? false);
+        if (!$rawActive) {
+            return false;
+        }
+        
+        // Only bans and mutes have a meaningful `until` for expiration
+        $normalizedType = rtrim(strtolower($type), 's');
+        if (in_array($normalizedType, ['ban', 'mute'], true) && isset($punishment['until'])) {
+            $until = (int)$punishment['until'];
+            // until > 0 means temporary; if it's already in the past -> expired
+            if ($until > 0 && $until <= time() * 1000) {
+                return false;
+            }
+        }
+        
+        return true;
     }
     
     protected function getAvatarUrl(?string $uuid, ?string $name): string
