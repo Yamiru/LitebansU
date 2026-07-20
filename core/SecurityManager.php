@@ -128,7 +128,7 @@ class SecurityManager
     public static function preventXss(string $text): string
     {
         // Remove Minecraft color codes
-        $text = preg_replace('/[§&][0-9a-fk-or]/i', '', $text);
+        $text = preg_replace('/[§&][0-9a-fk-or]/ui', '', $text);
         
         // Remove hex color codes  
         $text = preg_replace('/#[0-9a-f]{6}/i', '', $text);
