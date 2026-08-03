@@ -13,7 +13,6 @@
  * Repository:    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
-/* Page Header */
 .punishments-page h1 {
     display: flex;
     align-items: center;
@@ -21,7 +20,6 @@
     margin-bottom: var(--space-xl);
 }
 
-/* Table Styles */
 .table-responsive {
     border-radius: var(--radius-lg);
     box-shadow: var(--card-shadow);
@@ -52,7 +50,6 @@
     white-space: nowrap;
 }
 
-/* Sortovací linky */
 .sort-link {
     color: var(--text-primary) !important;
     text-decoration: none;
@@ -103,7 +100,6 @@
     word-break: break-word;
 }
 
-/* Player Info Cell - FIXED FOR DARK THEME */
 .player-info {
     display: flex;
     align-items: center;
@@ -134,7 +130,6 @@
     display: block;
 }
 
-/* Reason Cell - LIMITED TO 15 CHARS */
 .reason-cell {
     display: inline-block;
     vertical-align: middle;
@@ -152,20 +147,14 @@
     color: var(--primary) !important;
 }
 
-/* Desktop: Longer reason cell */
-/* Mediaqueries odebrány - używa se inline styles v HTML */
-
-/* Staff name color */
 .table .text-primary {
     color: var(--primary) !important;
 }
 
-/* Date text */
 .table small {
     color: var(--text-secondary) !important;
 }
 
-/* Mobile Punishment Cards - FIXED */
 .mobile-punishment-list {
     display: none;
     margin: 0 calc(var(--space-sm) * -1);
@@ -249,13 +238,11 @@
     padding: var(--space-md);
 }
 
-/* Status Badge Variants */
 .status-badge {
     font-size: 0.75rem;
     padding: var(--space-xs) var(--space-sm);
 }
 
-/* No Data State */
 .no-data-state {
     text-align: center;
     padding: var(--space-3xl) var(--space-lg);
@@ -276,7 +263,6 @@
     color: var(--text-tertiary);
 }
 
-/* Pagination */
 .pagination {
     display: flex;
     align-items: center;
@@ -303,7 +289,6 @@
     font-weight: 500;
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
     .table-responsive {
         display: none;
@@ -336,12 +321,11 @@
     }
 }
 
-/* Specific punishment type colors */
 .punishments-page .fa-ban { color: var(--danger); }
 .punishments-page .fa-volume-mute { color: var(--warning); }
 .punishments-page .fa-exclamation-triangle { color: var(--info); }
 .punishments-page .fa-sign-out-alt { color: var(--gray-600); }
-/* Table Styles - FIXED DARK THEME */
+
 .punishments-page .table-responsive {
     border-radius: var(--radius-lg);
     box-shadow: var(--card-shadow);
@@ -384,4 +368,60 @@
     background: transparent;
     color: var(--text-primary) !important;
     border-color: var(--border-color);
+}
+
+@media (min-width: 992px) and (max-width: 1279.98px) {
+    .table-responsive .table thead th,
+    .table-responsive .table tbody td {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.8125rem;
+    }
+
+    .table-responsive .player-info {
+        gap: 0.375rem;
+    }
+
+    .table-responsive .avatar {
+        width: 30px;
+        height: 30px;
+    }
+
+    .table-responsive .reason-cell {
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .table-responsive .badge,
+    .table-responsive .status-badge {
+        font-size: 0.6875rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    .table-responsive .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .table-responsive .btn-sm i {
+        display: none;
+    }
+
+    .table-responsive .font-monospace {
+        font-size: 0.75rem;
+    }
+
+    .table-responsive .sort-link {
+        gap: 0.25rem;
+    }
+
+    .table-responsive .sort-link i {
+        font-size: 0.75rem;
+    }
+
+    .table-responsive.d-none.d-lg-block .table thead th:nth-child(2),
+    .table-responsive.d-none.d-lg-block .table tbody td:nth-child(2) {
+        display: none;
+    }
 }
