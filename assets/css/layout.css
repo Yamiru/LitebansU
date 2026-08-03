@@ -26,7 +26,6 @@
     padding: 0 var(--space-lg);
 }
 
-/* Grid System */
 .row {
     display: flex;
     flex-wrap: wrap;
@@ -63,7 +62,6 @@
     .col-lg-12 { flex: 0 0 100%; max-width: 100%; }
 }
 
-/* Navbar */
 .navbar-modern {
     position: sticky;
     top: 0;
@@ -80,6 +78,10 @@
 .navbar-modern.scrolled {
     box-shadow: var(--shadow-md);
     padding: 0.5rem 0;
+}
+
+.navbar-modern .container {
+    max-width: 100%;
 }
 
 .navbar-brand {
@@ -112,10 +114,13 @@
 .navbar-nav {
     display: flex;
     align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: var(--space-xs);
     list-style: none;
     margin: 0;
     padding: 0;
+    min-width: 0;
 }
 
 .navbar-toggler {
@@ -141,12 +146,37 @@
     align-items: center;
     justify-content: space-between;
     flex: 1;
+    min-width: 0;
+    gap: var(--space-sm);
 }
 
 .navbar-controls {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+@media (min-width: 1400px) and (max-width: 1699.98px) {
+    .navbar-nav {
+        gap: 0.125rem;
+    }
+
+    .nav-link {
+        font-size: 0.875rem;
+        padding: var(--space-xs) var(--space-sm);
+        padding-right: 0.875rem;
+        gap: 0.25rem;
+    }
+
+    .nav-link i {
+        display: none;
+    }
+
+    .navbar-brand {
+        font-size: 1.05rem;
+    }
 }
 
 .nav-item {
@@ -157,7 +187,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-sm) var(--space-sm);
+    font-size: 0.9375rem;
     color: var(--text-secondary);
     text-decoration: none;
     border-radius: var(--radius-md);
@@ -172,7 +203,6 @@
     background: var(--hover-bg);
 }
 
-/* FIXED: Active navigation state for both themes */
 .nav-link.active {
     color: white !important;
     background: var(--primary) !important;
@@ -186,16 +216,6 @@
     color: white !important;
 }
 
-/* Alternative active state with outline (Option 3) */
-/*
-.nav-link.active {
-    color: var(--primary) !important;
-    background: transparent !important;
-    box-shadow: inset 0 0 0 2px var(--primary);
-}
-*/
-
-/* Fixed badge styling - superscript style */
 .nav-link .badge {
     position: absolute;
     top: 0;
@@ -215,12 +235,10 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Ensure nav items have proper spacing for badges */
 .nav-link {
-    padding-right: var(--space-lg);
+    padding-right: var(--space-md);
 }
 
-/* Language dropdown button fix */
 .btn-navbar {
     background: transparent;
     border: 2px solid var(--border-color);
@@ -235,7 +253,6 @@
     background: var(--hover-bg);
 }
 
-/* Footer */
 .footer {
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
@@ -253,7 +270,6 @@
     text-decoration: underline;
 }
 
-/* Hero Gradient */
 .hero-gradient {
     position: fixed;
     top: 0;
@@ -270,8 +286,7 @@
     opacity: 0.1;
 }
 
-/* Mobile Menu */
-@media (max-width: 991px) {
+@media (max-width: 1399.98px) {
     .navbar-toggler {
         display: block;
         margin-left: auto;
@@ -282,7 +297,8 @@
         top: 100%;
         left: 0;
         right: 0;
-        background: var(--navbar-bg);
+        z-index: 1030;
+        background: var(--bg-primary);
         border-top: 1px solid var(--border-color);
         box-shadow: var(--shadow-lg);
         padding: var(--space-md);
@@ -315,7 +331,7 @@
         justify-content: space-between;
     }
     
-    /* Fix badge position on mobile */
+    
     .nav-link .badge {
         position: static;
         transform: none;
@@ -331,7 +347,7 @@
         gap: var(--space-sm);
     }
     
-    /* Language dropdown on mobile */
+    
     .navbar-controls .dropdown {
         flex: 1;
     }
@@ -340,13 +356,12 @@
         width: 100%;
     }
     
-    /* Theme toggle on mobile */
+    
     .theme-toggle-wrapper {
         margin-left: auto;
     }
 }
 
-/* Theme Toggle Switch - Simplified */
 .theme-toggle-wrapper {
     display: inline-block;
 }
@@ -407,7 +422,6 @@
     transform: translateX(24px);
 }
 
-/* Fixed Clear Cache Button */
 .clear-cache-wrapper {
     position: fixed;
     bottom: 2rem;
@@ -444,7 +458,6 @@
     transform: translateY(0);
 }
 
-/* Ensure modal has proper z-index */
 #cacheModal {
     z-index: 1055;
 }
