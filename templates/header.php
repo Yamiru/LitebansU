@@ -7,9 +7,8 @@
     <meta name="base-path" content="<?= htmlspecialchars($config['base_path'], ENT_QUOTES, 'UTF-8') ?>">
     <meta http-equiv="Content-Type" content="text/html; charset=<?= htmlspecialchars($config['site_charset'] ?? 'UTF-8', ENT_QUOTES, 'UTF-8') ?>">
     <meta name="robots" content="<?= htmlspecialchars($config['site_robots'] ?? 'index, follow', ENT_QUOTES, 'UTF-8') ?>">
-    
-    <!-- SEO Meta Tags -->
-    <title><?php 
+
+    <title><?php
         if (isset($title)) {
             if (!empty($config['site_title_template'])) {
                 echo htmlspecialchars(str_replace(['{page}', '{site}'], [$title, $config['site_name']], $config['site_title_template']), ENT_QUOTES, 'UTF-8');
@@ -21,21 +20,18 @@
         }
     ?></title>
     <meta name="description" content="<?= htmlspecialchars(isset($description) ? $description : $config['site_description'], ENT_QUOTES, 'UTF-8') ?>">
-    
-    <!-- Canonical URL (strip transient query params like ?lang/?theme/?sort, keep ?page for paginated content) -->
-    <?php 
+
+    <?php
         $canonicalUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '/';
         $canonicalQuery = '';
         if (!empty($_SERVER['QUERY_STRING'])) {
             parse_str($_SERVER['QUERY_STRING'], $qsParams);
-            // Only keep page parameter, drop transient ones (lang, theme, sort, order, search, etc.)
+
             if (isset($qsParams['page']) && ctype_digit((string)$qsParams['page']) && (int)$qsParams['page'] > 1) {
                 $canonicalQuery = '?page=' . (int)$qsParams['page'];
             }
         }
-        // Resolve site base URL. Priority:
-        //   1. Operator-configured $config['site_url'] (absolute, may include subdir)
-        //   2. Auto-detected scheme + host + BASE_PATH (works on any subdirectory deployment)
+
         if (!empty($config['site_url'])) {
             $siteUrlBase = rtrim($config['site_url'], '/');
         } else {
@@ -47,12 +43,10 @@
         $canonicalUrl = $siteUrlBase . $canonicalUri . $canonicalQuery;
     ?>
     <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8') ?>">
-    
-    <!-- Favicon -->
+
     <link rel="icon" type="image/x-icon" href="<?= htmlspecialchars($config['site_favicon'] ?? asset('favicon.ico'), ENT_QUOTES, 'UTF-8') ?>">
     <link rel="apple-touch-icon" href="<?= htmlspecialchars($config['site_apple_icon'] ?? asset('apple-touch-icon.png'), ENT_QUOTES, 'UTF-8') ?>">
-    
-    <!-- Open Graph Meta Tags -->
+
     <meta property="og:title" content="<?= htmlspecialchars(isset($title) ? $title . ' - ' . $config['site_name'] : $config['site_name'], ENT_QUOTES, 'UTF-8') ?>">
     <meta property="og:description" content="<?= htmlspecialchars(isset($description) ? $description : $config['site_description'], ENT_QUOTES, 'UTF-8') ?>">
     <meta property="og:url" content="<?= htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8') ?>">
@@ -61,37 +55,68 @@
     <?php if (isset($config['site_og_image'])): ?>
     <meta property="og:image" content="<?= htmlspecialchars($config['site_og_image'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    
-    <!-- Twitter Card Meta Tags -->
+
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="<?= htmlspecialchars(isset($title) ? $title . ' - ' . $config['site_name'] : $config['site_name'], ENT_QUOTES, 'UTF-8') ?>">
     <meta name="twitter:description" content="<?= htmlspecialchars(isset($description) ? $description : $config['site_description'], ENT_QUOTES, 'UTF-8') ?>">
     <?php if (isset($config['site_twitter_site'])): ?>
     <meta name="twitter:site" content="<?= htmlspecialchars($config['site_twitter_site'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    
-    <!-- Preconnect to external resources -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    
-    <!-- Bootstrap CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Fonts -->
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    
-    <!-- Custom CSS with cache busting -->
+
     <link href="<?= htmlspecialchars(asset('assets/css/main.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
-    
-    <!-- PWA Meta Tags -->
+    <style>
+        .navbar-modern .container{max-width:100%}
+        .navbar-collapse{min-width:0;gap:var(--space-sm)}
+        .navbar-nav{flex-wrap:wrap;justify-content:center;min-width:0}
+        .navbar-controls{flex-shrink:0;margin-left:auto}
+        @media (min-width:1400px) and (max-width:1699.98px){
+            .navbar-nav{gap:.125rem}
+            .nav-link{font-size:.875rem;padding:var(--space-xs) var(--space-sm);padding-right:.875rem;gap:.25rem}
+            .nav-link i{display:none}
+            .navbar-brand{font-size:1.05rem}
+        }
+        @media (max-width:1399.98px){
+            .navbar-toggler{display:block;margin-left:auto}
+            .navbar-collapse{position:absolute;top:100%;left:0;right:0;z-index:1030;background:var(--bg-primary);border-top:1px solid var(--border-color);box-shadow:var(--shadow-lg);padding:var(--space-md);display:none;flex-direction:column;gap:var(--space-md);max-height:calc(100vh - 80px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+            .navbar-collapse.show{display:flex}
+            .navbar-nav{flex-direction:column;width:100%;gap:var(--space-xs)}
+            .nav-item{width:100%}
+            .nav-link{width:100%;padding:var(--space-md);padding-right:var(--space-xl);justify-content:space-between}
+            .nav-link .badge{position:static;transform:none;margin-left:auto}
+            .navbar-controls{width:100%;justify-content:space-between;padding-top:var(--space-md);border-top:1px solid var(--border-color);flex-wrap:wrap;gap:var(--space-sm);margin-left:0}
+            .navbar-controls .dropdown{flex:1}
+            .navbar-controls .btn-navbar{width:100%}
+            .theme-toggle-wrapper{margin-left:auto}
+        }
+        @media (min-width:992px) and (max-width:1279.98px){
+            .table-responsive .table thead th,.table-responsive .table tbody td{padding:.375rem .5rem;font-size:.8125rem}
+            .table-responsive .player-info{gap:.375rem}
+            .table-responsive .avatar{width:30px;height:30px}
+            .table-responsive .reason-cell{max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+            .table-responsive .badge,.table-responsive .status-badge{font-size:.6875rem;padding:.2rem .4rem}
+            .table-responsive .btn-sm{padding:.25rem .5rem;font-size:.75rem}
+            .table-responsive .btn-sm i{display:none}
+            .table-responsive .font-monospace{font-size:.75rem}
+            .table-responsive .sort-link{gap:.25rem}
+            .table-responsive .sort-link i{font-size:.75rem}
+            .table-responsive.d-none.d-lg-block .table thead th:nth-child(2),
+            .table-responsive.d-none.d-lg-block .table tbody td:nth-child(2){display:none}
+        }
+    </style>
+
     <meta name="theme-color" content="<?= htmlspecialchars($config['site_theme_color'] ?? '#ef4444', ENT_QUOTES, 'UTF-8') ?>">
-    
-    <!-- Additional SEO Meta Tags -->
+
     <?php if (isset($config['site_keywords']) && !empty($config['site_keywords'])): ?>
     <meta name="keywords" content="<?= htmlspecialchars($config['site_keywords'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
@@ -99,8 +124,7 @@
     <meta name="rating" content="general">
     <meta name="revisit-after" content="7 days">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    
-    <!-- Enhanced SEO Meta Tags -->
+
     <meta name="distribution" content="global">
     <meta name="language" content="<?= htmlspecialchars($config['site_lang'] ?? $lang->getCurrentLanguage(), ENT_QUOTES, 'UTF-8') ?>">
     <meta name="generator" content="LiteBansU 3.0">
@@ -115,8 +139,7 @@
     <meta name="application-name" content="<?= htmlspecialchars($config['site_name'], ENT_QUOTES, 'UTF-8') ?>">
     <meta name="msapplication-TileColor" content="<?= htmlspecialchars($config['site_theme_color'] ?? '#ef4444', ENT_QUOTES, 'UTF-8') ?>">
     <meta name="msapplication-config" content="none">
-    
-    <!-- Geo Meta Tags (Optional) -->
+
     <?php if (isset($config['seo_geo_region'])): ?>
     <meta name="geo.region" content="<?= htmlspecialchars($config['seo_geo_region'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
@@ -127,39 +150,33 @@
     <meta name="geo.position" content="<?= htmlspecialchars($config['seo_geo_position'], ENT_QUOTES, 'UTF-8') ?>">
     <meta name="ICBM" content="<?= htmlspecialchars($config['seo_geo_position'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    
-    <!-- AI / Search Engine Tags -->
+
     <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="googlebot-news" content="index, follow">
     <?php if (isset($config['seo_ai_training']) && $config['seo_ai_training'] === false): ?>
-    <!-- Explicit AI opt-out (overrides per-bot defaults) -->
     <meta name="robots" content="noai, noimageai">
     <meta name="GPTBot" content="noindex, nofollow">
     <meta name="ClaudeBot" content="noindex, nofollow">
     <meta name="PerplexityBot" content="noindex, nofollow">
     <meta name="CCBot" content="noindex, nofollow">
     <?php else: ?>
-    <!-- AI agent / LLM crawler hints (positive opt-in for public ban list visibility) -->
     <meta name="GPTBot" content="index, follow">
     <meta name="ClaudeBot" content="index, follow">
     <meta name="PerplexityBot" content="index, follow">
     <meta name="Google-Extended" content="index, follow">
     <?php endif; ?>
-    
-    <!-- Machine-readable endpoints for AI agents and crawlers -->
+
     <link rel="alternate" type="text/plain" title="LLM site description" href="<?= htmlspecialchars($siteUrlBase . '/llms.txt', ENT_QUOTES, 'UTF-8') ?>">
     <link rel="alternate" type="application/json" title="AI agent manifest" href="<?= htmlspecialchars($siteUrlBase . '/agent.json', ENT_QUOTES, 'UTF-8') ?>">
     <link rel="alternate" type="application/json" title="Punishment statistics (JSON)" href="<?= htmlspecialchars($siteUrlBase . '/ai/stats.json', ENT_QUOTES, 'UTF-8') ?>">
     <link rel="sitemap" type="application/xml" title="Sitemap" href="<?= htmlspecialchars($siteUrlBase . '/sitemap.xml', ENT_QUOTES, 'UTF-8') ?>">
-    
-    <!-- Open Graph Enhanced -->
+
     <meta property="og:locale" content="<?= htmlspecialchars($config['seo_locale'] ?? 'en_US', ENT_QUOTES, 'UTF-8') ?>">
     <?php if (isset($config['seo_facebook_app_id'])): ?>
     <meta property="fb:app_id" content="<?= htmlspecialchars($config['seo_facebook_app_id'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    
-    <!-- Twitter Card Enhanced -->
+
     <meta name="twitter:card" content="summary_large_image">
     <?php if (isset($config['seo_twitter_creator'])): ?>
     <meta name="twitter:creator" content="<?= htmlspecialchars($config['seo_twitter_creator'], ENT_QUOTES, 'UTF-8') ?>">
@@ -167,24 +184,22 @@
     <?php if (isset($config['site_og_image'])): ?>
     <meta name="twitter:image" content="<?= htmlspecialchars($config['site_og_image'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    
-    <!-- DNS Prefetch for Performance -->
+
     <link rel="dns-prefetch" href="//fonts.googleapis.com">
     <link rel="dns-prefetch" href="//fonts.gstatic.com">
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-    
-    <!-- Alternate Languages (if multilingual) -->
+
     <?php if (isset($config['seo_alternate_languages']) && is_array($config['seo_alternate_languages'])): ?>
     <?php foreach ($config['seo_alternate_languages'] as $langCode => $langUrl): ?>
     <link rel="alternate" hreflang="<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>" href="<?= htmlspecialchars($langUrl, ENT_QUOTES, 'UTF-8') ?>">
     <?php endforeach; ?>
     <?php else: ?>
-    <?php 
-        // Auto-generate hreflang tags for all supported languages on the current canonical path
+    <?php
+
         $sep = $canonicalQuery === '' ? '?' : '&';
         foreach ($lang->getSupportedLanguages() as $altCode):
-            // Use 'zh' as the standard ISO code for Chinese in hreflang while keeping 'cn' internally
+
             $hreflangCode = $altCode === 'cn' ? 'zh' : $altCode;
             $altUrl = $canonicalUrl . $sep . 'lang=' . $altCode;
     ?>
@@ -192,9 +207,7 @@
     <?php endforeach; ?>
     <link rel="alternate" hreflang="x-default" href="<?= htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    
-    <!-- JSON-LD for SEO -->
-    <!-- Schema.org Structured Data (JSON-LD) -->
+
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -212,7 +225,7 @@
         }
     }
     </script>
-    
+
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -223,7 +236,7 @@
         "logo": "<?= htmlspecialchars($config['seo_organization_logo'], ENT_QUOTES, 'UTF-8') ?>",
         <?php endif; ?>
         "sameAs": [
-            <?php 
+            <?php
             $socialLinks = [];
             if (!empty($config['seo_social_facebook'])) $socialLinks[] = '"' . htmlspecialchars($config['seo_social_facebook'], ENT_QUOTES, 'UTF-8') . '"';
             if (!empty($config['seo_social_twitter'])) $socialLinks[] = '"' . htmlspecialchars($config['seo_social_twitter'], ENT_QUOTES, 'UTF-8') . '"';
@@ -243,14 +256,14 @@
         }
     }
     </script>
-    
+
     <?php if (isset($config['seo_enable_breadcrumbs']) && $config['seo_enable_breadcrumbs'] && isset($breadcrumbs) && is_array($breadcrumbs)): ?>
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
-            <?php 
+            <?php
             $breadcrumbItems = [];
             foreach ($breadcrumbs as $index => $crumb) {
                 $breadcrumbItems[] = '{
@@ -266,7 +279,7 @@
     }
     </script>
     <?php endif; ?>
-    
+
     <?php if (($currentPage ?? '') === 'home' || !isset($currentPage)): ?>
     <script type="application/ld+json">
     {
@@ -285,8 +298,7 @@
     <?php endif; ?>
 </head>
 <body class="<?= htmlspecialchars($theme->getThemeClasses()['body'], ENT_QUOTES, 'UTF-8') ?>">
-    <!-- Modern Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-modern" id="mainNavbar">
+    <nav class="navbar navbar-expand-xxl navbar-modern" id="mainNavbar">
         <div class="container">
             <a class="navbar-brand" href="<?= htmlspecialchars(url(), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="navbar-brand-icon">
@@ -294,13 +306,11 @@
                 </div>
                 <span><?= htmlspecialchars($config['site_name'] ?? 'LiteBans', ENT_QUOTES, 'UTF-8') ?></span>
             </a>
-            
-            <!-- Mobile Menu Toggle -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+
+            <button class="navbar-toggler" type="button" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i>
             </button>
-            
-            <!-- Navbar Content -->
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
@@ -370,12 +380,11 @@
                     </li>
                     <?php endif; ?>
                 </ul>
-                
+
                 <div class="navbar-controls d-flex align-items-center">
-                    <!-- Language Switcher Dropdown -->
                     <div class="dropdown">
                         <button class="btn btn-sm btn-navbar dropdown-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <?php 
+                            <?php
                             $currentLang = $lang->getCurrentLanguage();
                             $langNames = [
                                 'ar' => 'AR',
@@ -403,7 +412,7 @@
                         <ul class="dropdown-menu dropdown-menu-end">
                             <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
                                 <li>
-                                    <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>" 
+                                    <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>"
                                        href="?lang=<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>"
                                        hreflang="<?= htmlspecialchars($langCode === 'cn' ? 'zh' : $langCode, ENT_QUOTES, 'UTF-8') ?>"
                                        title="<?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>">
@@ -414,10 +423,9 @@
                             <?php endforeach; ?>
                         </ul>
                     </div>
-                    
-                    <!-- Theme Toggle Switch -->
+
                     <div class="theme-toggle-wrapper">
-                        <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox" 
+                        <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox"
                                <?= $theme->getCurrentTheme() === 'dark' ? 'checked' : '' ?>>
                         <label for="theme-toggle" class="theme-toggle-label">
                             <i class="fas fa-sun"></i>
@@ -429,11 +437,8 @@
             </div>
         </div>
     </nav>
-    
-    <!-- Hero Gradient Background -->
+
     <div class="hero-gradient"></div>
-    
-    <!-- Main Content -->
+
     <main class="main-content">
         <div class="container">
-            <!-- Page content will be inserted here -->
