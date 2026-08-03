@@ -13,18 +13,16 @@
  * Repository:    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
-/* Import modular CSS files */
-@import url('variables.css');
-@import url('base.css');
-@import url('components.css');
-@import url('layout.css');
-@import url('themes.css');
-@import url('utilities.css');
-@import url('responsive.css');
+@import url('variables.css?v=2de9b53d');
+@import url('base.css?v=9350940e');
+@import url('components.css?v=82d46410');
+@import url('layout.css?v=0be3f978');
+@import url('themes.css?v=40fbc669');
+@import url('utilities.css?v=5358f675');
+@import url('responsive.css?v=83e78e7e');
 
-/* Page-specific styles */
-@import url('pages/home.css');
-@import url('pages/stats.css');
-@import url('pages/punishments.css');
-@import url('pages/detail.css');
-@import url('pages/admin.css');
+@import url('pages/home.css?v=1be4bdf8');
+@import url('pages/stats.css?v=1adfac85');
+@import url('pages/punishments.css?v=c0731344');
+@import url('pages/detail.css?v=cb1c7815');
+@import url('pages/admin.css?v=fdca68a6');
