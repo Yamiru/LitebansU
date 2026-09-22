@@ -754,20 +754,20 @@ if (!$controller->isAuthenticated()) {
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Avatar URL (Online)</label>
-                                    <input type="text" class="form-control" name="avatar_url" 
-                                           value="<?= htmlspecialchars($config['avatar_url'] ?? 'https://mineskin.eu/helm/{name}', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="https://mineskin.eu/helm/{name}">
-                                    <small class="form-text text-muted">URL for online mode avatars. Use {name} or {uuid} placeholder</small>
+                                    <input type="text" class="form-control" name="avatar_url"
+                                           value="<?= htmlspecialchars($config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://crafatar.com/avatars/{uuid}?size=64&overlay=true">
+                                    <small class="form-text text-muted">Premium (online-mode) players, looked up by {uuid}</small>
                                 </div>
                             </div>
                             
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Avatar URL (Offline)</label>
-                                    <input type="text" class="form-control" name="avatar_url_offline" 
-                                           value="<?= htmlspecialchars($config['avatar_url_offline'] ?? 'https://mineskin.eu/helm/{name}', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="https://mineskin.eu/helm/{name}">
-                                    <small class="form-text text-muted">URL for offline mode avatars. Use {name} or {uuid} placeholder</small>
+                                    <input type="text" class="form-control" name="avatar_url_offline"
+                                           value="<?= htmlspecialchars($config['avatar_url_offline'] ?? 'https://cravatar.eu/avatar/{name}/64', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://cravatar.eu/avatar/{name}/64">
+                                    <small class="form-text text-muted">Cracked (offline-mode) players, looked up by {name} — crafatar cannot resolve their UUID</small>
                                 </div>
                             </div>
                         </div>
