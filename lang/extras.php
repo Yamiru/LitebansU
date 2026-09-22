@@ -1,4 +1,8 @@
 <?php
+/**
+ * Texts for the cookie notice and the privacy page (see core/SiteExtras.php).
+ * Language codes match the rest of the site. Missing keys fall back to English.
+ */
 return [
     'en' => [
         'cookie_text' => "We use cookies that the site needs to work. With your consent we also use Google Analytics to understand how the site is used.",

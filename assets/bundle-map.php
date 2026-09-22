@@ -1,22 +1,11 @@
 <?php
 /**
- * ============================================================================
- * LiteBansU
- * ============================================================================
- *
- * Plugin Name: LiteBansU
- * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version: 5.1
- * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI: https://yamiru.com
- * License: MIT
- * License URI: https://opensource.org/licenses/MIT
- * ============================================================================
+ * Files combined by bundle.php, in load order (paths are relative to the assets/ folder).
+ * The order matches the old @import list in css/main.css, with refresh.css last.
  */
 return [
     'css' => [
         'css/variables.css',
-        'css/icons.css',
         'css/base.css',
         'css/components.css',
         'css/layout.css',

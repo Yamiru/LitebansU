@@ -135,8 +135,10 @@
                             <?php endif; ?>
                         </td>
                         <td>
-                            <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>"
-                               class="btn btn-sm btn-outline-primary">
+                            <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>" 
+                               class="btn btn-sm btn-outline-primary"
+                               target="_blank"
+                               rel="noopener noreferrer">
                                 <i class="fas fa-external-link-alt"></i> <?= $lang->get('table.view') ?>
                             </a>
                         </td>
@@ -241,8 +243,10 @@
                         
                         <!-- Action Button -->
                         <div class="text-end mt-3">
-                            <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>"
-                               class="btn btn-sm btn-outline-primary">
+                            <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>" 
+                               class="btn btn-sm btn-outline-primary"
+                               target="_blank"
+                               rel="noopener noreferrer">
                                 <i class="fas fa-external-link-alt"></i> <?= $lang->get('table.view') ?>
                             </a>
                         </div>

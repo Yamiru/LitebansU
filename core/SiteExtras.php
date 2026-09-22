@@ -1,19 +1,10 @@
 <?php
 /**
- * ============================================================================
- * LiteBansU
- * ============================================================================
- *
- * Plugin Name:   LiteBansU
- * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       5.0
- * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI:    https://yamiru.com
- * License:       MIT
- * License URI:   https://opensource.org/licenses/MIT
- * Repository:    https://github.com/Yamiru/LitebansU/
- * ============================================================================
+ * Site extras that admins manage in the admin panel: crawler policy, Google Analytics with cookie
+ * consent, the privacy page, custom code and the IndexNow key. Everything lives in data/site_extras.json
+ * (not in .env, because some values are multi-line).
  */
+
 declare(strict_types=1);
 
 namespace core;

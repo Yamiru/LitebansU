@@ -64,10 +64,21 @@
     <meta name="twitter:site" content="<?= htmlspecialchars($config['site_twitter_site'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
 
-    <link href="<?= htmlspecialchars(asset('assets/vendor/bootstrap/bootstrap.min.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
-    <link href="<?= htmlspecialchars(asset('assets/fonts/fonts.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
-    <link rel="preload" href="<?= htmlspecialchars(asset('assets/fonts/public-latin.woff2'), ENT_QUOTES, 'UTF-8') ?>" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="<?= htmlspecialchars(asset('assets/fonts/bricolage-latin.woff2'), ENT_QUOTES, 'UTF-8') ?>" as="font" type="font/woff2" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <?php // Font Awesome without the brand icons (about 100 KB) unless the page shows one (Discord on the protest and login pages) ?>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/fontawesome.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/solid.min.css" rel="stylesheet">
+    <?php if (in_array($currentPage ?? '', ['protest', 'admin'], true)): ?>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/brands.min.css" rel="stylesheet">
+    <?php endif; ?>
 
     <link href="<?= htmlspecialchars(bundle('css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
     <style>
@@ -82,19 +93,17 @@
             .navbar-brand{font-size:1.05rem}
         }
         @media (max-width:1399.98px){
-            .navbar-toggler{display:block}
+            .navbar-toggler{display:block;margin-left:auto}
             .navbar-collapse{position:absolute;top:100%;left:0;right:0;z-index:1030;background:var(--bg-primary);border-top:1px solid var(--border-color);box-shadow:var(--shadow-lg);padding:var(--space-md);display:none;flex-direction:column;gap:var(--space-md);max-height:calc(100vh - 80px);overflow-y:auto;-webkit-overflow-scrolling:touch}
             .navbar-collapse.show{display:flex}
             .navbar-nav{flex-direction:column;width:100%;gap:var(--space-xs)}
             .nav-item{width:100%}
             .nav-link{width:100%;padding:var(--space-md);padding-right:var(--space-xl);justify-content:space-between}
             .nav-link .badge{position:static;transform:none;margin-left:auto}
-            .navbar-modern .container{flex-wrap:nowrap}
-            .navbar-brand{order:0;flex:1 1 auto;min-width:0}
-            .navbar-brand span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-            .navbar-controls{order:1;margin-left:var(--space-sm);flex-wrap:nowrap}
-            .navbar-toggler{order:2;margin-left:var(--space-sm)}
-            .navbar-collapse{order:3}
+            .navbar-controls{width:100%;justify-content:space-between;padding-top:var(--space-md);border-top:1px solid var(--border-color);flex-wrap:wrap;gap:var(--space-sm);margin-left:0}
+            .navbar-controls .dropdown{flex:1}
+            .navbar-controls .btn-navbar{width:100%}
+            .theme-toggle-wrapper{margin-left:auto}
         }
         @media (min-width:992px) and (max-width:1279.98px){
             .table-responsive .table thead th,.table-responsive .table tbody td{padding:.375rem .5rem;font-size:.8125rem}
@@ -153,7 +162,7 @@
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="googlebot-news" content="index, follow">
     <?php endif; ?>
-    <?php if (!$allowCrawlers || (isset($config['seo_ai_training']) && $config['seo_ai_training'] === false)): ?>
+    <?php if (isset($config['seo_ai_training']) && $config['seo_ai_training'] === false): ?>
     <meta name="robots" content="noai, noimageai">
     <meta name="GPTBot" content="noindex, nofollow">
     <meta name="ClaudeBot" content="noindex, nofollow">
@@ -184,6 +193,10 @@
     <meta name="twitter:image" content="<?= htmlspecialchars($config['site_og_image'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
 
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//fonts.gstatic.com">
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
 
     <?php if (isset($config['seo_alternate_languages']) && is_array($config['seo_alternate_languages'])): ?>
     <?php foreach ($config['seo_alternate_languages'] as $langCode => $langUrl): ?>
@@ -370,58 +383,59 @@
                     </li>
                     <?php endif; ?>
                 </ul>
-            </div>
 
-            <div class="navbar-controls d-flex align-items-center">
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-navbar dropdown-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <?php
-                        $currentLang = $lang->getCurrentLanguage();
-                        $langNames = [
-                            'ar' => 'AR',
-                            'cs' => 'CS',
-                            'de' => 'DE',
-                            'gr' => 'GR',
-                            'en' => 'EN',
-                            'es' => 'ES',
-                            'fr' => 'FR',
-                            'hu' => 'HU',
-                            'it' => 'IT',
-                            'ja' => 'JA',
-                            'pl' => 'PL',
-                            'ro' => 'RO',
-                            'ru' => 'RU',
-                            'sk' => 'SK',
-                            'sr' => 'SR',
-                            'tr' => 'TR',
-                            'cn' => 'CN',
-                        ];
-                        ?>
-                        <i class="fas fa-globe"></i>
-                        <span><?= htmlspecialchars($langNames[$currentLang] ?? 'EN', ENT_QUOTES, 'UTF-8') ?></span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
-                            <li>
-                                <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>"
-                                   href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['lang' => $langCode])), ENT_QUOTES, 'UTF-8') ?>"
-                                   hreflang="<?= htmlspecialchars($langCode === 'cn' ? 'zh' : $langCode, ENT_QUOTES, 'UTF-8') ?>"
-                                   title="<?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>">
-                                    <?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>
-                                </a>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
+                <div class="navbar-controls d-flex align-items-center">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-navbar dropdown-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <?php
+                            $currentLang = $lang->getCurrentLanguage();
+                            $langNames = [
+                                'ar' => 'AR',
+                                'cs' => 'CS',
+                                'de' => 'DE',
+                                'gr' => 'GR',
+                                'en' => 'EN',
+                                'es' => 'ES',
+                                'fr' => 'FR',
+                                'hu' => 'HU',
+                                'it' => 'IT',
+                                'ja' => 'JA',
+                                'pl' => 'PL',
+                                'ro' => 'RO',
+                                'ru' => 'RU',
+                                'sk' => 'SK',
+                                'sr' => 'SR',
+                                'tr' => 'TR',
+                                'cn' => 'CN',
+                            ];
+                            ?>
+                            <i class="fas fa-globe"></i>
+                            <span><?= htmlspecialchars($langNames[$currentLang] ?? 'EN', ENT_QUOTES, 'UTF-8') ?></span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
+                                <li>
+                                    <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>"
+                                       href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['lang' => $langCode])), ENT_QUOTES, 'UTF-8') ?>"
+                                       hreflang="<?= htmlspecialchars($langCode === 'cn' ? 'zh' : $langCode, ENT_QUOTES, 'UTF-8') ?>"
+                                       title="<?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>">
+                                        <strong><?= htmlspecialchars($langNames[$langCode] ?? strtoupper($langCode), ENT_QUOTES, 'UTF-8') ?></strong>
+                                        <span class="text-muted small ms-1"><?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?></span>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
 
-                <div class="theme-toggle-wrapper">
-                    <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox"
-                           <?= $theme->getCurrentTheme() === 'dark' ? 'checked' : '' ?>>
-                    <label for="theme-toggle" class="theme-toggle-label">
-                        <i class="fas fa-sun"></i>
-                        <i class="fas fa-moon"></i>
-                        <span class="theme-toggle-ball"></span>
-                    </label>
+                    <div class="theme-toggle-wrapper">
+                        <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox"
+                               <?= $theme->getCurrentTheme() === 'dark' ? 'checked' : '' ?>>
+                        <label for="theme-toggle" class="theme-toggle-label">
+                            <i class="fas fa-sun"></i>
+                            <i class="fas fa-moon"></i>
+                            <span class="theme-toggle-ball"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>

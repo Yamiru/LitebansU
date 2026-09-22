@@ -1,17 +1,10 @@
 /**
- * ============================================================================
- * LiteBansU
- * ============================================================================
+ * Cookie notice and, when a Google Analytics ID is set, the analytics choice. Analytics is loaded
+ * only after the visitor accepts it. The choice is kept in the lb_consent cookie for 180 days.
+ * Settings come from window.LB_CONSENT = { ga: 'G-...' or '', banner: true|false }.
  *
- * Plugin Name:   LiteBansU
- * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       5.0
- * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI:    https://yamiru.com
- * License:       MIT
- * License URI:   https://opensource.org/licenses/MIT
- * Repository:    https://github.com/Yamiru/LitebansU/
- * ============================================================================
+ * This script is loaded before the notice markup in the footer, so everything that touches the
+ * notice runs after the document is parsed and looks the elements up when it needs them.
  */
 (function () {
     var cfg = window.LB_CONSENT;

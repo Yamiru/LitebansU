@@ -1,18 +1,18 @@
 <?php
 /**
- * ============================================================================
- * LiteBansU
- * ============================================================================
+ * Case Evidence for LiteBansU
  *
- * Plugin Name:   LiteBansU
- * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       5.0
- * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI:    https://yamiru.com
- * License:       MIT
- * License URI:   https://opensource.org/licenses/MIT
- * Repository:    https://github.com/Yamiru/LitebansU/
- * ============================================================================
+ * One place for everything staff know about a punishment: reports, screenshots,
+ * videos and demos (each with its own caption) and a one-line appeal outcome.
+ * Stored in demos/data/staff_notes.php (a PHP file that only holds JSON) and demos/data/evidence/ (private, served
+ * through this file). Nothing is written to the LiteBans MySQL database and
+ * players never see any of it. All text is translated (see sn_strings()).
+ *
+ * Used by:
+ *   - templates/detail.php          -> sn_panel_html() shows the case on the punishment page
+ *   - templates/admin/dashboard.php -> sn_admin_pane_html() renders the "Case Evidence" tab
+ *   - AdminController::caseEvidence() and searchPunishments() -> sn_apply_post(), sn_case_json(), sn_search_cases()
+ *   - POST / GET to this file       -> forms on the detail page and attachment downloads
  */
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

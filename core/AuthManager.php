@@ -1,17 +1,13 @@
 <?php
 /**
  * ============================================================================
- * LiteBansU
+ *  LiteBansU - Authentication Manager
  * ============================================================================
  *
- * Plugin Name:   LiteBansU
- * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       5.0
- * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI:    https://yamiru.com
- * License:       MIT
- * License URI:   https://opensource.org/licenses/MIT
- * Repository:    https://github.com/Yamiru/LitebansU/
+ *  Plugin Name:   LiteBansU
+ *  Description:   Google OAuth and user management for admin panel
+ *  Version:       3.6
+ *  License:       MIT
  * ============================================================================
  */
 
