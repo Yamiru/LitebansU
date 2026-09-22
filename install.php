@@ -66,8 +66,8 @@ DATE_FORMAT=Y-m-d H:i:s
 BASE_URL=" . ($config['base_url'] ?? '') . "
 
 # Avatar Configuration
-AVATAR_URL=" . ($config['avatar_url'] ?? 'https://mineskin.eu/helm/{name}') . "
-AVATAR_URL_OFFLINE=" . ($config['avatar_url_offline'] ?? 'https://mineskin.eu/helm/{name}') . "
+AVATAR_URL=" . ($config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true') . "
+AVATAR_URL_OFFLINE=" . ($config['avatar_url_offline'] ?? 'https://cravatar.eu/avatar/{name}/64') . "
 
 # Default Settings
 DEFAULT_THEME=" . ($config['default_theme'] ?? 'dark') . "
@@ -429,15 +429,15 @@ DEMO_MODE=false
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Avatar URL (Online)</label>
-                                <input type="text" class="form-control" name="avatar_url" value="https://mineskin.eu/helm/{name}" placeholder="https://mineskin.eu/helm/{name}">
-                                <small class="form-text">URL for online avatars. Use {name} or {uuid}</small>
+                                <input type="text" class="form-control" name="avatar_url" value="https://crafatar.com/avatars/{uuid}?size=64&overlay=true" placeholder="https://crafatar.com/avatars/{uuid}?size=64&overlay=true">
+                                <small class="form-text">URL for premium (online-mode) players, looked up by {uuid}</small>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Avatar URL (Offline)</label>
-                                <input type="text" class="form-control" name="avatar_url_offline" value="https://mineskin.eu/helm/{name}" placeholder="https://mineskin.eu/helm/{name}">
-                                <small class="form-text">URL for offline avatars. Use {name} or {uuid}</small>
+                                <input type="text" class="form-control" name="avatar_url_offline" value="https://cravatar.eu/avatar/{name}/64" placeholder="https://cravatar.eu/avatar/{name}/64">
+                                <small class="form-text">URL for cracked (offline-mode) players, looked up by {name} — crafatar cannot resolve their UUID</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Theme Color</label>
