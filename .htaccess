@@ -32,10 +32,6 @@ Header always unset X-Powered-By
     Require all denied
 </Files>
 
-<Files "install-demos.php">
-    Require all denied
-</Files>
-
 <Files "hash.php">
     Require all denied
 </Files>
