@@ -1,13 +1,17 @@
 <?php
 /**
  * ============================================================================
- *  LiteBansU - Authentication Manager
+ * LiteBansU
  * ============================================================================
  *
- *  Plugin Name:   LiteBansU
- *  Description:   Google OAuth and user management for admin panel
- *  Version:       3.6
- *  License:       MIT
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       5.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
@@ -20,6 +24,7 @@ class AuthManager
     private string $dataFile;
     private string $encryptionKey;
     private array $users = [];
+    private ?string $storageProblem = null;
     private array $config;
     
     private const CIPHER_METHOD = 'AES-256-CBC';
@@ -29,61 +34,103 @@ class AuthManager
     {
         $this->config = $config;
         $this->dataFile = dirname(__DIR__) . '/data/users.dat';
-        $this->encryptionKey = $this->generateEncryptionKey();
         $this->ensureDataDirectory();
+        $this->encryptionKey = $this->generateEncryptionKey();
         $this->loadUsers();
     }
     
+    /**
+     * Why the user store cannot be trusted, or null when it is healthy.
+     * While this is set, nobody can sign in through Google or Discord and no user can be created:
+     * an unreadable or unwritable store must never turn into "the first person to sign in is admin".
+     */
+    public function getStorageProblem(): ?string
+    {
+        return $this->storageProblem;
+    }
+
+    private function failStorage(string $problem): void
+    {
+        $this->storageProblem ??= $problem;
+        error_log('AuthManager: ' . $problem);
+    }
+
     /**
      * Generate a unique encryption key based on server-specific data
      */
     private function generateEncryptionKey(): string
     {
-        $keyFile = dirname(__DIR__) . '/data/.key';
-        
-        if (file_exists($keyFile)) {
-            return file_get_contents($keyFile);
+        if ($this->storageProblem !== null) {
+            return '';
         }
-        
+
+        $keyFile = dirname(__DIR__) . '/data/.key';
+
+        if (file_exists($keyFile)) {
+            $key = @file_get_contents($keyFile);
+            if ($key === false || $key === '') {
+                $this->failStorage('The encryption key data/.key cannot be read (check file permissions).');
+                return '';
+            }
+            return $key;
+        }
+
+        // A missing key next to an existing user file means the users cannot be decrypted: never start over silently
+        if (file_exists($this->dataFile)) {
+            $this->failStorage('data/users.dat exists but data/.key is missing.');
+            return '';
+        }
+
         // Generate a new key based on multiple factors
-        $key = hash(self::HASH_ALGO, 
-            ($_SERVER['SERVER_NAME'] ?? 'localhost') . 
+        $key = hash(self::HASH_ALGO,
+            ($_SERVER['SERVER_NAME'] ?? 'localhost') .
             ($_SERVER['DOCUMENT_ROOT'] ?? __DIR__) .
             php_uname() .
             random_bytes(32)
         );
-        
-        $this->ensureDataDirectory();
-        file_put_contents($keyFile, $key);
-        chmod($keyFile, 0600);
-        
+
+        if (@file_put_contents($keyFile, $key) === false) {
+            $this->failStorage('Cannot create data/.key (check that the data/ folder is writable).');
+            return '';
+        }
+        @chmod($keyFile, 0600);
+
         return $key;
     }
-    
+
     /**
-     * Ensure data directory exists and is protected
+     * Ensure data directory exists, is writable and is protected
      */
     private function ensureDataDirectory(): void
     {
         $dataDir = dirname(__DIR__) . '/data';
-        
-        if (!is_dir($dataDir)) {
-            mkdir($dataDir, 0700, true);
+
+        if (!is_dir($dataDir) && !@mkdir($dataDir, 0700, true) && !is_dir($dataDir)) {
+            $this->failStorage('Cannot create the data/ folder.');
+            return;
         }
-        
+
+        // Prove that files can really be created here, not just that the folder claims to be writable
+        $probe = $dataDir . '/.write-test-' . bin2hex(random_bytes(4));
+        if (@file_put_contents($probe, 'ok') === false) {
+            $this->failStorage('The data/ folder is not writable (check permissions and disk space).');
+            return;
+        }
+        @unlink($probe);
+
         // Create .htaccess to protect directory
         $htaccess = $dataDir . '/.htaccess';
         if (!file_exists($htaccess)) {
-            file_put_contents($htaccess, "Order deny,allow\nDeny from all\n");
+            @file_put_contents($htaccess, "Order deny,allow\nDeny from all\n");
         }
-        
+
         // Create index.php to prevent directory listing
         $index = $dataDir . '/index.php';
         if (!file_exists($index)) {
-            file_put_contents($index, "<?php http_response_code(403); exit('Forbidden');");
+            @file_put_contents($index, "<?php http_response_code(403); exit('Forbidden');");
         }
     }
-    
+
     /**
      * Encrypt data
      */
@@ -92,10 +139,10 @@ class AuthManager
         $iv = random_bytes(openssl_cipher_iv_length(self::CIPHER_METHOD));
         $encrypted = openssl_encrypt($data, self::CIPHER_METHOD, $this->encryptionKey, 0, $iv);
         $hmac = hash_hmac(self::HASH_ALGO, $encrypted, $this->encryptionKey, true);
-        
+
         return base64_encode($iv . $hmac . $encrypted);
     }
-    
+
     /**
      * Decrypt data
      */
@@ -105,63 +152,75 @@ class AuthManager
         if ($data === false) {
             return null;
         }
-        
+
         $ivLength = openssl_cipher_iv_length(self::CIPHER_METHOD);
         $iv = substr($data, 0, $ivLength);
         $hmac = substr($data, $ivLength, 32);
         $encrypted = substr($data, $ivLength + 32);
-        
+
         // Verify HMAC
         $calcHmac = hash_hmac(self::HASH_ALGO, $encrypted, $this->encryptionKey, true);
         if (!hash_equals($hmac, $calcHmac)) {
             return null; // Data tampered
         }
-        
-        return openssl_decrypt($encrypted, self::CIPHER_METHOD, $this->encryptionKey, 0, $iv);
+
+        $plain = openssl_decrypt($encrypted, self::CIPHER_METHOD, $this->encryptionKey, 0, $iv);
+        return $plain === false ? null : $plain;
     }
-    
+
     /**
-     * Load users from encrypted file
+     * Load users from encrypted file. A missing file is a fresh install; any other failure to
+     * read it is a storage problem, not an empty user list.
      */
     private function loadUsers(): void
     {
-        if (!file_exists($this->dataFile)) {
-            $this->users = [];
+        $this->users = [];
+        if ($this->storageProblem !== null || !file_exists($this->dataFile)) {
             return;
         }
-        
-        $encryptedData = file_get_contents($this->dataFile);
-        if (empty($encryptedData)) {
-            $this->users = [];
+
+        $encryptedData = @file_get_contents($this->dataFile);
+        if ($encryptedData === false || $encryptedData === '') {
+            $this->failStorage('data/users.dat cannot be read or is empty.');
             return;
         }
-        
+
         $decrypted = $this->decrypt($encryptedData);
         if ($decrypted === null) {
-            error_log("AuthManager: Failed to decrypt users data - possible tampering");
-            $this->users = [];
+            $this->failStorage('data/users.dat cannot be decrypted (wrong key or tampering).');
             return;
         }
-        
-        $this->users = json_decode($decrypted, true) ?? [];
+
+        $users = json_decode($decrypted, true);
+        if (!is_array($users)) {
+            $this->failStorage('data/users.dat is corrupted.');
+            return;
+        }
+        $this->users = $users;
     }
-    
+
     /**
      * Save users to encrypted file
      */
     private function saveUsers(): bool
     {
+        if ($this->storageProblem !== null) {
+            return false;
+        }
+
         $json = json_encode($this->users, JSON_PRETTY_PRINT);
         $encrypted = $this->encrypt($json);
-        
-        $result = file_put_contents($this->dataFile, $encrypted, LOCK_EX);
-        if ($result !== false) {
-            chmod($this->dataFile, 0600);
+
+        $result = @file_put_contents($this->dataFile, $encrypted, LOCK_EX);
+        if ($result === false) {
+            $this->failStorage('Cannot write data/users.dat (check permissions).');
+            return false;
         }
-        
-        return $result !== false;
+        @chmod($this->dataFile, 0600);
+
+        return true;
     }
-    
+
     /**
      * Check if Google Auth is enabled
      */
@@ -388,6 +447,9 @@ class AuthManager
      */
     public function authenticateDiscord(array $discordUser): ?array
     {
+        if ($this->storageProblem !== null) {
+            return null;
+        }
         $discordId = $discordUser['id'];
         $email = $discordUser['email'];
         $username = $discordUser['username'] ?? $email;
@@ -424,15 +486,19 @@ class AuthManager
                 $user['last_login'] = time();
                 $this->updateUser($user['id'], $user);
             } else {
-                // Create first admin user
-                $user = $this->createUser([
-                    'discord_id' => $discordId,
-                    'email' => $email,
-                    'name' => $name,
-                    'picture' => $avatar,
-                    'role' => 'admin',
-                    'permissions' => ['all']
-                ]);
+                // Create first admin user; if it cannot be stored, nobody gets in
+                try {
+                    $user = $this->createUser([
+                        'discord_id' => $discordId,
+                        'email' => $email,
+                        'name' => $name,
+                        'picture' => $avatar,
+                        'role' => 'admin',
+                        'permissions' => ['all']
+                    ]);
+                } catch (\RuntimeException $e) {
+                    return null;
+                }
             }
         } else {
             // Update last login
@@ -449,6 +515,9 @@ class AuthManager
      */
     public function getUserByDiscordId(string $discordId): ?array
     {
+        if ($discordId === '') {
+            return null;
+        }
         foreach ($this->users as $user) {
             if (($user['discord_id'] ?? '') === $discordId) {
                 return $user;
@@ -462,6 +531,9 @@ class AuthManager
      */
     public function authenticateGoogle(array $googleUser): ?array
     {
+        if ($this->storageProblem !== null) {
+            return null;
+        }
         $googleId = $googleUser['id'];
         $email = $googleUser['email'];
         $name = $googleUser['name'] ?? $email;
@@ -488,15 +560,19 @@ class AuthManager
                 $user['last_login'] = time();
                 $this->updateUser($user['id'], $user);
             } else {
-                // Create first admin user
-                $user = $this->createUser([
-                    'google_id' => $googleId,
-                    'email' => $email,
-                    'name' => $name,
-                    'picture' => $picture,
-                    'role' => 'admin',
-                    'permissions' => ['all']
-                ]);
+                // Create first admin user; if it cannot be stored, nobody gets in
+                try {
+                    $user = $this->createUser([
+                        'google_id' => $googleId,
+                        'email' => $email,
+                        'name' => $name,
+                        'picture' => $picture,
+                        'role' => 'admin',
+                        'permissions' => ['all']
+                    ]);
+                } catch (\RuntimeException $e) {
+                    return null;
+                }
             }
         } else {
             // Update last login
@@ -513,6 +589,9 @@ class AuthManager
      */
     public function getUserByGoogleId(string $googleId): ?array
     {
+        if ($googleId === '') {
+            return null;
+        }
         foreach ($this->users as $user) {
             if (($user['google_id'] ?? '') === $googleId) {
                 return $user;
@@ -526,6 +605,9 @@ class AuthManager
      */
     public function getUserByEmail(string $email): ?array
     {
+        if (trim($email) === '') {
+            return null;
+        }
         foreach ($this->users as $user) {
             if (strtolower($user['email'] ?? '') === strtolower($email)) {
                 return $user;
@@ -564,7 +646,10 @@ class AuthManager
         ];
         
         $this->users[$id] = $user;
-        $this->saveUsers();
+        if (!$this->saveUsers()) {
+            unset($this->users[$id]);
+            throw new \RuntimeException('The user could not be saved: ' . ($this->storageProblem ?? 'unknown storage error'));
+        }
         
         return $user;
     }
