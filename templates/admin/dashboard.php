@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.7
+ *  Version:       5.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -53,7 +53,7 @@ if (!$controller->isAuthenticated()) {
             </button>
         </li>
         <?php endif; ?>
-        <?php if (($config['google_auth_enabled'] ?? false) && ($currentUser['role'] ?? '') === 'admin'): ?>
+        <?php if ((($config['google_auth_enabled'] ?? false) || ($config['discord_auth_enabled'] ?? false)) && ($currentUser['role'] ?? '') === 'admin'): ?>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
                 <i class="fas fa-users"></i> Users
@@ -72,7 +72,10 @@ if (!$controller->isAuthenticated()) {
             </button>
         </li>
        <?php endif; ?>
-      <li class="nav-item" role="presentation"> <a class="nav-link" href="demos/"> <i class="fas fa-video"></i> Demo Management </a> </li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="case-evidence-tab" data-bs-toggle="tab" data-bs-target="#case-evidence" type="button"><i class="fas fa-folder-open"></i> <?php /* case-evidence:tab */ try { require_once __DIR__ . '/../../demos/case-evidence.php'; echo sn_e(sn_t('tab')); } catch (Throwable $e) { echo 'Evidence'; } ?></button></li>
+      <?php if (($currentUser['role'] ?? 'admin') === 'admin'): ?>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="seo-tracking-tab" data-bs-toggle="tab" data-bs-target="#seo-tracking" type="button"><i class="fas fa-bullseye"></i> SEO &amp; Tracking</button></li>
+      <?php endif; ?>
     </ul>
 
     <!-- Tab Content -->
@@ -572,116 +575,6 @@ if (!$controller->isAuthenticated()) {
                             </div>
                         </div>
                         
-                        <!-- Authentication Settings -->
-                        <hr class="my-4">
-                        <h6 class="mb-3"><i class="fas fa-key"></i> Authentication Settings</h6>
-                        <div class="alert alert-info mb-3">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Google OAuth:</strong> When enabled, admins sign in with their Google account. 
-                            The first user to sign in becomes administrator. You can manage users in the "Users" tab.
-                            <br><small>Get credentials from: <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a></small>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" name="google_auth_enabled" 
-                                           id="google_auth_enabled" <?= ($config['google_auth_enabled'] ?? false) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="google_auth_enabled">
-                                        Enable Google Authentication
-                                    </label>
-                                    <small class="form-text text-muted d-block">When disabled, password login is used</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row" id="google-auth-fields">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Google Client ID</label>
-                                    <input type="text" class="form-control" name="google_client_id" 
-                                           value="<?= htmlspecialchars($config['google_client_id'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="xxxx.apps.googleusercontent.com">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Google Client Secret</label>
-                                    <input type="password" class="form-control" name="google_client_secret" 
-                                           value="<?= htmlspecialchars($config['google_client_secret'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="GOCSPX-xxxx">
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" name="allow_password_login" 
-                                           id="allow_password_login" <?= ($config['allow_password_login'] ?? true) ? 'checked' : '' ?>>
-                                    <label class="form-check-label text-danger fw-bold" for="allow_password_login">
-                                        <i class="fas fa-exclamation-triangle"></i> Allow Password Login (Fallback)
-                                    </label>
-                                    <small class="form-text text-danger d-block">
-                                        <strong>Warning:</strong> When disabled, only Google authentication will work. 
-                                        Make sure Google OAuth is properly configured before disabling!
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="alert alert-secondary">
-                                    <strong>Redirect URI:</strong> 
-                                    <code><?= htmlspecialchars(rtrim($config['site_url'] ?? '', '/') . ($config['base_path'] ?? '') . '/admin/oauth-callback', ENT_QUOTES, 'UTF-8') ?></code>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Discord OAuth Settings -->
-                        <hr class="my-4">
-                        <h6 class="mb-3"><i class="fab fa-discord"></i> Discord OAuth Settings</h6>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Discord OAuth:</strong> Alternative to Google OAuth. Admins can sign in with their Discord account.
-                            <br><small>Get credentials from: <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a></small>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" name="discord_auth_enabled" 
-                                           id="discord_auth_enabled" <?= ($config['discord_auth_enabled'] ?? false) ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="discord_auth_enabled">
-                                        Enable Discord Authentication
-                                    </label>
-                                    <small class="form-text text-muted d-block">Can be used alongside Google OAuth</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row" id="discord-auth-fields">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Discord Client ID</label>
-                                    <input type="text" class="form-control" name="discord_client_id" 
-                                           value="<?= htmlspecialchars($config['discord_client_id'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="1234567890123456789">
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Discord Client Secret</label>
-                                    <input type="password" class="form-control" name="discord_client_secret" 
-                                           value="<?= htmlspecialchars($config['discord_client_secret'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="xxxx-xxxx-xxxx">
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="alert alert-secondary">
-                                    <strong>Redirect URI:</strong> 
-                                    <code><?= htmlspecialchars(rtrim($config['site_url'] ?? '', '/') . ($config['base_path'] ?? '') . '/admin/oauth-callback?provider=discord', ENT_QUOTES, 'UTF-8') ?></code>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="navigator.clipboard.writeText(this.previousElementSibling.textContent)">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- SEO Settings -->
                         <hr class="my-4">
                         <h6 class="mb-3"><i class="fas fa-search"></i> SEO Settings</h6>
@@ -955,7 +848,7 @@ if (!$controller->isAuthenticated()) {
             </div>
         </div>
 
-        <?php if (($config['google_auth_enabled'] ?? false) && ($currentUser['role'] ?? '') === 'admin'): ?>
+        <?php if ((($config['google_auth_enabled'] ?? false) || ($config['discord_auth_enabled'] ?? false)) && ($currentUser['role'] ?? '') === 'admin'): ?>
         <!-- Users Tab -->
         <div class="tab-pane fade" id="users" role="tabpanel">
             <div class="card">
@@ -969,7 +862,7 @@ if (!$controller->isAuthenticated()) {
                     
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
-                        Users must sign in with Google to activate their account. Add their email address here to grant access.
+                        Add an admin by email (Google sign-in) or by Discord ID (Discord sign-in). They get access the first time they sign in with that account.
                     </div>
                     
                     <div id="users-list">
@@ -984,104 +877,99 @@ if (!$controller->isAuthenticated()) {
         </div>
         <?php endif; ?>
 
-        <!-- System Info Tab -->
-        <div class="tab-pane fade" id="info" role="tabpanel">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="mb-3">
-                        <i class="fas fa-sitemap"></i> SEO Sitemap
-                    </h5>
-                    
-                    <!-- Dynamic website information -->
-                    <div class="alert alert-info mb-3" role="alert">
-                        <div class="row">
-                            <div class="col-md-6 mb-2 mb-md-0">
-                                <strong><i class="fas fa-globe"></i> Website:</strong>
-                                <code class="ms-2"><?= htmlspecialchars($config['site_url'] ?? 'https://yoursite.com', ENT_QUOTES, 'UTF-8') ?></code>
-                            </div>
+        <?php if (($currentUser['role'] ?? 'admin') === 'admin'): ?>
+        <!-- SEO & Tracking Tab -->
+        <?php
+        $seoExtras = \core\SiteExtras::get();
+        $seoLangs = $lang->getSupportedLanguages();
+        $seoSiteUrl = \core\SiteExtras::siteUrl($config);
+        $seoPrivacyShown = [];
+        foreach ($seoLangs as $code) {
+            $seoPrivacyShown[$code] = \core\SiteExtras::privacyHtml($code, (string)($config['site_name'] ?? 'this site'));
+        }
+        ?>
+        <div class="tab-pane fade" id="seo-tracking" role="tabpanel">
+            <form id="seo-form" onsubmit="return false">
+                <div class="alert alert-danger d-none" id="seo-error" role="alert"></div>
+                <div class="alert alert-success d-none" id="seo-saved" role="status"></div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3"><i class="fas fa-search text-primary"></i> Search engines and crawlers</h5>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="seo-allow-crawlers" <?= !empty($seoExtras['allow_crawlers']) ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="seo-allow-crawlers">Allow search engines and other crawlers</label>
+                        </div>
+                        <p class="text-muted small">When on, <a href="<?= htmlspecialchars(url('robots.txt'), ENT_QUOTES, 'UTF-8') ?>" target="_blank">robots.txt</a> allows the public pages and lists the <a href="<?= htmlspecialchars(url('sitemap.xml'), ENT_QUOTES, 'UTF-8') ?>" target="_blank">sitemap</a>. When off, the whole site is closed to crawlers (robots.txt and noindex). Blocking AI crawlers only is still <code>SEO_AI_TRAINING=false</code> in .env.</p>
+                        <hr>
+                        <h6 class="mb-2">IndexNow</h6>
+                        <p class="text-muted small mb-2">Tells Bing, Yandex and other IndexNow search engines about your pages right away. It sends the home page, ban, mute, warning and kick lists, statistics, protest, privacy and the list pages. Individual punishments (a player and an ID) are never sent. Site URL used: <code><?= htmlspecialchars($seoSiteUrl, ENT_QUOTES, 'UTF-8') ?></code></p>
+                        <button type="button" class="btn btn-outline-primary" id="indexnow-submit"><i class="fas fa-paper-plane"></i> Submit all pages to IndexNow</button>
+                        <div id="indexnow-result" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3"><i class="fas fa-chart-line text-primary"></i> Google Analytics and cookies</h5>
+                        <div class="row g-3">
                             <div class="col-md-6">
-                                <strong><i class="fas fa-clock"></i> Generated at:</strong>
-                                <code class="ms-2" id="sitemap-time"><?= date('Y-m-d H:i:s') ?></code>
+                                <label class="form-label" for="seo-ga-id">Measurement ID</label>
+                                <input type="text" class="form-control" id="seo-ga-id" placeholder="G-XXXXXXXXXX" value="<?= htmlspecialchars((string)$seoExtras['ga_id'], ENT_QUOTES, 'UTF-8') ?>">
+                                <small class="text-muted">Leave empty to switch analytics off. The tag loads on every page, but only after the visitor accepts analytics cookies. The notice itself does not need this.</small>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="seo-cookie-banner" <?= !empty($seoExtras['cookie_banner']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="seo-cookie-banner">Show the cookie notice in the visitor's language (accept, decline or choose when Google Analytics is set, a plain notice otherwise)</label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <p class="text-muted mb-3">
-                        Copy this XML code and save it as <code>sitemap.xml</code> in your website's root directory.
-                    </p>
-                    <div class="d-flex justify-content-end mb-2">
-                        <button type="button" class="btn btn-sm btn-primary" onclick="copySitemapToClipboard()">
-                            <i class="fas fa-copy"></i> Copy to Clipboard
-                        </button>
-                    </div>
-                    <div class="sitemap-container">
-                        <pre id="sitemap-content" class="mb-0"><code><?= htmlspecialchars($controller->generateSitemap(), ENT_QUOTES, 'UTF-8') ?></code></pre>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+                            <h5 class="mb-0"><i class="fas fa-user-shield text-primary"></i> Privacy page</h5>
+                            <a href="<?= htmlspecialchars(url('privacy'), ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="fas fa-external-link-alt"></i> Open /privacy</a>
+                        </div>
+                        <p class="text-muted small">The cookie notice and the footer link to this page. Each language starts with the text visitors see now. Change it and save; languages you do not touch keep showing the English text, or the built-in default, which you should read and adapt. Allowed formatting: p, br, strong, em, u, h2 to h4, lists, links, blockquote.</p>
+                        <div class="mb-2">
+                            <label class="form-label" for="seo-privacy-lang">Language</label>
+                            <select class="form-control w-auto" id="seo-privacy-lang">
+                                <?php foreach ($seoLangs as $code): ?>
+                                    <option value="<?= htmlspecialchars($code, ENT_QUOTES, 'UTF-8') ?>" <?= $code === 'en' ? 'selected' : '' ?>><?= htmlspecialchars(strtoupper($code) . ' - ' . $lang->getLanguageName($code), ENT_QUOTES, 'UTF-8') ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <textarea class="form-control font-monospace" id="seo-privacy-text" rows="12" placeholder="<p>Your privacy policy...</p>"></textarea>
                     </div>
                 </div>
-            </div>
-            
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="mb-3">
-                        <i class="fas fa-robot"></i> Robots.txt Configuration
-                    </h5>
-                    
-                    <div class="alert alert-warning mb-3" role="alert">
-                        <strong><i class="fas fa-info-circle"></i> Setup Instructions:</strong>
-                        <ol class="mb-0 mt-2">
-                            <li>Copy the robots.txt content below</li>
-                            <li>Create or edit <code>robots.txt</code> in your website's root directory</li>
-                            <li>Make sure to update the Sitemap URL to match your domain</li>
-                            <li>Adjust crawl-delay if needed (optional)</li>
-                        </ol>
-                    </div>
-                    
-                    <div class="d-flex justify-content-end mb-2">
-                        <button type="button" class="btn btn-sm btn-primary" onclick="copyRobotsToClipboard()">
-                            <i class="fas fa-copy"></i> Copy to Clipboard
-                        </button>
-                    </div>
-                    <div class="sitemap-container">
-                        <pre id="robots-content" class="mb-0"><code><?php
-$siteUrl = rtrim($config['site_url'] ?? 'https://yoursite.com', '/');
-$robotsTxt = <<<ROBOTS
-# robots.txt for LiteBansU
-User-agent: *
 
-# Allow public pages
-Allow: /
-Allow: /bans
-Allow: /mutes
-Allow: /warnings
-Allow: /kicks
-Allow: /stats
-Allow: /protest
-Allow: /search
-Allow: /assets/
-
-# Disallow admin and system directories
-Disallow: /admin
-Disallow: /config/
-Disallow: /core/
-Disallow: /controllers/
-Disallow: /templates/
-Disallow: /lang/
-Disallow: /.env
-Disallow: /hash.php
-Disallow: /install-demos.php
-
-# Sitemap location
-Sitemap: {$siteUrl}/sitemap.xml
-
-# Crawl-delay (optional, adjust as needed)
-Crawl-delay: 1
-ROBOTS;
-echo htmlspecialchars($robotsTxt, ENT_QUOTES, 'UTF-8');
-?></code></pre>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3"><i class="fas fa-code text-primary"></i> Custom code</h5>
+                        <div class="alert alert-warning small">This code is added to every public page exactly as you write it. Only paste code you trust. It is not held back by the cookie notice, so do not add trackers here that need consent. Scripts from other domains also need that domain allowed in the Content-Security-Policy in <code>.htaccess</code>.</div>
+                        <div class="mb-3">
+                            <label class="form-label" for="seo-custom-head">Head code (before &lt;/head&gt;)</label>
+                            <textarea class="form-control font-monospace" id="seo-custom-head" rows="5" spellcheck="false"><?= htmlspecialchars((string)$seoExtras['custom_head'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                        </div>
+                        <div>
+                            <label class="form-label" for="seo-custom-footer">Footer code (before &lt;/body&gt;)</label>
+                            <textarea class="form-control font-monospace" id="seo-custom-footer" rows="5" spellcheck="false"><?= htmlspecialchars((string)$seoExtras['custom_footer'], ENT_QUOTES, 'UTF-8') ?></textarea>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
+
+                <button type="button" class="btn btn-primary" id="seo-save"><i class="fas fa-save"></i> Save SEO &amp; Tracking</button>
+            </form>
+        </div>
+        <?php endif; ?>
+
+        <?php /* case-evidence:pane */ try { require_once __DIR__ . '/../../demos/case-evidence.php'; echo sn_admin_pane_html(); } catch (Throwable $e) {} ?>
+        <!-- System Info Tab -->
+        <div class="tab-pane fade" id="info" role="tabpanel">
             <div class="card">
                 <div class="card-body">
                     <h5 class="mb-3">PHP Information</h5>
@@ -1249,29 +1137,68 @@ echo htmlspecialchars($robotsTxt, ENT_QUOTES, 'UTF-8');
 }
 </style>
 
-<!-- Modify Reason Modal -->
+<!-- Modify Case Modal: reason (LiteBans database) plus case evidence (internal storage) -->
+<?php $snT = function (string $key): string { return function_exists('sn_t') ? htmlspecialchars(sn_t($key), ENT_QUOTES, 'UTF-8') : $key; }; ?>
 <div class="modal fade" id="modifyReasonModal" tabindex="-1" aria-labelledby="modifyReasonModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modifyReasonModalLabel">
-                    <i class="fas fa-edit text-warning"></i> Modify Reason
+                    <i class="fas fa-edit text-warning"></i> Modify Case
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="modify-type">
-                <input type="hidden" id="modify-id">
-                <div class="mb-3">
-                    <label class="form-label">Player</label>
-                    <div class="form-control bg-secondary" id="modify-player-name"></div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">New Reason</label>
-                    <textarea class="form-control" id="modify-reason-input" rows="3" placeholder="Enter new reason..."></textarea>
-                </div>
+                <form id="modify-case-form" onsubmit="return false">
+                    <input type="hidden" id="modify-type">
+                    <input type="hidden" id="modify-id">
+                    <div class="mb-3">
+                        <label class="form-label">Player</label>
+                        <div class="form-control bg-secondary" id="modify-player-name"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea class="form-control" id="modify-reason-input" rows="2" placeholder="Enter new reason..."></textarea>
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-3"><i class="fas fa-folder-open"></i> <?= $snT('tab') ?></h6>
+                    <div id="modify-evidence-existing" class="mb-3 small"></div>
+                    <div id="modify-evidence-add">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label" for="modify-appeal-status"><?= $snT('ap_title') ?></label>
+                                <select class="form-control" id="modify-appeal-status">
+                                    <?php foreach (['none', 'pending', 'accepted', 'rejected'] as $option): ?>
+                                        <option value="<?= $option ?>"><?= $snT('ap_' . $option) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label" for="modify-appeal-line">&nbsp;</label>
+                                <input type="text" class="form-control" id="modify-appeal-line" maxlength="160" placeholder="<?= $snT('ap_line_ph') ?>">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="modify-report"><?= $snT('report') ?></label>
+                            <textarea class="form-control" id="modify-report" rows="3" maxlength="5000" placeholder="<?= $snT('report_ph') ?>"></textarea>
+                        </div>
+                        <div class="mb-1">
+                            <label class="form-label" for="modify-files"><?= $snT('shots') ?></label>
+                            <input type="file" class="form-control" id="modify-files" accept="image/png,image/jpeg,image/gif,image/webp,video/*,.mkv,.dem,.demo,.m4a" multiple
+                                   data-sn-captions data-placeholder="<?= $snT('caption_ph') ?>">
+                            <div class="sn-captions" data-sn-caption-list></div>
+                            <div class="form-text"><?= $snT('shots_hint') ?></div>
+                        </div>
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="modify-public">
+                            <label class="form-check-label" for="modify-public"><?= $snT('public_label') ?></label>
+                        </div>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
+                <a class="btn btn-outline-secondary me-auto" id="modify-open-case" href="#"><i class="fas fa-external-link-alt"></i> <?= $snT('c_open') ?></a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-warning" id="save-modified-reason">
                     <i class="fas fa-save"></i> Save Changes
@@ -1293,9 +1220,14 @@ echo htmlspecialchars($robotsTxt, ENT_QUOTES, 'UTF-8');
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label">Email <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control" id="add-user-email" placeholder="user@example.com" required>
-                    <small class="text-muted">User must sign in with this Google email</small>
+                    <label class="form-label" for="add-user-email">Email</label>
+                    <input type="email" class="form-control" id="add-user-email" placeholder="user@example.com">
+                    <small class="text-muted">For Google sign-in, or Discord sign-in with the same email</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="add-user-discord">Discord ID</label>
+                    <input type="text" class="form-control" id="add-user-discord" inputmode="numeric" placeholder="123456789012345678">
+                    <small class="text-muted">Numeric user ID (Discord: Settings, Advanced, Developer Mode, then right-click the user and Copy User ID). Enter an email, a Discord ID, or both.</small>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Name</label>
@@ -1370,76 +1302,6 @@ echo htmlspecialchars($robotsTxt, ENT_QUOTES, 'UTF-8');
 
 <!-- Admin Dashboard JavaScript -->
 <script>
-// Copy sitemap to clipboard
-function copySitemapToClipboard() {
-    const sitemapContent = document.getElementById('sitemap-content');
-    if (!sitemapContent) return;
-    
-    const textArea = document.createElement('textarea');
-    textArea.value = sitemapContent.textContent;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    document.body.appendChild(textArea);
-    textArea.select();
-    
-    try {
-        document.execCommand('copy');
-        
-        // Show success feedback
-        const btn = event.target.closest('button');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-success');
-        
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-primary');
-        }, 2000);
-    } catch (err) {
-        console.error('Failed to copy sitemap:', err);
-        alert('Failed to copy. Please use manual copy (Ctrl+C).');
-    } finally {
-        document.body.removeChild(textArea);
-    }
-}
-
-// Copy robots.txt to clipboard
-function copyRobotsToClipboard() {
-    const robotsContent = document.getElementById('robots-content');
-    if (!robotsContent) return;
-    
-    const textArea = document.createElement('textarea');
-    textArea.value = robotsContent.textContent;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
-    document.body.appendChild(textArea);
-    textArea.select();
-    
-    try {
-        document.execCommand('copy');
-        
-        // Show success feedback
-        const btn = event.target.closest('button');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-success');
-        
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-            btn.classList.remove('btn-success');
-            btn.classList.add('btn-primary');
-        }, 2000);
-    } catch (err) {
-        console.error('Failed to copy robots.txt:', err);
-        alert('Failed to copy. Please use manual copy (Ctrl+C).');
-    } finally {
-        document.body.removeChild(textArea);
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     const userRole = '<?= htmlspecialchars($currentUser['role'] ?? 'admin', ENT_QUOTES, 'UTF-8') ?>';
@@ -1539,11 +1401,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (result.success) {
                     alert(result.message || 'Settings saved successfully!');
-                    // Reload page to apply avatar and other config changes
+                    // Reloading is manual: offer a button instead of refreshing on our own
                     if (result.reload_recommended) {
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
+                        showReloadNotice('Some changes (such as avatars) apply after the page is reloaded.');
                     }
                 } else {
                     alert('Failed to save settings: ' + (result.error || 'Unknown error'));
@@ -1554,17 +1414,125 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Toggle Discord OAuth fields visibility
-    const discordAuthEnabled = document.getElementById('discord_auth_enabled');
-    const discordAuthFields = document.getElementById('discord-auth-fields');
-    if (discordAuthEnabled && discordAuthFields) {
-        function toggleDiscordFields() {
-            discordAuthFields.style.display = discordAuthEnabled.checked ? 'block' : 'none';
+    // SEO & Tracking tab: crawlers, Google Analytics, privacy page, custom code, IndexNow
+    (function () {
+        const form = document.getElementById('seo-form');
+        if (!form) return;
+        const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
+        // Text of each language as visitors see it now (saved text, else English, else the built-in default)
+        const privacy = <?= json_encode((object)$seoPrivacyShown, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+        const privacyShown = { ...privacy };
+        const privacySaved = <?= json_encode(array_keys((array)($seoExtras['privacy'] ?? [])), JSON_HEX_TAG) ?>;
+        const langSelect = document.getElementById('seo-privacy-lang');
+        const privacyText = document.getElementById('seo-privacy-text');
+        let currentLang = langSelect.value;
+        privacyText.value = privacy[currentLang] || '';
+
+        langSelect.addEventListener('change', () => {
+            privacy[currentLang] = privacyText.value;
+            currentLang = langSelect.value;
+            privacyText.value = privacy[currentLang] || '';
+        });
+
+        const errorBox = document.getElementById('seo-error');
+        const savedBox = document.getElementById('seo-saved');
+        const show = (box, text) => {
+            errorBox.classList.add('d-none');
+            savedBox.classList.add('d-none');
+            box.textContent = text;
+            box.classList.remove('d-none');
+        };
+
+        async function postJson(url, body) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ ...body, csrf_token: csrf() })
+            });
+            const text = await response.text();
+            let result;
+            try {
+                result = JSON.parse(text);
+            } catch (e) {
+                throw new Error('HTTP ' + response.status + ': ' + text.replace(/<[^>]*>/g, ' ').trim().substring(0, 160));
+            }
+            if (!response.ok || result.error) throw new Error(result.error || result.message || 'Request failed');
+            return result;
         }
-        toggleDiscordFields();
-        discordAuthEnabled.addEventListener('change', toggleDiscordFields);
+
+        document.getElementById('seo-save').addEventListener('click', async function () {
+            privacy[currentLang] = privacyText.value;
+            // Only send languages that were saved before or edited now, not copies of the default text
+            const changed = {};
+            Object.keys(privacy).forEach(code => {
+                if (privacySaved.includes(code) || (privacy[code] || '').trim() !== (privacyShown[code] || '').trim()) changed[code] = privacy[code];
+            });
+            const btn = this;
+            btn.disabled = true;
+            try {
+                await postJson('<?= url('admin/site-extras') ?>', {
+                    allow_crawlers: document.getElementById('seo-allow-crawlers').checked,
+                    ga_id: document.getElementById('seo-ga-id').value.trim(),
+                    cookie_banner: document.getElementById('seo-cookie-banner').checked,
+                    custom_head: document.getElementById('seo-custom-head').value,
+                    custom_footer: document.getElementById('seo-custom-footer').value,
+                    privacy: changed
+                });
+                show(savedBox, 'Saved. Changes are live on the public pages.');
+            } catch (error) {
+                show(errorBox, error.message);
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('indexnow-submit').addEventListener('click', async function () {
+            const btn = this;
+            const out = document.getElementById('indexnow-result');
+            btn.disabled = true;
+            out.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Submitting...';
+            try {
+                const result = await postJson('<?= url('admin/indexnow') ?>', {});
+                out.innerHTML = '<div class="alert alert-success mb-2"><i class="fas fa-check"></i> ' + escapeHtml(result.message) + '</div>' +
+                    '<details><summary class="small">URLs</summary><ul class="small mb-0">' + result.urls.map(u => '<li>' + escapeHtml(u) + '</li>').join('') + '</ul></details>';
+            } catch (error) {
+                out.innerHTML = '<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(error.message) + '</div>';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    })();
+
+    // Manual reload: a small notice with a button, never an automatic refresh
+    function showReloadNotice(message) {
+        document.getElementById('reload-notice')?.remove();
+        const notice = document.createElement('div');
+        notice.id = 'reload-notice';
+        notice.className = 'alert alert-info shadow d-flex align-items-center gap-3';
+        notice.style.cssText = 'position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 1080; max-width: 420px; margin: 0;';
+        notice.innerHTML = '<span></span><button type="button" class="btn btn-sm btn-primary text-nowrap"><i class="fas fa-sync-alt"></i> Reload page</button>' +
+            '<button type="button" class="btn-close" aria-label="Close"></button>';
+        notice.querySelector('span').textContent = message;
+        notice.querySelector('.btn-primary').addEventListener('click', () => location.reload());
+        notice.querySelector('.btn-close').addEventListener('click', () => notice.remove());
+        document.body.appendChild(notice);
     }
-    
+
+    // Case evidence badges for search results (labels come from the site language)
+    const SN_LABELS = <?= json_encode(function_exists('sn_t') ? [
+        'summary' => sn_t('c_sum', 0, 0),
+        'pending' => sn_t('ap_pending'), 'accepted' => sn_t('ap_accepted'), 'rejected' => sn_t('ap_rejected'), 'title' => sn_t('ap_title'),
+        'empty' => sn_t('c_none'),
+    ] : ['summary' => '0 / 0', 'title' => 'Appeal', 'empty' => ''], JSON_UNESCAPED_UNICODE) ?>;
+    function evidenceBadges(p) {
+        const e = p.evidence;
+        if (!e || (!e.reports && !e.files && e.appeal === 'none')) return '';
+        const summary = SN_LABELS.summary.replace(/\d+/, e.reports).replace(/\d+/, e.files);
+        const appeal = e.appeal !== 'none' ? ` <span class="badge bg-secondary">${escapeHtml(SN_LABELS.title)}: ${escapeHtml(SN_LABELS[e.appeal] || e.appeal)}</span>` : '';
+        const match = p.evidence_match ? ' <span class="badge bg-warning text-dark"><i class="fas fa-search"></i></span>' : '';
+        return `<small class="d-block mt-1"><span class="badge bg-info text-dark"><i class="fas fa-folder-open"></i> ${escapeHtml(summary)}</span>${appeal}${match}</small>`;
+    }
+
     // Enhanced Admin search with better error handling
     const adminSearchForm = document.getElementById('admin-search-form');
     if (adminSearchForm) {
@@ -1614,6 +1582,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <span class="badge ${statusClass} ms-1">${statusText}</span>
                                         </div>
                                         <small class="text-muted d-block">${escapeHtml(p.reason.length > 60 ? p.reason.substring(0, 60) + '...' : p.reason)}</small>
+                                        ${evidenceBadges(p)}
                                         <small class="text-muted">
                                             <i class="fas fa-user-shield"></i> ${escapeHtml(p.staff)} 
                                             <i class="fas fa-clock ms-2"></i> ${escapeHtml(p.date)}
@@ -1716,94 +1685,135 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Open Modify Reason Modal
-    function openModifyReasonModal(e) {
+    // Open the Modify Case modal and load the case evidence
+    const CASE_EVIDENCE_URL = '<?= url('admin/case-evidence') ?>';
+    let caseCsrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    let caseLoaded = { appeal: { status: 'none', line: '' }, canAdd: false };
+
+    async function openModifyReasonModal(e) {
         const btn = e.currentTarget;
         const type = btn.dataset.type;
         const id = btn.dataset.id;
-        const playerName = btn.dataset.player;
-        const currentReason = btn.dataset.reason;
-        
+
         document.getElementById('modify-type').value = type;
         document.getElementById('modify-id').value = id;
-        document.getElementById('modify-player-name').textContent = playerName;
-        document.getElementById('modify-reason-input').value = currentReason;
-        
-        const modal = new bootstrap.Modal(document.getElementById('modifyReasonModal'));
-        modal.show();
+        document.getElementById('modify-player-name').textContent = btn.dataset.player;
+        const reasonInput = document.getElementById('modify-reason-input');
+        reasonInput.value = btn.dataset.reason;
+        reasonInput.dataset.original = btn.dataset.reason;
+        document.getElementById('modify-report').value = '';
+        document.getElementById('modify-public').checked = false;
+        document.getElementById('modify-files').value = '';
+        document.querySelector('#modify-case-form [data-sn-caption-list]').textContent = '';
+        document.getElementById('modify-open-case').href = `<?= url('detail') ?>?type=${type}&id=${id}#case-evidence`;
+
+        const existing = document.getElementById('modify-evidence-existing');
+        existing.innerHTML = '<span class="text-muted"><span class="spinner-border spinner-border-sm"></span></span>';
+        new bootstrap.Modal(document.getElementById('modifyReasonModal')).show();
+
+        try {
+            const response = await fetch(`${CASE_EVIDENCE_URL}?type=${encodeURIComponent(type)}&id=${encodeURIComponent(id)}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const data = await response.json();
+            if (!data.success) throw new Error(data.error || 'Failed to load');
+            caseCsrf = data.csrf || caseCsrf;
+            caseLoaded = { appeal: data.appeal || { status: 'none', line: '' }, canAdd: !!data.can_add };
+            document.getElementById('modify-appeal-status').value = caseLoaded.appeal.status || 'none';
+            document.getElementById('modify-appeal-line').value = caseLoaded.appeal.line || '';
+            document.getElementById('modify-evidence-add').style.display = data.can_add ? '' : 'none';
+            existing.innerHTML = data.notes.length ? data.notes.map(n => `
+                <div class="border rounded p-2 mb-2">
+                    <div class="text-muted"><i class="fas fa-user-shield"></i> ${escapeHtml(n.author)}, ${escapeHtml(n.created)}</div>
+                    <div style="white-space: pre-wrap">${escapeHtml(n.text.length > 240 ? n.text.substring(0, 240) + '...' : n.text)}</div>
+                    ${n.attachments.map(a => `<span class="badge bg-secondary me-1"><i class="fas ${a.kind === 'image' ? 'fa-image' : 'fa-film'}"></i> ${escapeHtml(a.caption || a.name)}</span>`).join('')}
+                </div>`).join('') : `<span class="text-muted">${escapeHtml(SN_LABELS.empty || '')}</span>`;
+        } catch (error) {
+            existing.innerHTML = `<span class="text-danger">${escapeHtml(error.message)}</span>`;
+        }
     }
-    
-    // Save Modified Reason
+
+    async function postCaseEvidence(fields, files) {
+        const body = new FormData();
+        Object.entries(fields).forEach(([key, value]) => body.append(key, value));
+        files.forEach(file => body.append('evidence[]', file));
+        document.querySelectorAll('#modify-case-form [name="caption[]"]').forEach(input => body.append('caption[]', input.value));
+        const response = await fetch(CASE_EVIDENCE_URL, { method: 'POST', body, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const text = await response.text();
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (e) {
+            throw new Error('HTTP ' + response.status + ': ' + text.replace(/<[^>]*>/g, ' ').trim().substring(0, 160));
+        }
+        if (!result.ok) throw new Error(result.message || result.error || 'Failed to save');
+    }
+
+    // Save the reason (LiteBans database) and the case evidence (internal storage)
     document.getElementById('save-modified-reason')?.addEventListener('click', async function() {
         const type = document.getElementById('modify-type').value;
         const id = document.getElementById('modify-id').value;
-        const newReason = document.getElementById('modify-reason-input').value.trim();
-        
-        // Enhanced validation
+        const reasonInput = document.getElementById('modify-reason-input');
+        const newReason = reasonInput.value.trim();
+        const report = document.getElementById('modify-report').value.trim();
+        const files = Array.from(document.getElementById('modify-files').files);
+        const appealStatus = document.getElementById('modify-appeal-status').value;
+        const appealLine = document.getElementById('modify-appeal-line').value.trim();
+
         if (!type || !['ban', 'mute', 'warning', 'kick'].includes(type)) {
             alert('Invalid punishment type');
-            console.error('Invalid type:', type);
             return;
         }
-        
         if (!id || isNaN(parseInt(id))) {
             alert('Invalid punishment ID');
-            console.error('Invalid ID:', id);
             return;
         }
-        
         if (!newReason) {
             alert('Please enter a reason');
             return;
         }
-        
+        if (files.length && !report) {
+            document.getElementById('modify-report').focus();
+            alert(<?= json_encode(function_exists('sn_t') ? sn_t('e_text', 5000) : 'Write what happened.', JSON_UNESCAPED_UNICODE) ?>);
+            return;
+        }
+
         const btn = this;
         const originalText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
-        
+
         try {
-            const requestData = { 
-                type, 
-                id: parseInt(id), 
-                reason: newReason 
-            };
-            
-            console.log('Sending modify reason request:', requestData);
-            
-            const response = await fetch('<?= url('admin/modify-reason') ?>', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(requestData)
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (newReason !== (reasonInput.dataset.original || '')) {
+                const response = await fetch('<?= url('admin/modify-reason') ?>', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: JSON.stringify({ type, id: parseInt(id), reason: newReason })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) throw new Error(result.error || 'Failed to update reason');
             }
-            
-            const result = await response.json();
-            console.log('Modify reason response:', result);
-            
-            if (result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('modifyReasonModal')).hide();
-                alert('Reason updated successfully!');
-                // Refresh search results
-                document.getElementById('admin-search-form').dispatchEvent(new Event('submit'));
-            } else {
-                throw new Error(result.error || 'Failed to update reason');
+
+            if (caseLoaded.canAdd) {
+                const base = { type, id, csrf_token: caseCsrf };
+                if (appealStatus !== (caseLoaded.appeal.status || 'none') || appealLine !== (caseLoaded.appeal.line || '')) {
+                    await postCaseEvidence({ ...base, action: 'appeal', status: appealStatus, line: appealLine }, []);
+                }
+                if (report) {
+                    await postCaseEvidence({ ...base, action: 'add', text: report, public: document.getElementById('modify-public').checked ? '1' : '0' }, files);
+                }
             }
+
+            bootstrap.Modal.getInstance(document.getElementById('modifyReasonModal')).hide();
+            // Refresh search results
+            document.getElementById('admin-search-form').dispatchEvent(new Event('submit'));
         } catch (error) {
-            console.error('Modify reason error:', error);
-            alert('Error updating reason: ' + error.message);
+            console.error('Modify case error:', error);
+            alert('Error: ' + error.message);
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalText;
         }
     });
-    
+
     // PHP Info loader
     document.querySelectorAll('.phpinfo-btn').forEach(btn => {
         btn.addEventListener('click', async function() {
@@ -2040,9 +2050,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (result.success) {
                     databaseTestResults.innerHTML = '<div class="alert alert-success"><i class="fas fa-check"></i> ' + 
                         escapeHtml(result.message) + '<br><small>Cleared: ' + result.cleared.join(', ') + '</small></div>';
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
+                    showReloadNotice('Cache cleared. Reload the page to see fresh data.');
                 } else {
                     throw new Error(result.error || 'Failed to clear cache');
                 }
@@ -2099,7 +2107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         let html = '<div class="table-responsive"><table class="table table-hover">';
-        html += '<thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody>';
+        html += '<thead><tr><th>User</th><th>Sign-in</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody>';
         
         users.forEach(user => {
             const roleColors = { admin: 'danger', moderator: 'warning', viewer: 'info' };
@@ -2116,17 +2124,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>
                     <div class="d-flex align-items-center">
                         ${avatar}
-                        <span>${escapeHtml(user.name || user.email)}</span>
+                        <span>${escapeHtml(user.name || user.email || user.discord_id || '')}</span>
                     </div>
                 </td>
-                <td>${escapeHtml(user.email)}</td>
+                <td>${escapeHtml(user.email || '')}${user.email && user.discord_id ? '<br>' : ''}${user.discord_id ? '<small class="text-muted"><i class="fab fa-discord"></i> ' + escapeHtml(user.discord_id) + '</small>' : ''}</td>
                 <td>${roleBadge}</td>
                 <td>${statusBadge}</td>
                 <td><small class="text-muted">${lastLogin}</small></td>
                 <td>
                     <button class="btn btn-sm btn-outline-warning edit-user-btn" 
                             data-id="${escapeHtml(user.id)}"
-                            data-email="${escapeAttr(user.email)}"
+                            data-email="${escapeAttr(user.email || user.discord_id || '')}"
                             data-name="${escapeAttr(user.name || '')}"
                             data-role="${escapeAttr(user.role)}"
                             data-active="${user.active !== false ? '1' : '0'}">
@@ -2160,11 +2168,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add new user
     document.getElementById('save-new-user')?.addEventListener('click', async function() {
         const email = document.getElementById('add-user-email').value.trim();
+        const discordId = document.getElementById('add-user-discord').value.trim();
         const name = document.getElementById('add-user-name').value.trim();
         const role = document.getElementById('add-user-role').value;
         
-        if (!email) {
-            alert('Email is required');
+        if (!email && !discordId) {
+            alert('Enter an email or a Discord ID');
             return;
         }
         
@@ -2180,7 +2189,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ email, name, role })
+                body: JSON.stringify({ email, discord_id: discordId, name, role })
             });
             
             const result = await response.json();
@@ -2188,6 +2197,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (result.success) {
                 bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
                 document.getElementById('add-user-email').value = '';
+                document.getElementById('add-user-discord').value = '';
                 document.getElementById('add-user-name').value = '';
                 document.getElementById('add-user-role').value = 'viewer';
                 loadUsers();
