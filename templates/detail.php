@@ -189,6 +189,9 @@
                                         <label class="detail-label">
                                             <i class="fas fa-tasks"></i> <?= htmlspecialchars($lang->get('detail.progress'), ENT_QUOTES, 'UTF-8') ?>
                                         </label>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" data-refresh-page aria-label="Refresh" title="Refresh">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
                                         <div class="progress mt-2">
                                             <div class="progress-bar <?= $punishment['progress'] >= 100 ? 'bg-success' : 'bg-warning' ?>" 
                                                  role="progressbar" 
@@ -271,6 +274,7 @@
         </div>
     </div>
     
+    <?php /* case-evidence:begin */ try { $snFile = __DIR__ . '/../demos/case-evidence.php'; if (is_file($snFile)) { require_once $snFile; echo sn_panel_html($type, (int)$punishment['id']); } } catch (Throwable $e) {} /* case-evidence:end */ ?>
     <!-- Related Punishments -->
     <?php if (!empty($relatedPunishments)): ?>
         <div class="card">
