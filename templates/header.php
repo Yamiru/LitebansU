@@ -1,3 +1,4 @@
+<?php $siteExtras = \core\SiteExtras::get(); $allowCrawlers = (bool)$siteExtras['allow_crawlers']; $gaId = \core\SiteExtras::gaId(); ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($config['site_lang'] ?? $lang->getCurrentLanguage(), ENT_QUOTES, 'UTF-8') ?>">
 <head>
@@ -6,7 +7,7 @@
     <meta name="csrf-token" content="<?= htmlspecialchars(SecurityManager::generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
     <meta name="base-path" content="<?= htmlspecialchars($config['base_path'], ENT_QUOTES, 'UTF-8') ?>">
     <meta http-equiv="Content-Type" content="text/html; charset=<?= htmlspecialchars($config['site_charset'] ?? 'UTF-8', ENT_QUOTES, 'UTF-8') ?>">
-    <meta name="robots" content="<?= htmlspecialchars($config['site_robots'] ?? 'index, follow', ENT_QUOTES, 'UTF-8') ?>">
+    <meta name="robots" content="<?= htmlspecialchars($allowCrawlers ? ($config['site_robots'] ?? 'index, follow') : 'noindex, nofollow', ENT_QUOTES, 'UTF-8') ?>">
 
     <title><?php
         if (isset($title)) {
@@ -70,11 +71,16 @@
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <?php // Font Awesome without the brand icons (about 100 KB) unless the page shows one (Discord on the protest and login pages) ?>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/fontawesome.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/solid.min.css" rel="stylesheet">
+    <?php if (in_array($currentPage ?? '', ['protest', 'admin'], true)): ?>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/brands.min.css" rel="stylesheet">
+    <?php endif; ?>
 
-    <link href="<?= htmlspecialchars(asset('assets/css/main.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
+    <link href="<?= htmlspecialchars(bundle('css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
     <style>
         .navbar-modern .container{max-width:100%}
         .navbar-collapse{min-width:0;gap:var(--space-sm)}
@@ -151,9 +157,11 @@
     <meta name="ICBM" content="<?= htmlspecialchars($config['seo_geo_position'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
 
+    <?php if ($allowCrawlers): ?>
     <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="googlebot-news" content="index, follow">
+    <?php endif; ?>
     <?php if (isset($config['seo_ai_training']) && $config['seo_ai_training'] === false): ?>
     <meta name="robots" content="noai, noimageai">
     <meta name="GPTBot" content="noindex, nofollow">
@@ -194,18 +202,6 @@
     <?php foreach ($config['seo_alternate_languages'] as $langCode => $langUrl): ?>
     <link rel="alternate" hreflang="<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>" href="<?= htmlspecialchars($langUrl, ENT_QUOTES, 'UTF-8') ?>">
     <?php endforeach; ?>
-    <?php else: ?>
-    <?php
-
-        $sep = $canonicalQuery === '' ? '?' : '&';
-        foreach ($lang->getSupportedLanguages() as $altCode):
-
-            $hreflangCode = $altCode === 'cn' ? 'zh' : $altCode;
-            $altUrl = $canonicalUrl . $sep . 'lang=' . $altCode;
-    ?>
-    <link rel="alternate" hreflang="<?= htmlspecialchars($hreflangCode, ENT_QUOTES, 'UTF-8') ?>" href="<?= htmlspecialchars($altUrl, ENT_QUOTES, 'UTF-8') ?>">
-    <?php endforeach; ?>
-    <link rel="alternate" hreflang="x-default" href="<?= htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
 
     <script type="application/ld+json">
@@ -295,6 +291,13 @@
         }
     }
     </script>
+    <?php endif; ?>
+    <?php if ($gaId !== '' || !empty($siteExtras['cookie_banner'])): ?>
+    <script>window.LB_CONSENT = { ga: <?= json_encode($gaId) ?>, banner: <?= !empty($siteExtras['cookie_banner']) ? 'true' : 'false' ?> };</script>
+    <?php endif; ?>
+    <?php if (trim((string)$siteExtras['custom_head']) !== ''): ?>
+    <?= $siteExtras['custom_head'] ?>
+
     <?php endif; ?>
 </head>
 <body class="<?= htmlspecialchars($theme->getThemeClasses()['body'], ENT_QUOTES, 'UTF-8') ?>">
@@ -413,7 +416,7 @@
                             <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
                                 <li>
                                     <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>"
-                                       href="?lang=<?= htmlspecialchars($langCode, ENT_QUOTES, 'UTF-8') ?>"
+                                       href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['lang' => $langCode])), ENT_QUOTES, 'UTF-8') ?>"
                                        hreflang="<?= htmlspecialchars($langCode === 'cn' ? 'zh' : $langCode, ENT_QUOTES, 'UTF-8') ?>"
                                        title="<?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>">
                                         <strong><?= htmlspecialchars($langNames[$langCode] ?? strtoupper($langCode), ENT_QUOTES, 'UTF-8') ?></strong>
@@ -438,7 +441,7 @@
         </div>
     </nav>
 
-    <div class="hero-gradient"></div>
+    <div class="hero-gradient" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
 
     <main class="main-content">
         <div class="container">
