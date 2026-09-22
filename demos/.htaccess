@@ -1,0 +1,17 @@
+# Demo System Security
+Options -Indexes
+
+# Protect JSON files
+<FilesMatch "\.json$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# PHP settings for video uploads (if allowed by host)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 500M
+    php_value post_max_size 500M
+    php_value max_execution_time 600
+    php_value max_input_time 600
+    php_value memory_limit 512M
+</IfModule>
