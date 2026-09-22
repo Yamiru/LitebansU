@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.9
+ *  Version:       5.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -202,13 +202,16 @@ class AdminController extends BaseController
             // Enhanced search that handles both names and UUIDs
             $punishments = $this->performAdvancedSearch($query, $type);
             
+
+
+            
             // Sort by time descending
             usort($punishments, function($a, $b) {
                 return ($b['time'] ?? 0) <=> ($a['time'] ?? 0);
             });
             
             // Format punishments with enhanced data
-            $formatted = array_map(function($p) {
+            $formatted = array_map(function($p) use ($evidenceData, $evidenceMatches) {
                 // Get player name more reliably
                 $playerName = $p['player_name'] ?? null;
                 if (!$playerName && !empty($p['uuid']) && $p['uuid'] !== '#') {
@@ -230,7 +233,9 @@ class AdminController extends BaseController
                     'until' => isset($p['until']) && $p['until'] > 0 
                         ? $this->formatDate((int)$p['until']) 
                         : null,
-                    'server' => $p['server_origin'] ?? $p['server_scope'] ?? 'Global'
+                    'server' => $p['server_origin'] ?? $p['server_scope'] ?? 'Global',
+                    'evidence' => $evidenceData ? sn_case_summary($rowType, (int)$p['id'], $evidenceData) : null,
+                    'evidence_match' => isset($evidenceMatches[$rowType . '_' . (int)$p['id']])
                 ];
             }, array_slice($punishments, 0, 100)); // Increase limit to 100 results
             
@@ -583,6 +588,154 @@ class AdminController extends BaseController
         }
     }
     
+    /**
+     * Loads the Case Evidence module (demos/case-evidence.php).
+     */
+    private function loadCaseEvidence(): bool
+    {
+        $file = BASE_DIR . '/demos/case-evidence.php';
+        if (!is_file($file)) {
+            return false;
+        }
+        require_once $file;
+        return true;
+    }
+
+    /**
+     * Case evidence for one punishment. GET returns the case, POST adds a report with files
+     * or sets the appeal outcome. Stored in demos/data, never in the LiteBans database.
+     */
+    public function caseEvidence(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        if (!$this->loadCaseEvidence()) {
+            $this->jsonResponse(['error' => 'Case evidence module is missing (demos/case-evidence.php)'], 500);
+            return;
+        }
+
+        $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
+        if ($isPost && ($overflow = sn_upload_overflow())) {
+            // The whole form was dropped by PHP because it exceeded post_max_size
+            $this->jsonResponse(['ok' => false, 'message' => $overflow, 'error' => $overflow], 413);
+            return;
+        }
+        $source = $isPost ? $_POST : $_GET;
+        $type = (string)($source['type'] ?? '');
+        $id = (int)($source['id'] ?? 0);
+
+        if (!in_array($type, ['ban', 'mute', 'warning', 'kick'], true) || $id <= 0) {
+            $this->jsonResponse(['error' => 'Invalid punishment', 'ok' => false, 'message' => 'Invalid punishment'], 400);
+            return;
+        }
+        if (!$this->repository->getPunishmentById($type . 's', $id)) {
+            $this->jsonResponse(['error' => 'Punishment not found', 'ok' => false, 'message' => 'Punishment not found'], 404);
+            return;
+        }
+
+        if (!$isPost) {
+            $this->jsonResponse(['success' => true] + sn_case_json($type, $id));
+            return;
+        }
+
+        [$ok, $message] = sn_apply_post();
+        if ($ok) {
+            $this->logAdminAction('case_evidence', "Case evidence changed for {$type} #{$id}", [
+                'punishment_id' => $id,
+                'punishment_type' => $type,
+                'action' => (string)($_POST['action'] ?? '')
+            ]);
+        }
+        $this->jsonResponse(['ok' => $ok, 'message' => $message], $ok ? 200 : 400);
+    }
+
+    /**
+     * SEO & Tracking settings: crawlers, Google Analytics, cookie notice, privacy page, custom code.
+     * GET returns them, POST (JSON) saves them. Stored in data/site_extras.json. Admins only.
+     */
+    public function siteExtras(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        if (($this->getCurrentUser()['role'] ?? '') !== 'admin') {
+            $this->jsonResponse(['error' => 'Permission denied. Only administrators can change these settings.'], 403);
+            return;
+        }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => true, 'settings' => \core\SiteExtras::get()]);
+            return;
+        }
+
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($input) || !SecurityManager::validateCsrfToken((string)($input['csrf_token'] ?? ''))) {
+            $this->jsonResponse(['error' => 'Invalid security token. Reload the page and try again.'], 403);
+            return;
+        }
+
+        $gaId = trim((string)($input['ga_id'] ?? ''));
+        if ($gaId !== '' && \core\SiteExtras::normalizeGaId($gaId) === '') {
+            $this->jsonResponse(['error' => 'The Google Analytics ID must look like G-XXXXXXXXXX.'], 400);
+            return;
+        }
+
+        $privacy = [];
+        $supported = $this->lang->getSupportedLanguages();
+        foreach ((array)($input['privacy'] ?? []) as $code => $html) {
+            if (in_array($code, $supported, true) && is_string($html) && trim($html) !== '') {
+                $privacy[$code] = \core\SiteExtras::sanitizeHtml(mb_substr($html, 0, 50000));
+            }
+        }
+
+        $saved = \core\SiteExtras::save([
+            'allow_crawlers' => !empty($input['allow_crawlers']),
+            'ga_id' => \core\SiteExtras::normalizeGaId($gaId),
+            'cookie_banner' => !empty($input['cookie_banner']),
+            'custom_head' => mb_substr((string)($input['custom_head'] ?? ''), 0, 20000),
+            'custom_footer' => mb_substr((string)($input['custom_footer'] ?? ''), 0, 20000),
+            'privacy' => $privacy,
+        ]);
+        if (!$saved) {
+            $this->jsonResponse(['error' => 'Could not save. Check that the data/ folder is writable.'], 500);
+            return;
+        }
+
+        $this->logAdminAction('site_extras_saved', 'SEO & Tracking settings changed', ['severity' => 'info']);
+        $this->jsonResponse(['success' => true, 'message' => 'Saved.', 'settings' => \core\SiteExtras::get()]);
+    }
+
+    /**
+     * Submits every public page that is not tied to one person (no punishment IDs) to IndexNow.
+     */
+    public function indexNow(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        if (($this->getCurrentUser()['role'] ?? '') !== 'admin') {
+            $this->jsonResponse(['error' => 'Permission denied'], 403);
+            return;
+        }
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($input) || !SecurityManager::validateCsrfToken((string)($input['csrf_token'] ?? ''))) {
+            $this->jsonResponse(['error' => 'Invalid security token. Reload the page and try again.'], 403);
+            return;
+        }
+        if (!(\core\SiteExtras::get()['allow_crawlers'] ?? true)) {
+            $this->jsonResponse(['error' => 'Crawlers are switched off, so there is nothing to submit.'], 400);
+            return;
+        }
+
+        $urls = \core\SiteExtras::indexableUrls($this->config, $this->repository);
+        [$ok, $status, $message] = \core\SiteExtras::submitIndexNow($this->config, $urls);
+        $this->logAdminAction('indexnow_submit', 'IndexNow: ' . $message, ['urls' => count($urls), 'http_status' => $status]);
+        $this->jsonResponse(['success' => $ok, 'message' => $message, 'error' => $ok ? null : $message, 'status' => $status, 'urls' => $urls], $ok ? 200 : 502);
+    }
+
     public function saveSettings(): void
     {
         if (!$this->isAuthenticated()) {
@@ -634,15 +787,7 @@ class AdminController extends BaseController
                 $settings['PROTEST_FORUM'] = $_POST['protest_forum'];
             }
             
-            // Google Auth Settings
-            $settings['GOOGLE_AUTH_ENABLED'] = isset($_POST['google_auth_enabled']) ? 'true' : 'false';
-            if (isset($_POST['google_client_id'])) {
-                $settings['GOOGLE_CLIENT_ID'] = $_POST['google_client_id'];
-            }
-            if (isset($_POST['google_client_secret'])) {
-                $settings['GOOGLE_CLIENT_SECRET'] = $_POST['google_client_secret'];
-            }
-            $settings['ALLOW_PASSWORD_LOGIN'] = isset($_POST['allow_password_login']) ? 'true' : 'false';
+            // Authentication (Google, Discord, password login) is configured in .env only.
             
             // Display Options
             $settings['SHOW_SILENT_PUNISHMENTS'] = isset($_POST['show_silent_punishments']) ? 'true' : 'false';
@@ -1084,6 +1229,10 @@ class AdminController extends BaseController
     {
         $authManager = $this->getAuthManager();
         $allowPasswordLogin = $this->config['allow_password_login'] ?? true;
+        $storageProblem = $authManager->getStorageProblem();
+        if ($storageProblem !== null) {
+            $_SESSION['admin_error'] = 'Google and Discord sign-in are disabled: ' . $storageProblem . ' Fix the permissions of the data/ folder.';
+        }
         
         // Show password login if: not using OAuth, or explicitly allowed, and password is set
         $showPasswordLogin = ((!$authManager->isGoogleAuthEnabled() && !$authManager->isDiscordAuthEnabled()) || $allowPasswordLogin) 
@@ -1096,10 +1245,10 @@ class AdminController extends BaseController
             'title' => $this->lang->get('admin.login'),
             'error' => $_SESSION['admin_error'] ?? null,
             'currentPage' => 'admin',
-            'googleAuthEnabled' => $authManager->isGoogleAuthEnabled(),
-            'googleAuthUrl' => $authManager->isGoogleAuthEnabled() ? $authManager->getGoogleAuthUrl() : '',
-            'discordAuthEnabled' => $authManager->isDiscordAuthEnabled(),
-            'discordAuthUrl' => $authManager->isDiscordAuthEnabled() ? $authManager->getDiscordAuthUrl() : '',
+            'googleAuthEnabled' => $storageProblem === null && $authManager->isGoogleAuthEnabled(),
+            'googleAuthUrl' => $storageProblem === null && $authManager->isGoogleAuthEnabled() ? $authManager->getGoogleAuthUrl() : '',
+            'discordAuthEnabled' => $storageProblem === null && $authManager->isDiscordAuthEnabled(),
+            'discordAuthUrl' => $storageProblem === null && $authManager->isDiscordAuthEnabled() ? $authManager->getDiscordAuthUrl() : '',
             'showPasswordLogin' => $showPasswordLogin,
             'allowPasswordLogin' => $allowPasswordLogin,
             'hasUsers' => $hasUsers
@@ -1114,6 +1263,12 @@ class AdminController extends BaseController
     public function oauthCallback(): void
     {
         $authManager = $this->getAuthManager();
+        if ($authManager->getStorageProblem() !== null) {
+            $_SESSION['admin_error'] = 'Sign-in is disabled: ' . $authManager->getStorageProblem() . ' Fix the permissions of the data/ folder.';
+            $this->getLogger()->warning('OAuth sign-in blocked, user storage unavailable', ['problem' => $authManager->getStorageProblem()]);
+            $this->redirect(url('admin'));
+            return;
+        }
         // Default to google for backward compatibility (when no provider param)
         $provider = $_GET['provider'] ?? 'google';
         
@@ -1259,6 +1414,11 @@ class AdminController extends BaseController
         
         // Redirect to OAuth provider
         $authManager = $this->getAuthManager();
+        if ($authManager->getStorageProblem() !== null) {
+            $_SESSION['admin_error'] = 'Sign-in is disabled: ' . $authManager->getStorageProblem() . ' Fix the permissions of the data/ folder.';
+            $this->redirect(url('admin'));
+            return;
+        }
         
         if ($provider === 'google' && $authManager->isGoogleAuthEnabled()) {
             $this->redirect($authManager->getGoogleAuthUrl());
@@ -1306,17 +1466,30 @@ class AdminController extends BaseController
         
         $input = json_decode(file_get_contents('php://input'), true);
         $email = trim($input['email'] ?? '');
+        $discordId = trim((string)($input['discord_id'] ?? ''));
         $name = trim($input['name'] ?? '');
         $role = $input['role'] ?? 'viewer';
-        
-        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+        if ($email === '' && $discordId === '') {
+            $this->jsonResponse(['error' => 'Enter an email or a Discord ID'], 400);
+            return;
+        }
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->jsonResponse(['error' => 'Valid email is required'], 400);
             return;
         }
-        
-        // Check if email already exists
-        if ($this->getAuthManager()->getUserByEmail($email)) {
+        if ($discordId !== '' && !preg_match('/^\d{15,25}$/', $discordId)) {
+            $this->jsonResponse(['error' => 'Discord ID must be the numeric user ID (15-25 digits)'], 400);
+            return;
+        }
+
+        // Check if the email or Discord ID already exists
+        if ($email !== '' && $this->getAuthManager()->getUserByEmail($email)) {
             $this->jsonResponse(['error' => 'User with this email already exists'], 400);
+            return;
+        }
+        if ($discordId !== '' && $this->getAuthManager()->getUserByDiscordId($discordId)) {
+            $this->jsonResponse(['error' => 'User with this Discord ID already exists'], 400);
             return;
         }
         
@@ -1325,16 +1498,24 @@ class AdminController extends BaseController
             $role = 'viewer';
         }
         
-        $user = $this->getAuthManager()->createUser([
-            'email' => $email,
-            'name' => $name ?: $email,
-            'role' => $role,
-            'permissions' => $roles[$role]['permissions']
-        ]);
-        
-        $this->logAdminAction('user_created', "Created user {$email}", [
+        $label = $email !== '' ? $email : 'Discord ' . $discordId;
+        try {
+            $user = $this->getAuthManager()->createUser([
+                'email' => $email,
+                'discord_id' => $discordId,
+                'name' => $name ?: $label,
+                'role' => $role,
+                'permissions' => $roles[$role]['permissions']
+            ]);
+        } catch (\RuntimeException $e) {
+            $this->jsonResponse(['error' => $e->getMessage()], 500);
+            return;
+        }
+
+        $this->logAdminAction('user_created', "Created user {$label}", [
             'user_id' => $user['id'],
             'email' => $email,
+            'discord_id' => $discordId,
             'role' => $role
         ]);
         
