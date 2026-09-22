@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.9
+ *  Version:       5.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -15,6 +15,11 @@
  */
 
 declare(strict_types=1);
+
+// Compress dynamic pages even when the web server does not (Apache's mod_deflate skips this if it already did)
+if (extension_loaded('zlib') && !ini_get('zlib.output_compression') && !headers_sent()) {
+    ini_set('zlib.output_compression', '1');
+}
 
 // Error handling - capture all errors
 error_reporting(E_ALL);
@@ -182,6 +187,7 @@ $requiredFiles = [
     'core/ThemeManager.php',
     'core/DatabaseRepository.php',
     'core/RememberMeManager.php',
+    'core/SiteExtras.php',
     'controllers/BaseController.php',
     'controllers/HomeController.php',
     'controllers/PunishmentsController.php',
@@ -189,7 +195,8 @@ $requiredFiles = [
     'controllers/StatsController.php',
     'controllers/AdminController.php',
     'controllers/ProtestController.php',
-    'controllers/AiController.php'
+    'controllers/AiController.php',
+    'controllers/PrivacyController.php'
 ];
 
 foreach ($requiredFiles as $file) {
@@ -242,6 +249,20 @@ function url(string $path = ''): string {
     }
     
     return $basePath . '/' . $path;
+}
+
+/**
+ * URL of a combined asset bundle (assets/bundle.php): all CSS in one request, or the main JS,
+ * served with gzip and a one-year cache. The version changes when any source file changes.
+ */
+function bundle(string $type): string {
+    $files = (require BASE_DIR . '/assets/bundle-map.php')[$type] ?? [];
+    $stamp = '';
+    foreach ($files as $file) {
+        $full = BASE_DIR . '/assets/' . $file;
+        $stamp .= $file . (is_file($full) ? filemtime($full) . ':' . filesize($full) : '') . '|';
+    }
+    return rtrim(BASE_PATH, '/') . '/assets/bundle.php?t=' . ($type === 'js' ? 'js' : 'css') . '&v=' . substr(md5($stamp), 0, 10);
 }
 
 function asset(string $path): string {
@@ -320,7 +341,13 @@ try {
         // Prevent the browser from serving a cached (old-language) version of the destination
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         header('Pragma: no-cache');
+        // Drop only ?lang=, so pages like /detail?type=ban&id=12 keep their parameters
         $cleanUrl = strtok($_SERVER['REQUEST_URI'], '?');
+        $keptQuery = $_GET;
+        unset($keptQuery['lang']);
+        if ($keptQuery) {
+            $cleanUrl .= '?' . http_build_query($keptQuery);
+        }
         // 303 See Other forces a GET on the new URL and discourages caching of this response
         header("Location: " . $cleanUrl, true, 303);
         exit;
@@ -414,6 +441,12 @@ try {
         (new StatsController($repository, $lang, $theme, $config))->clearCache();
     } elseif ($requestUri === '/detail' || $requestUri === '/detail.php' || (isset($route[0]) && $route[0] === 'detail')) {
         (new DetailController($repository, $lang, $theme, $config))->show();
+    } elseif ($requestUri === '/privacy') {
+        (new PrivacyController($repository, $lang, $theme, $config))->index();
+    } elseif (preg_match('#^/([a-f0-9]{32})\.txt$#', $requestUri, $keyMatch) && \core\SiteExtras::indexNowKey(false) === $keyMatch[1]) {
+        // IndexNow ownership proof: the key file must contain the key
+        header('Content-Type: text/plain; charset=UTF-8');
+        echo $keyMatch[1];
     } elseif ($requestUri === '/protest') {
         (new ProtestController($repository, $lang, $theme, $config))->index();
     } elseif ($requestUri === '/protest/submit' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -450,6 +483,9 @@ try {
             '/admin/search-punishments' => $admin->searchPunishments(),
             '/admin/remove-punishment'  => $admin->removePunishment(),
             '/admin/modify-reason'      => $admin->modifyReason(),
+            '/admin/case-evidence'      => $admin->caseEvidence(),
+            '/admin/site-extras'        => $admin->siteExtras(),
+            '/admin/indexnow'           => $admin->indexNow(),
             '/admin/save-settings'      => $admin->saveSettings(),
             '/admin/oauth-callback'     => $admin->oauthCallback(),
             '/admin/oauth-prepare'      => $admin->oauthPrepare(),
