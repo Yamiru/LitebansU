@@ -6,19 +6,13 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   Machine-readable endpoints for AI agents, crawlers, and integrations.
- *  Version:       3.9
+ *  Version:       5.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
  *  License URI:   https://opensource.org/licenses/MIT
  * ============================================================================
  *
- * Provides:
- *  - /ai/stats.json  -> aggregate punishment counts as JSON
- *  - /sitemap.xml    -> XML sitemap of all canonical pages
- *
- * All endpoints are public, cacheable, and CORS-open. They never expose data
- * that isn't already visible in the regular HTML pages.
  */
 
 declare(strict_types=1);
@@ -172,10 +166,18 @@ class AiController extends BaseController
             ['loc' => $siteUrl . '/mutes',     'priority' => '0.9', 'changefreq' => 'hourly'],
             ['loc' => $siteUrl . '/warnings',  'priority' => '0.7', 'changefreq' => 'daily'],
             ['loc' => $siteUrl . '/kicks',     'priority' => '0.6', 'changefreq' => 'daily'],
-            ['loc' => $siteUrl . '/stats',     'priority' => '0.7', 'changefreq' => 'daily'],
             ['loc' => $siteUrl . '/search',    'priority' => '0.5', 'changefreq' => 'weekly'],
+            ['loc' => $siteUrl . '/privacy',   'priority' => '0.3', 'changefreq' => 'monthly'],
         ];
         
+        // Pages that can be switched off in the settings
+        if ($this->config['show_menu_stats'] ?? true) {
+            $urls[] = ['loc' => $siteUrl . '/stats', 'priority' => '0.7', 'changefreq' => 'daily'];
+        }
+        if ($this->config['show_menu_protest'] ?? true) {
+            $urls[] = ['loc' => $siteUrl . '/protest', 'priority' => '0.5', 'changefreq' => 'monthly'];
+        }
+
         // Add paginated listings for the first few pages of each high-volume type
         try {
             $perPage = max(1, (int)($this->config['items_per_page'] ?? 20));
@@ -206,16 +208,8 @@ class AiController extends BaseController
         foreach ($urls as $url) {
             $xml .= "  <url>\n";
             $xml .= "    <loc>" . htmlspecialchars($url['loc'], ENT_QUOTES | ENT_XML1, 'UTF-8') . "</loc>\n";
-            $xml .= "    <lastmod>" . $now . "</lastmod>\n";
             $xml .= "    <changefreq>" . $url['changefreq'] . "</changefreq>\n";
             $xml .= "    <priority>" . $url['priority'] . "</priority>\n";
-            // Add hreflang alternates for each canonical page
-            foreach ($supportedLangs as $altCode) {
-                $hreflang = $altCode === 'cn' ? 'zh' : $altCode;
-                $sep = strpos($url['loc'], '?') === false ? '?' : '&';
-                $altUrl = $url['loc'] . $sep . 'lang=' . $altCode;
-                $xml .= '    <xhtml:link rel="alternate" hreflang="' . htmlspecialchars($hreflang, ENT_QUOTES | ENT_XML1, 'UTF-8') . '" href="' . htmlspecialchars($altUrl, ENT_QUOTES | ENT_XML1, 'UTF-8') . '"/>' . "\n";
-            }
             $xml .= "  </url>\n";
         }
         
@@ -246,6 +240,14 @@ class AiController extends BaseController
         $aiOptOut = isset($this->config['seo_ai_training']) && $this->config['seo_ai_training'] === false;
         
         $lines = [];
+        if (!(\core\SiteExtras::get()['allow_crawlers'] ?? true)) {
+            // Crawlers switched off in the admin panel (SEO & Tracking)
+            if (!headers_sent()) {
+                header('Content-Type: text/plain; charset=UTF-8');
+            }
+            echo "User-agent: *\nDisallow: /\n";
+            return;
+        }
         $lines[] = '# robots.txt for ' . ($this->config['site_name'] ?? 'LiteBansU');
         $lines[] = '# Dynamically generated. Auto-detects deployment URL and AI opt-in/opt-out.';
         $lines[] = '';
@@ -253,10 +255,10 @@ class AiController extends BaseController
         $lines[] = '# Default policy: allow public listings, block internal paths';
         $lines[] = '# ---------------------------------------------------------------------------';
         $lines[] = 'User-agent: *';
-        foreach (['/', '/bans', '/mutes', '/warnings', '/kicks', '/stats', '/protest', '/search', '/detail', '/assets/', '/llms.txt', '/agent.json', '/ai/stats.json', '/sitemap.xml'] as $allow) {
+        foreach (['/', '/bans', '/mutes', '/warnings', '/kicks', '/stats', '/protest', '/privacy', '/search', '/detail', '/assets/', '/llms.txt', '/agent.json', '/ai/stats.json', '/sitemap.xml'] as $allow) {
             $lines[] = 'Allow: ' . $allow;
         }
-        foreach (['/admin', '/config/', '/core/', '/controllers/', '/lang/', '/templates/', '/data/', '/logs/', '/.env', '/hash.php', '/install.php', '/install-demos.php'] as $disallow) {
+        foreach (['/admin', '/config/', '/core/', '/controllers/', '/lang/', '/templates/', '/data/', '/logs/', '/.env', '/hash.php', '/install.php', '/demos/'] as $disallow) {
             $lines[] = 'Disallow: ' . $disallow;
         }
         $lines[] = '';
