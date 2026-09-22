@@ -162,7 +162,7 @@
     <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="googlebot-news" content="index, follow">
     <?php endif; ?>
-    <?php if (isset($config['seo_ai_training']) && $config['seo_ai_training'] === false): ?>
+    <?php if (!$allowCrawlers || (isset($config['seo_ai_training']) && $config['seo_ai_training'] === false)): ?>
     <meta name="robots" content="noai, noimageai">
     <meta name="GPTBot" content="noindex, nofollow">
     <meta name="ClaudeBot" content="noindex, nofollow">
