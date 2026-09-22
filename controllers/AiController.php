@@ -46,6 +46,8 @@ class AiController extends BaseController
                 'kicks' => $siteUrl . '/kicks',
                 'stats' => $siteUrl . '/stats',
                 'search' => $siteUrl . '/search',
+                'protest' => $siteUrl . '/protest',
+                'privacy' => $siteUrl . '/privacy',
             ],
             'machine_readable' => [
                 'stats_json' => $siteUrl . '/ai/stats.json',
@@ -55,10 +57,15 @@ class AiController extends BaseController
             ],
             'content_policy' => [
                 'public' => true,
-                'indexing_allowed' => true,
+                'indexing_allowed' => \core\SiteExtras::get()['allow_crawlers'] ?? true,
                 'ai_training_allowed' => !(isset($this->config['seo_ai_training']) && $this->config['seo_ai_training'] === false),
                 'rate_limit_recommendation_rps' => 2,
                 'crawl_delay_seconds' => 1,
+            ],
+            'data_policy' => [
+                'personal_data' => 'Public punishment records only (player name, UUID, reason, staff, dates). See ' . $siteUrl . '/privacy for the full policy.',
+                'cookies' => \core\SiteExtras::gaId() !== '' ? 'Necessary cookies always; Google Analytics only after visitor consent.' : 'Necessary cookies only (session, language, theme).',
+                'staff_evidence' => 'Server staff may attach an internal report and evidence files to a punishment. These are private by default; a staff member can mark one to show its text and files on that punishment\'s detail page. Staff names and appeal notes are never shown to visitors.',
             ],
             'data_model' => [
                 'punishment_types' => ['ban', 'mute', 'warning', 'kick'],
@@ -337,13 +344,27 @@ class AiController extends BaseController
     {
         $siteUrl = $this->resolveSiteUrl();
         $siteName = $this->config['site_name'] ?? 'LiteBansU';
+
+        if (!(\core\SiteExtras::get()['allow_crawlers'] ?? true)) {
+            // Crawlers switched off in the admin panel (SEO & Tracking) - same signal as robots.txt
+            if (!headers_sent()) {
+                header('Content-Type: text/plain; charset=UTF-8');
+            }
+            echo "# {$siteName}\n\nThe operator has closed this site to crawlers and AI agents. See {$siteUrl}/robots.txt.\n";
+            return;
+        }
+
         $siteDesc = $this->config['site_description'] ?? 'A self-hosted, multilingual web interface for the LiteBans Minecraft punishment management system.';
         $supported = implode(', ', $this->lang->getSupportedLanguages());
         $aiOptOut = isset($this->config['seo_ai_training']) && $this->config['seo_ai_training'] === false;
         $policyLine = $aiOptOut
             ? 'The operator has opted out of AI training. AI/LLM crawlers will see noindex/nofollow signals; please respect that opt-out.'
             : 'This site is intentionally public and welcomes indexing by both traditional search engines and modern LLM/AI crawlers (Googlebot, Bingbot, GPTBot, ClaudeBot, PerplexityBot, CCBot, Google-Extended, and others).';
-        
+        $gaId = \core\SiteExtras::gaId();
+        $cookieLine = $gaId !== ''
+            ? 'Necessary cookies (session, language, theme, cookie choice) are always set. Google Analytics is loaded only after a visitor accepts it in the cookie notice.'
+            : 'Only necessary cookies are set (session, language, theme, cookie choice). No analytics are configured.';
+
         $body = <<<TXT
 # {$siteName}
 
@@ -366,6 +387,7 @@ The information shown is intended to be public and indexable: it lets players se
 - {$siteUrl}/detail?type={ban|mute|warning|kick}&id={id} - Detailed view of a single punishment.
 - {$siteUrl}/search - Full-text search by player name across all punishment types.
 - {$siteUrl}/protest - Form for players to appeal a punishment (optional).
+- {$siteUrl}/privacy - Privacy policy: what data is shown, what cookies are used.
 
 ## Machine-readable endpoints
 
@@ -384,6 +406,12 @@ The information shown is intended to be public and indexable: it lets players se
 
 Language switch parameter: ?lang=XX
 
+## Cookies and personal data
+
+{$cookieLine} Full policy: {$siteUrl}/privacy
+
+Server staff may attach an internal report and evidence files (screenshots, video, demo files) to a punishment. This is private by default. A staff member can choose to show one report's text and files on that punishment's detail page; staff names and appeal notes are never shown to visitors, only the report text and files a staff member marked public.
+
 ## Source code
 
 LiteBansU is open source under the MIT license. Plugin/source: https://github.com/Yamiru/LitebansU
@@ -393,7 +421,7 @@ LiteBansU is open source under the MIT license. Plugin/source: https://github.co
 - Punishment status: an "active" punishment may still be expired if its `until` timestamp has passed and LiteBans has not yet cleared the active flag. The web UI accounts for this; raw database flags should not be trusted alone.
 - Timestamps in JSON endpoints are Unix milliseconds (LiteBans native format).
 - Player avatars are fetched from third-party services (Crafatar/Cravatar by default); they are not stored on this server.
-- This site does not collect personal data beyond the LiteBans punishment records themselves.
+- Beyond the public punishment records and any staff report a staff member marked public, this site does not expose personal data.
 
 TXT;
         
