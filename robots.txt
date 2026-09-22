@@ -13,6 +13,7 @@ Allow: /warnings
 Allow: /kicks
 Allow: /stats
 Allow: /protest
+Allow: /privacy
 Allow: /search
 Allow: /detail
 Allow: /assets/
@@ -32,7 +33,7 @@ Disallow: /logs/
 Disallow: /.env
 Disallow: /hash.php
 Disallow: /install.php
-Disallow: /install-demos.php
+Disallow: /demos/
 
 # Reduce churn: avoid crawling transient query params (language switch, theme toggle, sort)
 Disallow: /*?lang=
