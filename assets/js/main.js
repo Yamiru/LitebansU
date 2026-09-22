@@ -5,7 +5,7 @@
  *
  * Plugin Name: LiteBansU
  * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version: 3.6
+ * Version: 5.0
  * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI: https://yamiru.com
  * License: MIT
@@ -92,10 +92,6 @@ class LiteBansUI {
         });
     }
 
-    // =====================================================================
-    // ZMENA 1: PĂ´vodnĂˇ logika z form.addEventListener('submit') je presunutĂˇ 
-    // do tejto novej metĂłdy, aby ju bolo moĹľnĂ© volaĹĄ priamo.
-    // =====================================================================
     async performSearch() {
         const input = document.getElementById('search-input');
         const results = document.getElementById('search-results');
@@ -152,11 +148,8 @@ class LiteBansUI {
             e.target.removeAttribute('style');
         });
 
-        // =====================================================================
-        // ZMENA 2: Nahradenie celej pĂ´vodnej logiky volanĂ­m novej metĂłdy performSearch()
-        // =====================================================================
         form.addEventListener('submit', (e) => {
-            e.preventDefault(); // ZastavĂ­ ĹˇtandardnĂ© odoslanie formulĂˇra
+            e.preventDefault();
             this.performSearch();
         });
 
@@ -166,9 +159,7 @@ class LiteBansUI {
             clearTimeout(this.debounceTimer);
             if (input.value.length >= 1) {
                 this.debounceTimer = setTimeout(() => {
-                    // PĂ´vodne: form.dispatchEvent(new Event('submit'));
-                    // NovĂ©: Priame volanie, ktorĂ© Firefox nezablokuje
-                    this.performSearch(); 
+                    this.performSearch();
                 }, 500);
             } else if (input.value.length === 0) {
                 results.innerHTML = '';
@@ -498,21 +489,10 @@ class LiteBansUI {
     }
 
     setupDetailPageFeatures() {
-        // Auto-refresh for active punishments
-        const progressBar = document.querySelector('.progress-bar');
-        if (progressBar) {
-            // Update progress every minute
-            setInterval(() => {
-                if (document.visibilityState === 'visible') {
-                    const progress = parseFloat(progressBar.style.width);
-                    if (progress < 100) {
-                        // Could implement real-time progress update here
-                        // For now, just reload the page
-                        location.reload();
-                    }
-                }
-            }, 60000);
-        }
+        // No automatic refresh: it wiped forms in progress. The page has a manual refresh button.
+        document.querySelectorAll('[data-refresh-page]').forEach(btn => {
+            btn.addEventListener('click', () => location.reload());
+        });
 
         // Copy UUID on click
         const uuidElements = document.querySelectorAll('.font-monospace');
