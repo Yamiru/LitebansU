@@ -156,9 +156,6 @@ SHOW_MENU_ADMIN=" . ($config['show_menu_admin'] ?? 'true') . "
 # Performance & Cache
 CACHE_ENABLED=true
 CACHE_LIFETIME=3600
-
-# Demo Mode
-DEMO_MODE=false
 ";
     return $env;
 }
