@@ -1420,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!form) return;
         const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
         // Text of each language as visitors see it now (saved text, else English, else the built-in default)
-        const privacy = <?= json_encode((object)$seoPrivacyShown, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+        const privacy = <?= json_encode((object)($seoPrivacyShown ?? []), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
         const privacyShown = { ...privacy };
         const privacySaved = <?= json_encode(array_keys((array)($seoExtras['privacy'] ?? [])), JSON_HEX_TAG) ?>;
         const langSelect = document.getElementById('seo-privacy-lang');
