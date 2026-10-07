@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.9
+ *  Version:       5.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -54,7 +54,7 @@ class DatabaseRepository
                 'name' => 'h.name',
                 'reason' => 'b.reason',
                 'banned_by_name' => 'b.banned_by_name',
-                'server' => 'b.server',
+                'server' => 'COALESCE(b.server_origin, b.server_scope)',
                 'active' => 'b.active',
                 'until' => 'b.until',
                 'id' => 'b.id',
@@ -125,7 +125,7 @@ class DatabaseRepository
                 'name' => 'h.name',
                 'reason' => 'm.reason',
                 'banned_by_name' => 'm.banned_by_name',
-                'server' => 'm.server',
+                'server' => 'COALESCE(m.server_origin, m.server_scope)',
                 'active' => 'm.active',
                 'until' => 'm.until',
                 'id' => 'm.id',
@@ -189,7 +189,7 @@ class DatabaseRepository
                 'name' => 'h.name',
                 'reason' => 'w.reason',
                 'banned_by_name' => 'w.banned_by_name',
-                'server' => 'w.server',
+                'server' => 'COALESCE(w.server_origin, w.server_scope)',
                 'active' => 'w.active',
                 'id' => 'w.id',
                 default => 'w.time'
@@ -252,7 +252,7 @@ class DatabaseRepository
                 'name' => 'h.name',
                 'reason' => 'k.reason',
                 'banned_by_name' => 'k.banned_by_name',
-                'server' => 'k.server',
+                'server' => 'COALESCE(k.server_origin, k.server_scope)',
                 'active' => 'k.active',
                 'id' => 'k.id',
                 default => 'k.time'
