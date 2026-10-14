@@ -6,7 +6,7 @@ Header always set X-Frame-Options DENY
 Header always set X-XSS-Protection "1; mode=block"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
 Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
-Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-hashes' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' https: data:; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://static.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com"
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-hashes' https://static.cloudflareinsights.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' https: data:; connect-src 'self' https://static.cloudflareinsights.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com"
 
 # Remove Server signature
 ServerSignature Off
@@ -96,19 +96,28 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
 
-# Cache static assets
+# Expires headers for every static component (CSS, JS, images, fonts)
 <IfModule mod_expires.c>
     ExpiresActive On
-    ExpiresByType text/css "access plus 1 month"
-    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType application/x-javascript "access plus 1 year"
     ExpiresByType image/png "access plus 1 year"
     ExpiresByType image/jpg "access plus 1 year"
     ExpiresByType image/jpeg "access plus 1 year"
     ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/avif "access plus 1 year"
     ExpiresByType image/svg+xml "access plus 1 year"
     ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType image/vnd.microsoft.icon "access plus 1 year"
     ExpiresByType font/woff "access plus 1 year"
     ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    ExpiresByType application/x-font-woff "access plus 1 year"
     ExpiresByType text/plain "access plus 1 day"
 </IfModule>
 
@@ -131,8 +140,8 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 
 # Explicit cache lifetime for static files (versioned URLs make a long cache safe)
 <IfModule mod_headers.c>
-    <FilesMatch "\.(css|js|png|jpe?g|gif|webp|svg|ico|woff2?)$">
-        Header set Cache-Control "public, max-age=2592000"
+    <FilesMatch "\.(css|js|png|jpe?g|gif|webp|avif|svg|ico|woff2?|ttf)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
 </IfModule>
 
@@ -140,6 +149,8 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 <IfModule mod_mime.c>
     AddType text/css .css
     AddType application/javascript .js
+    AddType font/woff2 .woff2
+    AddType font/woff .woff
     AddType application/json .json
     AddType text/plain .txt
 </IfModule>
