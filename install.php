@@ -167,8 +167,7 @@ CACHE_LIFETIME=3600
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiteBansU <?= $version ?> - Installation Wizard</title>
     <link href="assets/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/vendor/fontawesome/css/fontawesome.min.css" rel="stylesheet">
-    <link href="assets/vendor/fontawesome/css/solid.min.css" rel="stylesheet">
+    <link href="assets/css/icons.css" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
