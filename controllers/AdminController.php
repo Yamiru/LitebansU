@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       5.0
+ *  Version:       5.1
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -734,6 +734,58 @@ class AdminController extends BaseController
         [$ok, $status, $message] = \core\SiteExtras::submitIndexNow($this->config, $urls);
         $this->logAdminAction('indexnow_submit', 'IndexNow: ' . $message, ['urls' => count($urls), 'http_status' => $status]);
         $this->jsonResponse(['success' => $ok, 'message' => $message, 'error' => $ok ? null : $message, 'status' => $status, 'urls' => $urls], $ok ? 200 : 502);
+    }
+
+    /**
+     * Checks llms.txt: the text this site generates, and what the public URL really serves.
+     */
+    public function checkLlms(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        if (($this->getCurrentUser()['role'] ?? '') !== 'admin') {
+            $this->jsonResponse(['error' => 'Permission denied'], 403);
+            return;
+        }
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($input) || !SecurityManager::validateCsrfToken((string)($input['csrf_token'] ?? ''))) {
+            $this->jsonResponse(['error' => 'Invalid security token. Reload the page and try again.'], 403);
+            return;
+        }
+
+        $siteUrl = \core\SiteExtras::siteUrl($this->config);
+        $siteName = trim((string)($this->config['site_name'] ?? '')) ?: 'LiteBansU';
+        $ai = new AiController($this->repository, $this->lang, $this->theme, $this->config);
+        $generated = $ai->buildLlms();
+
+        $checks = [['info', 'Checked URL: ' . $siteUrl . '/llms.txt']];
+        $checks = array_merge($checks, AiController::checkLlms($generated, $siteUrl, $siteName));
+
+        // What a crawler really gets from the public URL (a stale file or a proxy can differ from the generated text)
+        $ctx = stream_context_create(['http' => ['timeout' => 5, 'ignore_errors' => true, 'header' => "User-Agent: LiteBansU-check\r\n"]]);
+        $live = @file_get_contents($siteUrl . '/llms.txt', false, $ctx);
+        $status = 0;
+        foreach ($http_response_header ?? [] as $line) {
+            if (preg_match('#^HTTP/\S+\s+(\d{3})#', $line, $m)) {
+                $status = (int)$m[1];
+            }
+        }
+        if ($live === false || $status !== 200) {
+            $checks[] = ['warn', 'Could not fetch the public URL (HTTP ' . ($status ?: 'no response') . '). Is the site URL correct and reachable from the server?'];
+        } elseif (trim($live) !== trim($generated)) {
+            $checks[] = ['error', 'The public URL serves different text than this site generates (a static file or cache is in the way). Check the llms.txt rewrite in .htaccess / nginx.'];
+        } else {
+            $checks[] = ['ok', 'The public URL serves exactly the generated text.'];
+        }
+
+        $levels = array_column($checks, 0);
+        $this->jsonResponse([
+            'success' => true,
+            'ok' => !in_array('error', $levels, true),
+            'checks' => $checks,
+        ]);
     }
 
     public function saveSettings(): void
