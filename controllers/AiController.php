@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   Machine-readable endpoints for AI agents, crawlers, and integrations.
- *  Version:       5.0
+ *  Version:       5.1
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -336,95 +336,9 @@ class AiController extends BaseController
     
     /**
      * GET /llms.txt
-     * Dynamic llms.txt - the LLM-friendly site description. Auto-fills site name,
-     * description, supported languages, and absolute URLs so the file does not
-     * need manual editing on different deployments.
      */
     public function llms(): void
     {
-        $siteUrl = $this->resolveSiteUrl();
-        $siteName = $this->config['site_name'] ?? 'LiteBansU';
-
-        if (!(\core\SiteExtras::get()['allow_crawlers'] ?? true)) {
-            // Crawlers switched off in the admin panel (SEO & Tracking) - same signal as robots.txt
-            if (!headers_sent()) {
-                header('Content-Type: text/plain; charset=UTF-8');
-            }
-            echo "# {$siteName}\n\nThe operator has closed this site to crawlers and AI agents. See {$siteUrl}/robots.txt.\n";
-            return;
-        }
-
-        $siteDesc = $this->config['site_description'] ?? 'A self-hosted, multilingual web interface for the LiteBans Minecraft punishment management system.';
-        $supported = implode(', ', $this->lang->getSupportedLanguages());
-        $aiOptOut = isset($this->config['seo_ai_training']) && $this->config['seo_ai_training'] === false;
-        $policyLine = $aiOptOut
-            ? 'The operator has opted out of AI training. AI/LLM crawlers will see noindex/nofollow signals; please respect that opt-out.'
-            : 'This site is intentionally public and welcomes indexing by both traditional search engines and modern LLM/AI crawlers (Googlebot, Bingbot, GPTBot, ClaudeBot, PerplexityBot, CCBot, Google-Extended, and others).';
-        $gaId = \core\SiteExtras::gaId();
-        $cookieLine = $gaId !== ''
-            ? 'Necessary cookies (session, language, theme, cookie choice) are always set. Google Analytics is loaded only after a visitor accepts it in the cookie notice.'
-            : 'Only necessary cookies are set (session, language, theme, cookie choice). No analytics are configured.';
-
-        $body = <<<TXT
-# {$siteName}
-
-> {$siteDesc}
-
-## About this site
-
-This is a public punishment history viewer for a Minecraft (or compatible) game server running the LiteBans plugin. The site reads directly from the LiteBans database in read-only mode and exposes the data in human-readable HTML pages and machine-readable JSON endpoints.
-
-The information shown is intended to be public and indexable: it lets players see who was punished, for what reason, by which staff member, when, and whether the punishment is still active. Player data displayed is limited to in-game name, UUID, optional avatar, and the punishment record itself.
-
-## Available pages
-
-- {$siteUrl}/ - Home page with site statistics and recent punishments.
-- {$siteUrl}/bans - Paginated list of all bans (active and historical).
-- {$siteUrl}/mutes - Paginated list of all mutes.
-- {$siteUrl}/warnings - Paginated list of all warnings.
-- {$siteUrl}/kicks - Paginated list of all kicks.
-- {$siteUrl}/stats - Aggregate statistics across all punishment types.
-- {$siteUrl}/detail?type={ban|mute|warning|kick}&id={id} - Detailed view of a single punishment.
-- {$siteUrl}/search - Full-text search by player name across all punishment types.
-- {$siteUrl}/protest - Form for players to appeal a punishment (optional).
-- {$siteUrl}/privacy - Privacy policy: what data is shown, what cookies are used.
-
-## Machine-readable endpoints
-
-- {$siteUrl}/agent.json - Discovery manifest for AI agents and crawlers.
-- {$siteUrl}/ai/stats.json - Current aggregate counts as JSON (60s cache).
-- {$siteUrl}/sitemap.xml - XML sitemap of all canonical pages.
-- {$siteUrl}/robots.txt - Crawl policy.
-
-## Crawling policy
-
-{$policyLine}
-
-## Supported languages
-
-{$supported}
-
-Language switch parameter: ?lang=XX
-
-## Cookies and personal data
-
-{$cookieLine} Full policy: {$siteUrl}/privacy
-
-Server staff may attach an internal report and evidence files (screenshots, video, demo files) to a punishment. This is private by default. A staff member can choose to show one report's text and files on that punishment's detail page; staff names and appeal notes are never shown to visitors, only the report text and files a staff member marked public.
-
-## Source code
-
-LiteBansU is open source under the MIT license. Plugin/source: https://github.com/Yamiru/LitebansU
-
-## Notes for AI agents
-
-- Punishment status: an "active" punishment may still be expired if its `until` timestamp has passed and LiteBans has not yet cleared the active flag. The web UI accounts for this; raw database flags should not be trusted alone.
-- Timestamps in JSON endpoints are Unix milliseconds (LiteBans native format).
-- Player avatars are fetched from third-party services (Crafatar/Cravatar by default); they are not stored on this server.
-- Beyond the public punishment records and any staff report a staff member marked public, this site does not expose personal data.
-
-TXT;
-        
         if (!headers_sent()) {
             header_remove('Content-Type');
             header('Content-Type: text/plain; charset=UTF-8');
@@ -432,9 +346,117 @@ TXT;
             header('Cache-Control: public, max-age=3600');
             header('X-Content-Type-Options: nosniff');
         }
-        echo $body;
+        echo $this->buildLlms();
     }
-    
+
+    /** The llms.txt text. Also used by the admin check, so both always see the same thing. */
+    public function buildLlms(): string
+    {
+        $siteUrl = $this->resolveSiteUrl();
+        $siteName = trim((string)($this->config['site_name'] ?? '')) ?: 'LiteBansU';
+
+        if (!(\core\SiteExtras::get()['allow_crawlers'] ?? true)) {
+            // Crawlers switched off in the admin panel (SEO & Tracking) - same signal as robots.txt
+            return "# {$siteName}\n\nThe operator has closed this site to crawlers and AI agents. See [robots.txt]({$siteUrl}/robots.txt).\n";
+        }
+
+        $siteDesc = trim((string)($this->config['site_description'] ?? '')) ?: 'Public punishment history of a game server running the LiteBans plugin.';
+        $siteDesc = trim(preg_replace('/\s+/', ' ', $siteDesc));
+        $supported = implode(', ', $this->lang->getSupportedLanguages());
+        $aiOptOut = isset($this->config['seo_ai_training']) && $this->config['seo_ai_training'] === false;
+        $policyLine = $aiOptOut
+            ? 'The operator has opted out of AI training. AI/LLM crawlers will see noindex/nofollow signals; please respect that opt-out.'
+            : 'This site is public and welcomes indexing by search engines and LLM/AI crawlers. The live policy is in [robots.txt](' . $siteUrl . '/robots.txt) and overrides anything stated here.';
+        $cookieLine = \core\SiteExtras::gaId() !== ''
+            ? 'Necessary cookies (session, language, theme, cookie choice) are always set. Google Analytics is loaded only after a visitor accepts it in the cookie notice.'
+            : 'Only necessary cookies are set (session, language, theme, cookie choice). No analytics are configured.';
+
+        $pages = [
+            ['/', 'Home', 'Site statistics and recent punishments.'],
+            ['/bans', 'Bans', 'Paginated list of all bans (active and historical).'],
+            ['/mutes', 'Mutes', 'Paginated list of all mutes.'],
+            ['/warnings', 'Warnings', 'Paginated list of all warnings.'],
+            ['/kicks', 'Kicks', 'Paginated list of all kicks.'],
+        ];
+        if ($this->config['show_menu_stats'] ?? true) {
+            $pages[] = ['/stats', 'Statistics', 'Aggregate statistics across all punishment types.'];
+        }
+        $pages[] = ['/search', 'Search', 'Search by player name across all punishment types.'];
+        if ($this->config['show_menu_protest'] ?? true) {
+            $pages[] = ['/protest', 'Protest', 'Form for players to appeal a punishment.'];
+        }
+        $pages[] = ['/privacy', 'Privacy', 'What data is shown and which cookies are used.'];
+
+        $machine = [
+            ['/agent.json', 'Agent manifest', 'Discovery manifest for AI agents and crawlers.'],
+            ['/ai/stats.json', 'Stats JSON', 'Current aggregate counts as JSON (60s cache).'],
+            ['/sitemap.xml', 'Sitemap', 'XML sitemap of all canonical pages.'],
+            ['/robots.txt', 'Robots', 'Crawl policy.'],
+        ];
+
+        $list = static function (array $items) use ($siteUrl): string {
+            $out = '';
+            foreach ($items as [$path, $label, $desc]) {
+                $out .= "- [{$label}]({$siteUrl}{$path}): {$desc}\n";
+            }
+            return $out;
+        };
+
+        return "# {$siteName}\n\n> {$siteDesc}\n\n"
+            . "This is a public punishment history viewer for a game server running the LiteBans plugin. It reads the LiteBans database read-only and shows in-game name, UUID, optional avatar, reason, staff member, dates and whether the punishment is still active. Single punishments are at `{$siteUrl}/detail?type={ban|mute|warning|kick}&id={id}`.\n\n"
+            . "## Pages\n\n" . $list($pages)
+            . "\n## Machine-readable endpoints\n\n" . $list($machine)
+            . "\n## Crawling policy\n\n{$policyLine}\n\n"
+            . "## Supported languages\n\n{$supported}. Switch with `?lang=XX`.\n\n"
+            . "## Cookies and personal data\n\n{$cookieLine} Full policy: [Privacy]({$siteUrl}/privacy)\n\n"
+            . "Server staff may attach an internal report and evidence files to a punishment. This is private by default; only report text and files a staff member marked public are shown. Staff names and appeal notes are never shown to visitors.\n\n"
+            . "## Optional\n\n- [LiteBansU source code](https://github.com/Yamiru/LitebansU): Open source (MIT) software this site runs on.\n\n"
+            . "## Notes for AI agents\n\n"
+            . "- An \"active\" punishment may already be expired if its `until` timestamp has passed; the web UI accounts for this.\n"
+            . "- Timestamps in JSON endpoints are Unix milliseconds.\n"
+            . "- Avatars come from third-party services and are not stored on this server.\n";
+    }
+
+    /**
+     * Checks an llms.txt body against the llms.txt recommendations and this site's own settings.
+     * Returns a list of [level, message] where level is ok|warn|error.
+     */
+    public static function checkLlms(string $body, string $siteUrl, string $siteName): array
+    {
+        $r = [];
+        $add = static function (string $level, string $msg) use (&$r): void {
+            $r[] = [$level, $msg];
+        };
+
+        if (trim($body) === '') {
+            return [['error', 'The file is empty.']];
+        }
+        preg_match_all('/^# \S.*$/m', $body, $h1);
+        count($h1[0]) >= 1 ? $add('ok', 'Has an H1 heading: ' . trim($h1[0][0], '# ')) : $add('error', 'No H1 heading (a line starting with "# ").');
+        if (count($h1[0]) > 1) {
+            $add('warn', 'More than one H1 heading.');
+        }
+        if ($h1[0] && trim($h1[0][0], '# ') !== $siteName) {
+            $add('warn', "The H1 is not the configured site name \"{$siteName}\".");
+        }
+        preg_match('/^> \S.*$/m', $body) ? $add('ok', 'Has a summary line (blockquote).') : $add('warn', 'No summary line ("> ...") under the H1.');
+
+        preg_match_all('/\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/', $body, $links);
+        $count = count($links[1]);
+        $count > 0 ? $add('ok', "Contains {$count} Markdown links.") : $add('error', 'No Markdown links. Links must look like [text](https://...).');
+        preg_match('/^## \S/m', $body) ? $add('ok', 'Has H2 sections.') : $add('warn', 'No H2 sections to group the links.');
+
+        if ($count > 0) {
+            $own = array_filter($links[1], fn($u) => str_starts_with($u, $siteUrl));
+            $own ? $add('ok', count($own) . ' links point to this site (' . $siteUrl . ').') : $add('error', 'No link points to this site (' . $siteUrl . ').');
+        }
+        if (preg_match('#https?://(localhost|127\.0\.0\.1)#', $body) && !preg_match('#^https?://(localhost|127\.0\.0\.1)#', $siteUrl)) {
+            $add('error', 'The file contains localhost links, but the site URL is ' . $siteUrl . '.');
+        }
+        preg_match('/<\/?(html|body|div|script)\b/i', $body) ? $add('error', 'Looks like HTML, not Markdown.') : $add('ok', 'Plain Markdown, no HTML.');
+        return $r;
+    }
+
     private function sendJson(array $payload, int $cacheSeconds = 0): void
     {
         if (!headers_sent()) {
