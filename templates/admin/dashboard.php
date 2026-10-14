@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       5.0
+ *  Version:       5.1
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -906,6 +906,11 @@ if (!$controller->isAuthenticated()) {
                         <p class="text-muted small mb-2">Tells Bing, Yandex and other IndexNow search engines about your pages right away. It sends the home page, ban, mute, warning and kick lists, statistics, protest, privacy and the list pages. Individual punishments (a player and an ID) are never sent. Site URL used: <code><?= htmlspecialchars($seoSiteUrl, ENT_QUOTES, 'UTF-8') ?></code></p>
                         <button type="button" class="btn btn-outline-primary" id="indexnow-submit"><i class="fas fa-paper-plane"></i> Submit all pages to IndexNow</button>
                         <div id="indexnow-result" class="mt-3"></div>
+                        <hr>
+                        <h6 class="mb-2">llms.txt</h6>
+                        <p class="text-muted small mb-2">The file AI assistants read to understand this site. It is generated from your site name, description, URL and settings. The check verifies it has a heading, Markdown links to this site, and that the public URL serves it. <a href="<?= htmlspecialchars(url('llms.txt'), ENT_QUOTES, 'UTF-8') ?>" target="_blank">Open /llms.txt</a></p>
+                        <button type="button" class="btn btn-outline-primary" id="llms-check"><i class="fas fa-check-circle"></i> Check llms.txt</button>
+                        <div id="llms-result" class="mt-3"></div>
                     </div>
                 </div>
 
@@ -1495,6 +1500,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await postJson('<?= url('admin/indexnow') ?>', {});
                 out.innerHTML = '<div class="alert alert-success mb-2"><i class="fas fa-check"></i> ' + escapeHtml(result.message) + '</div>' +
                     '<details><summary class="small">URLs</summary><ul class="small mb-0">' + result.urls.map(u => '<li>' + escapeHtml(u) + '</li>').join('') + '</ul></details>';
+            } catch (error) {
+                out.innerHTML = '<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(error.message) + '</div>';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('llms-check').addEventListener('click', async function () {
+            const btn = this;
+            const out = document.getElementById('llms-result');
+            const icon = { ok: 'check text-success', warn: 'exclamation-triangle text-warning', error: 'times text-danger', info: 'info-circle text-muted' };
+            btn.disabled = true;
+            out.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Checking...';
+            try {
+                const result = await postJson('<?= url('admin/check-llms') ?>', {});
+                out.innerHTML = '<div class="alert alert-' + (result.ok ? 'success' : 'danger') + ' mb-2">' +
+                    (result.ok ? 'llms.txt meets the recommendations.' : 'llms.txt does not meet the recommendations.') + '</div>' +
+                    '<ul class="list-unstyled small mb-0">' + result.checks.map(c => '<li><i class="fas fa-' + icon[c[0]] + '"></i> ' + escapeHtml(c[1]) + '</li>').join('') + '</ul>';
             } catch (error) {
                 out.innerHTML = '<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(error.message) + '</div>';
             } finally {
