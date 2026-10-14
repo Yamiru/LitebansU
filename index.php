@@ -74,8 +74,7 @@ function showErrorPage(int $code, string $title, string $message, ?string $detai
     <meta name="robots" content="noindex, nofollow">
     <title>{$code} - {$safeTitle}</title>
     <link href="{$assetBase}/assets/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
-    <link href="{$assetBase}/assets/vendor/fontawesome/css/fontawesome.min.css" rel="stylesheet">
-    <link href="{$assetBase}/assets/vendor/fontawesome/css/solid.min.css" rel="stylesheet">
+    <link href="{$assetBase}/assets/css/icons.css" rel="stylesheet">
     <style>
         body { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
         .error-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; }
@@ -258,6 +257,15 @@ function url(string $path = ''): string {
  * URL of a combined asset bundle (assets/bundle.php): all CSS in one request, or the main JS,
  * served with gzip and a one-year cache. The version changes when any source file changes.
  */
+/**
+ * Base URL for CSS, JS, fonts and images. ASSETS_URL in .env (e.g. https://static.example.com or https://example.com/mcbans)
+ * serves them from a cookie-free domain; empty keeps them on this site.
+ */
+function assetBase(): string {
+    $url = trim((string)\core\EnvLoader::get('ASSETS_URL', ''));
+    return preg_match('#^https?://[^\s/?\#]+(/[\w./-]*)?$#i', rtrim($url, '/')) ? rtrim($url, '/') : rtrim(BASE_PATH, '/');
+}
+
 function bundle(string $type): string {
     $files = (require BASE_DIR . '/assets/bundle-map.php')[$type] ?? [];
     $stamp = '';
@@ -265,14 +273,14 @@ function bundle(string $type): string {
         $full = BASE_DIR . '/assets/' . $file;
         $stamp .= $file . (is_file($full) ? filemtime($full) . ':' . filesize($full) : '') . '|';
     }
-    return rtrim(BASE_PATH, '/') . '/assets/bundle.php?t=' . ($type === 'js' ? 'js' : 'css') . '&v=' . substr(md5($stamp), 0, 10);
+    return assetBase() . '/assets/bundle.php?t=' . ($type === 'js' ? 'js' : 'css') . '&v=' . substr(md5($stamp), 0, 10);
 }
 
 function asset(string $path): string {
     $path = ltrim($path, '/');
     $fullPath = BASE_DIR . '/' . $path;
     $version = file_exists($fullPath) ? '?v=' . substr(md5_file($fullPath), 0, 8) : '';
-    return rtrim(BASE_PATH, '/') . '/' . $path . $version;
+    return assetBase() . '/' . $path . $version;
 }
 
 /**
