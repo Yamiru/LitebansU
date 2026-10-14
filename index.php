@@ -63,6 +63,8 @@ function showErrorPage(int $code, string $title, string $message, ?string $detai
         $detailsHtml = "<div class='alert alert-secondary mt-3 text-start'><small><strong>Debug info:</strong><br><pre style='white-space: pre-wrap; word-break: break-all; margin: 0; font-size: 12px;'>{$safeDetails}</pre></small></div>";
     }
 
+    $assetBase = defined('BASE_PATH') ? rtrim(BASE_PATH, '/') : '';
+
     return <<<HTML
 <!DOCTYPE html>
 <html lang="en">
@@ -71,8 +73,9 @@ function showErrorPage(int $code, string $title, string $message, ?string $detai
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>{$code} - {$safeTitle}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="{$assetBase}/assets/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="{$assetBase}/assets/vendor/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+    <link href="{$assetBase}/assets/vendor/fontawesome/css/solid.min.css" rel="stylesheet">
     <style>
         body { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
         .error-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-width: 600px; }
