@@ -86,17 +86,19 @@
             .navbar-brand{font-size:1.05rem}
         }
         @media (max-width:1399.98px){
-            .navbar-toggler{display:block;margin-left:auto}
+            .navbar-toggler{display:block}
             .navbar-collapse{position:absolute;top:100%;left:0;right:0;z-index:1030;background:var(--bg-primary);border-top:1px solid var(--border-color);box-shadow:var(--shadow-lg);padding:var(--space-md);display:none;flex-direction:column;gap:var(--space-md);max-height:calc(100vh - 80px);overflow-y:auto;-webkit-overflow-scrolling:touch}
             .navbar-collapse.show{display:flex}
             .navbar-nav{flex-direction:column;width:100%;gap:var(--space-xs)}
             .nav-item{width:100%}
             .nav-link{width:100%;padding:var(--space-md);padding-right:var(--space-xl);justify-content:space-between}
             .nav-link .badge{position:static;transform:none;margin-left:auto}
-            .navbar-controls{width:100%;justify-content:space-between;padding-top:var(--space-md);border-top:1px solid var(--border-color);flex-wrap:wrap;gap:var(--space-sm);margin-left:0}
-            .navbar-controls .dropdown{flex:1}
-            .navbar-controls .btn-navbar{width:100%}
-            .theme-toggle-wrapper{margin-left:auto}
+            .navbar-modern .container{flex-wrap:nowrap}
+            .navbar-brand{order:0;flex:1 1 auto;min-width:0}
+            .navbar-brand span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+            .navbar-controls{order:1;margin-left:var(--space-sm);flex-wrap:nowrap}
+            .navbar-toggler{order:2;margin-left:var(--space-sm)}
+            .navbar-collapse{order:3}
         }
         @media (min-width:992px) and (max-width:1279.98px){
             .table-responsive .table thead th,.table-responsive .table tbody td{padding:.375rem .5rem;font-size:.8125rem}
@@ -372,59 +374,58 @@
                     </li>
                     <?php endif; ?>
                 </ul>
+            </div>
 
-                <div class="navbar-controls d-flex align-items-center">
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-navbar dropdown-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <?php
-                            $currentLang = $lang->getCurrentLanguage();
-                            $langNames = [
-                                'ar' => 'AR',
-                                'cs' => 'CS',
-                                'de' => 'DE',
-                                'gr' => 'GR',
-                                'en' => 'EN',
-                                'es' => 'ES',
-                                'fr' => 'FR',
-                                'hu' => 'HU',
-                                'it' => 'IT',
-                                'ja' => 'JA',
-                                'pl' => 'PL',
-                                'ro' => 'RO',
-                                'ru' => 'RU',
-                                'sk' => 'SK',
-                                'sr' => 'SR',
-                                'tr' => 'TR',
-                                'cn' => 'CN',
-                            ];
-                            ?>
-                            <i class="fas fa-globe"></i>
-                            <span><?= htmlspecialchars($langNames[$currentLang] ?? 'EN', ENT_QUOTES, 'UTF-8') ?></span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
-                                <li>
-                                    <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>"
-                                       href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['lang' => $langCode])), ENT_QUOTES, 'UTF-8') ?>"
-                                       hreflang="<?= htmlspecialchars($langCode === 'cn' ? 'zh' : $langCode, ENT_QUOTES, 'UTF-8') ?>"
-                                       title="<?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>">
-                                        <strong><?= htmlspecialchars($langNames[$langCode] ?? strtoupper($langCode), ENT_QUOTES, 'UTF-8') ?></strong>
-                                        <span class="text-muted small ms-1"><?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?></span>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
+            <div class="navbar-controls d-flex align-items-center">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-navbar dropdown-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <?php
+                        $currentLang = $lang->getCurrentLanguage();
+                        $langNames = [
+                            'ar' => 'AR',
+                            'cs' => 'CS',
+                            'de' => 'DE',
+                            'gr' => 'GR',
+                            'en' => 'EN',
+                            'es' => 'ES',
+                            'fr' => 'FR',
+                            'hu' => 'HU',
+                            'it' => 'IT',
+                            'ja' => 'JA',
+                            'pl' => 'PL',
+                            'ro' => 'RO',
+                            'ru' => 'RU',
+                            'sk' => 'SK',
+                            'sr' => 'SR',
+                            'tr' => 'TR',
+                            'cn' => 'CN',
+                        ];
+                        ?>
+                        <i class="fas fa-globe"></i>
+                        <span><?= htmlspecialchars($langNames[$currentLang] ?? 'EN', ENT_QUOTES, 'UTF-8') ?></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <?php foreach ($lang->getSupportedLanguages() as $langCode): ?>
+                            <li>
+                                <a class="dropdown-item <?= $currentLang === $langCode ? 'active' : '' ?>"
+                                   href="?<?= htmlspecialchars(http_build_query(array_merge($_GET, ['lang' => $langCode])), ENT_QUOTES, 'UTF-8') ?>"
+                                   hreflang="<?= htmlspecialchars($langCode === 'cn' ? 'zh' : $langCode, ENT_QUOTES, 'UTF-8') ?>"
+                                   title="<?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>">
+                                    <?= htmlspecialchars($lang->getLanguageName($langCode), ENT_QUOTES, 'UTF-8') ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
 
-                    <div class="theme-toggle-wrapper">
-                        <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox"
-                               <?= $theme->getCurrentTheme() === 'dark' ? 'checked' : '' ?>>
-                        <label for="theme-toggle" class="theme-toggle-label">
-                            <i class="fas fa-sun"></i>
-                            <i class="fas fa-moon"></i>
-                            <span class="theme-toggle-ball"></span>
-                        </label>
-                    </div>
+                <div class="theme-toggle-wrapper">
+                    <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox"
+                           <?= $theme->getCurrentTheme() === 'dark' ? 'checked' : '' ?>>
+                    <label for="theme-toggle" class="theme-toggle-label">
+                        <i class="fas fa-sun"></i>
+                        <i class="fas fa-moon"></i>
+                        <span class="theme-toggle-ball"></span>
+                    </label>
                 </div>
             </div>
         </div>
