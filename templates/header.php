@@ -68,12 +68,6 @@
     <link href="<?= htmlspecialchars(asset('assets/fonts/fonts.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
     <link rel="preload" href="<?= htmlspecialchars(asset('assets/fonts/public-latin.woff2'), ENT_QUOTES, 'UTF-8') ?>" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="<?= htmlspecialchars(asset('assets/fonts/bricolage-latin.woff2'), ENT_QUOTES, 'UTF-8') ?>" as="font" type="font/woff2" crossorigin>
-    <link rel="preload" href="<?= htmlspecialchars(asset('assets/vendor/fontawesome/webfonts/fa-solid-900.woff2'), ENT_QUOTES, 'UTF-8') ?>" as="font" type="font/woff2" crossorigin>
-    <link href="<?= htmlspecialchars(asset('assets/vendor/fontawesome/css/fontawesome.min.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
-    <link href="<?= htmlspecialchars(asset('assets/vendor/fontawesome/css/solid.min.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
-    <?php if (in_array($currentPage ?? '', ['protest', 'admin'], true)): ?>
-    <link href="<?= htmlspecialchars(asset('assets/vendor/fontawesome/css/brands.min.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
-    <?php endif; ?>
 
     <link href="<?= htmlspecialchars(bundle('css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
     <style>
