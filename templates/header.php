@@ -64,20 +64,13 @@
     <meta name="twitter:site" content="<?= htmlspecialchars($config['site_twitter_site'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <?php // Font Awesome without the brand icons (about 100 KB) unless the page shows one (Discord on the protest and login pages) ?>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/fontawesome.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/solid.min.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars(asset('assets/vendor/bootstrap/bootstrap.min.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
+    <link href="<?= htmlspecialchars(asset('assets/fonts/fonts.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
+    <link rel="preload" href="<?= htmlspecialchars(asset('assets/fonts/public-latin.woff2'), ENT_QUOTES, 'UTF-8') ?>" as="font" type="font/woff2" crossorigin>
+    <link href="<?= htmlspecialchars(asset('assets/vendor/fontawesome/css/fontawesome.min.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
+    <link href="<?= htmlspecialchars(asset('assets/vendor/fontawesome/css/solid.min.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
     <?php if (in_array($currentPage ?? '', ['protest', 'admin'], true)): ?>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/brands.min.css" rel="stylesheet">
+    <link href="<?= htmlspecialchars(asset('assets/vendor/fontawesome/css/brands.min.css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
     <?php endif; ?>
 
     <link href="<?= htmlspecialchars(bundle('css'), ENT_QUOTES, 'UTF-8') ?>" rel="stylesheet">
@@ -193,10 +186,6 @@
     <meta name="twitter:image" content="<?= htmlspecialchars($config['site_og_image'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
 
-    <link rel="dns-prefetch" href="//fonts.googleapis.com">
-    <link rel="dns-prefetch" href="//fonts.gstatic.com">
-    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
 
     <?php if (isset($config['seo_alternate_languages']) && is_array($config['seo_alternate_languages'])): ?>
     <?php foreach ($config['seo_alternate_languages'] as $langCode => $langUrl): ?>
