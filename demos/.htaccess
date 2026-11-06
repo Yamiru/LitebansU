@@ -3,8 +3,7 @@ Options -Indexes
 
 # Protect JSON files
 <FilesMatch "\.json$">
-    Order Deny,Allow
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 # PHP settings for video uploads (if allowed by host)

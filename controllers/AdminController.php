@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.9
+ *  Version:       5.1
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -122,7 +122,6 @@ class AdminController extends BaseController
         // Verify password
         $adminPassword = $this->config['admin_password'] ?? '';
         if (empty($adminPassword) || !password_verify($password, $adminPassword)) {
-            $this->incrementLoginAttempts();
             $_SESSION['admin_error'] = 'Invalid password';
             $this->logAdminAction('login_failed', 'Failed login attempt', ['severity' => 'warning']);
             $this->getLogger()->warning('Failed password login attempt', [
@@ -132,7 +131,8 @@ class AdminController extends BaseController
             return;
         }
         
-        // Set admin session
+        // Set admin session (new ID: a session ID planted before login must not become authenticated)
+        session_regenerate_id(true);
         $_SESSION['admin_authenticated'] = true;
         $_SESSION['admin_login_time'] = time();
         $_SESSION['admin_user'] = 'Administrator';
@@ -142,9 +142,6 @@ class AdminController extends BaseController
             $this->getRememberMeManager()->createToken('legacy', 'password');
             $this->getLogger()->info('Remember me token created for password login');
         }
-        
-        // Clear login attempts
-        $this->clearLoginAttempts();
         
         // Log successful login
         $this->logAdminAction('login_success', 'Successfully logged in');
@@ -157,8 +154,8 @@ class AdminController extends BaseController
         $redirectUrl = $_SESSION['redirect_after_login'] ?? null;
         unset($_SESSION['redirect_after_login']);
         
-        if ($redirectUrl && strpos($redirectUrl, '/admin') !== 0) {
-            $this->redirect($redirectUrl);
+        if ($target = $this->safeRedirectTarget($redirectUrl)) {
+            $this->redirect($target);
         } else {
             $this->redirect(url('admin'));
         }
@@ -201,6 +198,16 @@ class AdminController extends BaseController
             
             // Enhanced search that handles both names and UUIDs
             $punishments = $this->performAdvancedSearch($query, $type);
+
+            // Case evidence: summaries and free-text matches (reports, captions, appeal line)
+            $evidenceData = null;
+            $evidenceMatches = [];
+            if ($this->loadCaseEvidence()) {
+                $evidenceData = sn_read();
+                foreach (sn_search_cases($query) as [$hitType, $hitId]) {
+                    $evidenceMatches[$hitType . '_' . $hitId] = true;
+                }
+            }
             
 
 
@@ -235,7 +242,8 @@ class AdminController extends BaseController
                         : null,
                     'server' => $p['server_origin'] ?? $p['server_scope'] ?? 'Global',
                     'evidence' => $evidenceData ? sn_case_summary($rowType, (int)$p['id'], $evidenceData) : null,
-                    'evidence_match' => isset($evidenceMatches[$rowType . '_' . (int)$p['id']])
+                    'evidence_match' => isset($evidenceMatches[$rowType . '_' . (int)$p['id']]),
+                    'ip' => !empty($p['ip']) && $p['ip'] !== '#' ? (string)$p['ip'] : null
                 ];
             }, array_slice($punishments, 0, 100)); // Increase limit to 100 results
             
@@ -260,14 +268,14 @@ class AdminController extends BaseController
         $seenIds = []; // Track already found results to avoid duplicates
         
         // Determine which tables to search
-        if (!empty($type)) {
-            $tables = [$type];
-        } else {
-            $tables = ['bans', 'mutes', 'warnings', 'kicks'];
-        }
-        
+        $allTables = ['bans', 'mutes', 'warnings', 'kicks'];
+        $tables = in_array($type, $allTables, true) ? [$type] : $allTables;
+
+        // IPv4/IPv6, full or partial prefix (e.g. "192.168." or "192.168" which is_numeric would take for an ID)
+        $isIp = (bool)preg_match('/^[0-9a-fA-F:.]{3,45}$/', $query) && (bool)preg_match('/[.:]/', $query);
+
         // Check if query is numeric (for direct ID match)
-        $isNumeric = is_numeric($query);
+        $isNumeric = !$isIp && is_numeric($query);
         
         // Check if query is a UUID
         $isUuid = !$isNumeric && SecurityManager::validateUuid($query);
@@ -275,6 +283,29 @@ class AdminController extends BaseController
         foreach ($tables as $table) {
             $fullTable = $this->repository->getTablePrefix() . $table;
             
+            // 0. IP SEARCH (exact or prefix match)
+            if ($isIp) {
+                $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
+                        FROM {$fullTable} p
+                        LEFT JOIN {$historyTable} h ON p.uuid = h.uuid
+                            AND h.date = (SELECT MAX(date) FROM {$historyTable} WHERE uuid = p.uuid)
+                        WHERE p.ip LIKE :ip
+                        AND p.uuid IS NOT NULL AND p.uuid != '#'
+                        ORDER BY p.time DESC
+                        LIMIT 100";
+
+                $stmt = $this->repository->getConnection()->prepare($sql);
+                $stmt->execute([':ip' => addcslashes($query, '%_\\') . '%']);
+                foreach ($stmt->fetchAll() as $row) {
+                    $key = $row['id'] . '_' . $table;
+                    if (!isset($seenIds[$key])) {
+                        $results[] = $row;
+                        $seenIds[$key] = true;
+                    }
+                }
+                continue;
+            }
+
             // 1. NUMERIC ID SEARCH (exact match for numbers like "1", "123", etc.)
             if ($isNumeric) {
                 $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
@@ -682,6 +713,12 @@ class AdminController extends BaseController
             return;
         }
 
+        $homeUrl = trim((string)($input['home_link_url'] ?? ''));
+        if ($homeUrl !== '' && \core\SiteExtras::normalizeLinkUrl($homeUrl) === '') {
+            $this->jsonResponse(['error' => 'The main website link must start with https://, http:// or /.'], 400);
+            return;
+        }
+
         $privacy = [];
         $supported = $this->lang->getSupportedLanguages();
         foreach ((array)($input['privacy'] ?? []) as $code => $html) {
@@ -697,6 +734,10 @@ class AdminController extends BaseController
             'custom_head' => mb_substr((string)($input['custom_head'] ?? ''), 0, 20000),
             'custom_footer' => mb_substr((string)($input['custom_footer'] ?? ''), 0, 20000),
             'privacy' => $privacy,
+            'home_link_enabled' => !empty($input['home_link_enabled']),
+            'home_link_url' => $homeUrl,
+            'home_link_label' => mb_substr(trim((string)($input['home_link_label'] ?? '')), 0, 40),
+            'home_link_newtab' => !empty($input['home_link_newtab']),
         ]);
         if (!$saved) {
             $this->jsonResponse(['error' => 'Could not save. Check that the data/ folder is writable.'], 500);
@@ -736,6 +777,58 @@ class AdminController extends BaseController
         $this->jsonResponse(['success' => $ok, 'message' => $message, 'error' => $ok ? null : $message, 'status' => $status, 'urls' => $urls], $ok ? 200 : 502);
     }
 
+    /**
+     * Checks llms.txt: the text this site generates, and what the public URL really serves.
+     */
+    public function checkLlms(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        if (($this->getCurrentUser()['role'] ?? '') !== 'admin') {
+            $this->jsonResponse(['error' => 'Permission denied'], 403);
+            return;
+        }
+        $input = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($input) || !SecurityManager::validateCsrfToken((string)($input['csrf_token'] ?? ''))) {
+            $this->jsonResponse(['error' => 'Invalid security token. Reload the page and try again.'], 403);
+            return;
+        }
+
+        $siteUrl = \core\SiteExtras::siteUrl($this->config);
+        $siteName = trim((string)($this->config['site_name'] ?? '')) ?: 'LiteBansU';
+        $ai = new AiController($this->repository, $this->lang, $this->theme, $this->config);
+        $generated = $ai->buildLlms();
+
+        $checks = [['info', 'Checked URL: ' . $siteUrl . '/llms.txt']];
+        $checks = array_merge($checks, AiController::checkLlms($generated, $siteUrl, $siteName));
+
+        // What a crawler really gets from the public URL (a stale file or a proxy can differ from the generated text)
+        $ctx = stream_context_create(['http' => ['timeout' => 5, 'ignore_errors' => true, 'header' => "User-Agent: LiteBansU-check\r\n"]]);
+        $live = @file_get_contents($siteUrl . '/llms.txt', false, $ctx);
+        $status = 0;
+        foreach ($http_response_header ?? [] as $line) {
+            if (preg_match('#^HTTP/\S+\s+(\d{3})#', $line, $m)) {
+                $status = (int)$m[1];
+            }
+        }
+        if ($live === false || $status !== 200) {
+            $checks[] = ['warn', 'Could not fetch the public URL (HTTP ' . ($status ?: 'no response') . '). Is the site URL correct and reachable from the server?'];
+        } elseif (trim($live) !== trim($generated)) {
+            $checks[] = ['error', 'The public URL serves different text than this site generates (a static file or cache is in the way). Check the llms.txt rewrite in .htaccess / nginx.'];
+        } else {
+            $checks[] = ['ok', 'The public URL serves exactly the generated text.'];
+        }
+
+        $levels = array_column($checks, 0);
+        $this->jsonResponse([
+            'success' => true,
+            'ok' => !in_array('error', $levels, true),
+            'checks' => $checks,
+        ]);
+    }
+
     public function saveSettings(): void
     {
         if (!$this->isAuthenticated()) {
@@ -748,7 +841,10 @@ class AdminController extends BaseController
             $this->jsonResponse(['error' => 'Invalid security token'], 400);
             return;
         }
-        
+
+        // These values are written to .env: administrators only
+        $this->requireAdminRole();
+
         try {
             // Only update settings that are actually submitted
             $settings = [];
@@ -881,11 +977,14 @@ class AdminController extends BaseController
             $envContent = file_get_contents($envFile);
             
             foreach ($settings as $key => $value) {
+                // A line break would start a new .env entry (e.g. ADMIN_PASSWORD=...)
+                $value = str_replace(["\r", "\n", "\0"], '', (string)$value);
                 $pattern = "/^{$key}=.*/m";
                 $replacement = "{$key}={$value}";
-                
+
                 if (preg_match($pattern, $envContent)) {
-                    $envContent = preg_replace($pattern, $replacement, $envContent);
+                    // Callback: a value containing $1 or \0 must not be read as a back-reference
+                    $envContent = preg_replace_callback($pattern, fn() => $replacement, $envContent);
                 } else {
                     $envContent .= "\n{$key}={$value}";
                 }
@@ -958,10 +1057,17 @@ class AdminController extends BaseController
             exit('Unauthorized');
         }
         
+        $this->requireAdminRole(false);
+
         $format = $_GET['format'] ?? 'json';
         $type = $_GET['type'] ?? 'all';
         $filter = $_GET['filter'] ?? 'all'; // New: 'all' or 'active'
-        
+
+        if (!in_array($type, ['all', 'bans', 'mutes', 'warnings', 'kicks'], true) || !in_array($filter, ['all', 'active'], true)) {
+            http_response_code(400);
+            exit('Invalid type');
+        }
+
         $this->logAdminAction('data_export', "Exported $type data as $format (filter: $filter)");
         
         $data = $this->gatherExportData($type, $filter);
@@ -994,7 +1100,9 @@ class AdminController extends BaseController
             $this->jsonResponse(['error' => 'Invalid security token'], 400);
             return;
         }
-        
+
+        $this->requireAdminRole();
+
         if (!isset($_FILES['import_file']) || $_FILES['import_file']['error'] !== UPLOAD_ERR_OK) {
             $this->jsonResponse(['error' => 'No file uploaded'], 400);
             return;
@@ -1045,10 +1153,13 @@ class AdminController extends BaseController
             exit;
         }
         
+        // phpinfo shows server paths and settings: administrators only; no environment/variables (secrets)
+        $this->requireAdminRole(false);
+
         $section = $_GET['section'] ?? 'general';
-        
+
         ob_start();
-        
+
         switch ($section) {
             case 'general':
                 phpinfo(INFO_GENERAL);
@@ -1058,12 +1169,6 @@ class AdminController extends BaseController
                 break;
             case 'modules':
                 phpinfo(INFO_MODULES);
-                break;
-            case 'environment':
-                phpinfo(INFO_ENVIRONMENT);
-                break;
-            case 'variables':
-                phpinfo(INFO_VARIABLES);
                 break;
             default:
                 phpinfo(INFO_GENERAL);
@@ -1193,38 +1298,34 @@ class AdminController extends BaseController
         return $this->getAuthManager()->hasPermission($user, $permission);
     }
     
+    /**
+     * Counts every password attempt per connecting address outside the session, so dropping
+     * the session cookie or sending a forged X-Forwarded-For does not reset the limit.
+     */
     private function checkLoginAttempts(): bool
     {
-        $ip = SecurityManager::getClientIp();
-        $attempts = $_SESSION['login_attempts'][$ip] ?? 0;
-        $lastAttempt = $_SESSION['last_login_attempt'][$ip] ?? 0;
-        
-        if ($attempts >= self::MAX_LOGIN_ATTEMPTS) {
-            if (time() - $lastAttempt < self::LOGIN_LOCKOUT_TIME) {
-                return false;
-            }
-            // Reset after lockout period
-            unset($_SESSION['login_attempts'][$ip]);
-            unset($_SESSION['last_login_attempt'][$ip]);
+        return SecurityManager::rateLimitCheck('admin_login_' . ($_SERVER['REMOTE_ADDR'] ?? ''), self::MAX_LOGIN_ATTEMPTS, self::LOGIN_LOCKOUT_TIME);
+    }
+
+    /** Admin role check for sensitive endpoints; sends 403 and stops otherwise. */
+    private function requireAdminRole(bool $json = true): void
+    {
+        if (($this->getCurrentUser()['role'] ?? '') === 'admin') {
+            return;
         }
-        
-        return true;
+        if ($json) {
+            $this->jsonResponse(['error' => 'Permission denied. Only administrators can do this.'], 403);
+        }
+        http_response_code(403);
+        exit('Forbidden');
     }
-    
-    private function incrementLoginAttempts(): void
+
+    /** A post-login target is only used when it is a path on this site ("//host" and "\" are refused). */
+    private function safeRedirectTarget($url): ?string
     {
-        $ip = SecurityManager::getClientIp();
-        $_SESSION['login_attempts'][$ip] = ($_SESSION['login_attempts'][$ip] ?? 0) + 1;
-        $_SESSION['last_login_attempt'][$ip] = time();
+        return is_string($url) && preg_match('#^/(?![/\\\\])[^\r\n\\\\]*$#', $url) && strpos($url, '/admin') !== 0 ? $url : null;
     }
-    
-    private function clearLoginAttempts(): void
-    {
-        $ip = SecurityManager::getClientIp();
-        unset($_SESSION['login_attempts'][$ip]);
-        unset($_SESSION['last_login_attempt'][$ip]);
-    }
-    
+
     private function showLoginForm(): void
     {
         $authManager = $this->getAuthManager();
@@ -1314,6 +1415,14 @@ class AdminController extends BaseController
             $this->redirect(url('admin'));
             return;
         }
+
+        // The code must answer a sign-in that this browser started (state), else it is a forged callback
+        if (!\core\AuthManager::checkOauthState((string)($_GET['state'] ?? ''))) {
+            $_SESSION['admin_error'] = 'Invalid OAuth state. Please try signing in again.';
+            $this->getLogger()->warning('OAuth callback with a wrong state', ['provider' => $provider]);
+            $this->redirect(url('admin'));
+            return;
+        }
         
         // Process OAuth callback based on provider
         if ($provider === 'google') {
@@ -1347,7 +1456,8 @@ class AdminController extends BaseController
             return;
         }
         
-        // Set session
+        // Set session (new ID: a session ID planted before login must not become authenticated)
+        session_regenerate_id(true);
         $_SESSION['admin_authenticated'] = true;
         $_SESSION['admin_login_time'] = time();
         $_SESSION['admin_user'] = $user['name'];
@@ -1377,8 +1487,8 @@ class AdminController extends BaseController
         $redirectUrl = $_SESSION['redirect_after_login'] ?? null;
         unset($_SESSION['redirect_after_login']);
         
-        if ($redirectUrl && strpos($redirectUrl, '/admin') !== 0) {
-            $this->redirect($redirectUrl);
+        if ($target = $this->safeRedirectTarget($redirectUrl)) {
+            $this->redirect($target);
         } else {
             $this->redirect(url('admin'));
         }
@@ -1720,13 +1830,14 @@ class AdminController extends BaseController
         $imported = 0;
         
         foreach ($data as $table => $rows) {
-            if (!is_array($rows)) continue;
-            
+            if (!is_array($rows) || !in_array($table, ['bans', 'mutes', 'warnings', 'kicks'], true)) continue;
+
             $tableName = $this->repository->getTablePrefix() . $table;
-            
+
             foreach ($rows as $row) {
-                if (!is_array($row)) continue;
-                
+                // Column names go into the SQL text, so only plain identifiers are accepted
+                if (!is_array($row) || array_filter(array_keys($row), fn($c) => !preg_match('/^[A-Za-z_][A-Za-z0-9_]{0,63}$/', (string)$c))) continue;
+
                 try {
                     // Check if record exists
                     $sql = "SELECT id FROM {$tableName} WHERE id = :id";

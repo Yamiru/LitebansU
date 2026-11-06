@@ -155,7 +155,11 @@ class DetailController extends BaseController
             'server_origin' => $punishment['server_origin'] ?? null,
             'server_scope' => $punishment['server_scope'] ?? null,
             'avatar' => $this->getAvatarUrl($uuid, $name),
-            'type' => $type
+            'type' => $type,
+            // IP is private data: only exposed to a logged-in admin
+            'ip' => $this->isAdminLoggedIn() && !empty($punishment['ip']) && $punishment['ip'] !== '#'
+                ? SecurityManager::preventXss((string)$punishment['ip'])
+                : null
         ];
     }
     

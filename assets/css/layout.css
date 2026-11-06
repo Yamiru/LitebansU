@@ -5,7 +5,7 @@
  *
  * Plugin Name:   LiteBansU
  * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       2.0
+ * Version:       5.1
  * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  * Author URI:    https://yamiru.com
  * License:       MIT
@@ -289,7 +289,6 @@
 @media (max-width: 1399.98px) {
     .navbar-toggler {
         display: block;
-        margin-left: auto;
     }
     
     .navbar-collapse {
@@ -338,27 +337,35 @@
         margin-left: auto;
     }
     
+    .navbar-modern .container {
+        flex-wrap: nowrap;
+    }
+
+    .navbar-brand {
+        order: 0;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .navbar-brand span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .navbar-controls {
-        width: 100%;
-        justify-content: space-between;
-        padding-top: var(--space-md);
-        border-top: 1px solid var(--border-color);
-        flex-wrap: wrap;
-        gap: var(--space-sm);
+        order: 1;
+        margin-left: var(--space-sm);
+        flex-wrap: nowrap;
     }
-    
-    
-    .navbar-controls .dropdown {
-        flex: 1;
+
+    .navbar-toggler {
+        order: 2;
+        margin-left: var(--space-sm);
     }
-    
-    .navbar-controls .btn-navbar {
-        width: 100%;
-    }
-    
-    
-    .theme-toggle-wrapper {
-        margin-left: auto;
+
+    .navbar-collapse {
+        order: 3;
     }
 }
 

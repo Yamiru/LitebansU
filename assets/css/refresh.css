@@ -1,9 +1,18 @@
 /**
- * Visual refresh: loaded last, overrides tokens and a few signature surfaces.
- * Direction: a public court docket. Ink-toned surfaces, a single wax-seal red,
- * flat panels drawn with rules instead of shadows and gradients.
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
+ *
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       5.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
  */
-
 :root {
     --primary: #b3261e;
     --primary-hover: #8f1d17;
@@ -114,11 +123,24 @@ body {
     color: var(--text-primary);
 }
 
+.nav-link.active {
+    background: transparent !important;
+}
+
+/* Icons are SVG masks painted with background-color: keep it, only set the colour */
 .nav-link.active,
 .nav-link.active i,
-.nav-link.active span {
-    background: transparent !important;
+.nav-link.active span:not(.badge) {
     color: var(--text-primary) !important;
+}
+
+.nav-link.active i {
+    background-color: currentColor !important;
+}
+
+.nav-link.active .badge {
+    background: var(--primary) !important;
+    color: #fff !important;
 }
 
 .nav-link.active {

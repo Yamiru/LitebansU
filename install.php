@@ -4,8 +4,14 @@
  * Complete configuration setup with all fields
  */
 
+// The wizard has no login: once the site is configured it must not run again (delete .env to reinstall)
+if (is_file(__DIR__ . '/.env')) {
+    http_response_code(403);
+    exit('Already installed. Delete install.php.');
+}
+
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '0');
 
 session_start();
 
@@ -66,8 +72,8 @@ DATE_FORMAT=Y-m-d H:i:s
 BASE_URL=" . ($config['base_url'] ?? '') . "
 
 # Avatar Configuration
-AVATAR_URL=" . ($config['avatar_url'] ?? 'https://mineskin.eu/helm/{name}') . "
-AVATAR_URL_OFFLINE=" . ($config['avatar_url_offline'] ?? 'https://mineskin.eu/helm/{name}') . "
+AVATAR_URL=" . ($config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true') . "
+AVATAR_URL_OFFLINE=" . ($config['avatar_url_offline'] ?? 'https://cravatar.eu/avatar/{name}/64') . "
 
 # Default Settings
 DEFAULT_THEME=" . ($config['default_theme'] ?? 'dark') . "
@@ -156,9 +162,6 @@ SHOW_MENU_ADMIN=" . ($config['show_menu_admin'] ?? 'true') . "
 # Performance & Cache
 CACHE_ENABLED=true
 CACHE_LIFETIME=3600
-
-# Demo Mode
-DEMO_MODE=false
 ";
     return $env;
 }
@@ -169,8 +172,8 @@ DEMO_MODE=false
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiteBansU <?= $version ?> - Installation Wizard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="assets/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/icons.css" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -429,15 +432,15 @@ DEMO_MODE=false
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Avatar URL (Online)</label>
-                                <input type="text" class="form-control" name="avatar_url" value="https://mineskin.eu/helm/{name}" placeholder="https://mineskin.eu/helm/{name}">
-                                <small class="form-text">URL for online avatars. Use {name} or {uuid}</small>
+                                <input type="text" class="form-control" name="avatar_url" value="https://crafatar.com/avatars/{uuid}?size=64&overlay=true" placeholder="https://crafatar.com/avatars/{uuid}?size=64&overlay=true">
+                                <small class="form-text">URL for premium (online-mode) players, looked up by {uuid}</small>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Avatar URL (Offline)</label>
-                                <input type="text" class="form-control" name="avatar_url_offline" value="https://mineskin.eu/helm/{name}" placeholder="https://mineskin.eu/helm/{name}">
-                                <small class="form-text">URL for offline avatars. Use {name} or {uuid}</small>
+                                <input type="text" class="form-control" name="avatar_url_offline" value="https://cravatar.eu/avatar/{name}/64" placeholder="https://cravatar.eu/avatar/{name}/64">
+                                <small class="form-text">URL for cracked (offline-mode) players, looked up by {name} — crafatar cannot resolve their UUID</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Theme Color</label>

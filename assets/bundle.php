@@ -1,12 +1,17 @@
 <?php
 /**
- * Serves the site's CSS (13 files in one request, minified) and main JS with gzip and a one-year
- * immutable cache, no matter how the web server is configured.
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
  *
- *   /assets/bundle.php?t=css&v=<hash>
- *   /assets/bundle.php?t=js&v=<hash>
- *
- * The file lists live in bundle-map.php. The v parameter changes whenever a source file changes.
+ * Plugin Name: LiteBansU
+ * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version: 5.0
+ * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI: https://yamiru.com
+ * License: MIT
+ * License URI: https://opensource.org/licenses/MIT
+ * ============================================================================
  */
 
 declare(strict_types=1);

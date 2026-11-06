@@ -1,7 +1,7 @@
 </div>
 </main>
 <!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="<?= htmlspecialchars(asset('assets/vendor/bootstrap/bootstrap.bundle.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 
 <!-- Custom JS -->
 <script src="<?= htmlspecialchars(bundle('js'), ENT_QUOTES, 'UTF-8') ?>"></script>

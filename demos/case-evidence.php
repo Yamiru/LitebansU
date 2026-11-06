@@ -1,18 +1,18 @@
 <?php
 /**
- * Case Evidence for LiteBansU
+ * ============================================================================
+ * LiteBansU
+ * ============================================================================
  *
- * One place for everything staff know about a punishment: reports, screenshots,
- * videos and demos (each with its own caption) and a one-line appeal outcome.
- * Stored in demos/data/staff_notes.php (a PHP file that only holds JSON) and demos/data/evidence/ (private, served
- * through this file). Nothing is written to the LiteBans MySQL database and
- * players never see any of it. All text is translated (see sn_strings()).
- *
- * Used by:
- *   - templates/detail.php          -> sn_panel_html() shows the case on the punishment page
- *   - templates/admin/dashboard.php -> sn_admin_pane_html() renders the "Case Evidence" tab
- *   - AdminController::caseEvidence() and searchPunishments() -> sn_apply_post(), sn_case_json(), sn_search_cases()
- *   - POST / GET to this file       -> forms on the detail page and attachment downloads
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       5.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
+ * ============================================================================
  */
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -644,6 +644,11 @@ function sn_user(): ?array
     if (empty($_SESSION['admin_authenticated'])) {
         return null;
     }
+    // Same 2 hour idle limit as the admin panel (AdminController::ADMIN_SESSION_TIMEOUT); activity here keeps it alive
+    if (time() - (int)($_SESSION['admin_login_time'] ?? 0) > 7200) {
+        return null;
+    }
+    $_SESSION['admin_login_time'] = time();
 
     $name = (string)($_SESSION['admin_user'] ?? 'Administrator');
     $id = (string)($_SESSION['admin_user_id'] ?? 'legacy');
@@ -1003,7 +1008,7 @@ function sn_video_script(string $ffmpeg, string $path, string $id): string
     $final = SN_EVIDENCE . '/' . $id . '.mp4';
     $q = 'escapeshellarg';
     return 'N=""; command -v nice >/dev/null 2>&1 && N="nice -n 19"; '
-        . '( $N ' . $q($ffmpeg) . ' -nostdin -v error -i ' . $q($path)
+        . '( $N ' . $q($ffmpeg) . ' -nostdin -v error -protocol_whitelist file -i ' . $q($path)
         . ' -vf ' . $q('scale=-2:min(720\,ih)') . ' -c:v libx264 -preset veryfast -crf 28 -pix_fmt yuv420p'
         . ' -c:a aac -b:a 96k -movflags +faststart -f mp4 -y ' . $q($tmp)
         . ' && [ -f ' . $q($path) . ' ] && [ "$(wc -c < ' . $q($tmp) . ')" -lt "$(wc -c < ' . $q($path) . ')" ]'
@@ -1015,6 +1020,19 @@ function sn_optimize_video(string $path, string $id): bool
 {
     $ffmpeg = sn_ffmpeg();
     if (!$ffmpeg) {
+        return false;
+    }
+    // ffmpeg decides the format from the content, not the extension: a text playlist (HLS, ffconcat)
+    // renamed to .mp4 could make it read other local files. Only re-encode real video containers.
+    $head = (string)@file_get_contents($path, false, null, 0, 16);
+    $isContainer = substr($head, 4, 4) === 'ftyp'
+        || strncmp($head, "\x1A\x45\xDF\xA3", 4) === 0
+        || (strncmp($head, 'RIFF', 4) === 0 && substr($head, 8, 4) === 'AVI ')
+        || strncmp($head, "\x30\x26\xB2\x75", 4) === 0
+        || strncmp($head, 'FLV', 3) === 0
+        || strncmp($head, "\x00\x00\x01\xBA", 4) === 0
+        || strncmp($head, "\x00\x00\x01\xB3", 4) === 0;
+    if (!$isContainer) {
         return false;
     }
     @exec('nohup sh -c ' . escapeshellarg(sn_video_script($ffmpeg, $path, $id)) . ' > /dev/null 2>&1 &');

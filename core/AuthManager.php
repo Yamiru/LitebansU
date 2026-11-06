@@ -1,13 +1,17 @@
 <?php
 /**
  * ============================================================================
- *  LiteBansU - Authentication Manager
+ * LiteBansU
  * ============================================================================
  *
- *  Plugin Name:   LiteBansU
- *  Description:   Google OAuth and user management for admin panel
- *  Version:       3.6
- *  License:       MIT
+ * Plugin Name:   LiteBansU
+ * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
+ * Version:       5.0
+ * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
+ * Author URI:    https://yamiru.com
+ * License:       MIT
+ * License URI:   https://opensource.org/licenses/MIT
+ * Repository:    https://github.com/Yamiru/LitebansU/
  * ============================================================================
  */
 
@@ -117,7 +121,7 @@ class AuthManager
         // Create .htaccess to protect directory
         $htaccess = $dataDir . '/.htaccess';
         if (!file_exists($htaccess)) {
-            @file_put_contents($htaccess, "Order deny,allow\nDeny from all\n");
+            @file_put_contents($htaccess, "Require all denied\n");
         }
 
         // Create index.php to prevent directory listing
@@ -237,6 +241,20 @@ class AuthManager
             && !empty($this->config['discord_client_secret']);
     }
     
+    /** Random value tied to this browser session; the provider returns it unchanged (stops login CSRF). */
+    private static function oauthState(): string
+    {
+        return $_SESSION['oauth_state'] ??= bin2hex(random_bytes(16));
+    }
+
+    /** True when the "state" of the callback is the one issued to this session. It is single use. */
+    public static function checkOauthState(string $state): bool
+    {
+        $expected = (string)($_SESSION['oauth_state'] ?? '');
+        unset($_SESSION['oauth_state']);
+        return $expected !== '' && hash_equals($expected, $state);
+    }
+
     /**
      * Get Google OAuth URL
      */
@@ -251,7 +269,8 @@ class AuthManager
             'response_type' => 'code',
             'scope' => 'email profile',
             'access_type' => 'online',
-            'prompt' => 'select_account'
+            'prompt' => 'select_account',
+            'state' => self::oauthState()
         ];
         
         return 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
@@ -292,7 +311,8 @@ class AuthManager
             'client_id' => $clientId,
             'redirect_uri' => $redirectUri,
             'response_type' => 'code',
-            'scope' => 'identify email'
+            'scope' => 'identify email',
+            'state' => self::oauthState()
         ];
         
         return 'https://discord.com/api/oauth2/authorize?' . http_build_query($params);
@@ -364,6 +384,11 @@ class AuthManager
             error_log("Google OAuth: Invalid user info response");
             return null;
         }
+        // The email picks the account (pre-registered user or first admin): it must be verified
+        if (($userInfo['verified_email'] ?? false) !== true) {
+            error_log("Google OAuth: email is not verified");
+            return null;
+        }
         
         return $userInfo;
     }
@@ -432,6 +457,11 @@ class AuthManager
         $userInfo = json_decode($response, true);
         if (!isset($userInfo['id']) || !isset($userInfo['email'])) {
             error_log("Discord OAuth: Invalid user info response");
+            return null;
+        }
+        // Discord lets an account carry an unverified email of someone else: never match a user by it
+        if (($userInfo['verified'] ?? false) !== true) {
+            error_log("Discord OAuth: email is not verified");
             return null;
         }
         

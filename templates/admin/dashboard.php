@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.7
+ *  Version:       5.1
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -263,7 +263,7 @@ if (!$controller->isAuthenticated()) {
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <input type="text" class="form-control" id="admin-search-input" 
-                                       placeholder="Search by player name, UUID, reason, or staff...">
+                                       placeholder="Search by player name, UUID, IP, reason, or staff...">
                             </div>
                             <div class="col-md-3">
                                 <select class="form-control" id="admin-search-type">
@@ -754,20 +754,20 @@ if (!$controller->isAuthenticated()) {
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Avatar URL (Online)</label>
-                                    <input type="text" class="form-control" name="avatar_url" 
-                                           value="<?= htmlspecialchars($config['avatar_url'] ?? 'https://mineskin.eu/helm/{name}', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="https://mineskin.eu/helm/{name}">
-                                    <small class="form-text text-muted">URL for online mode avatars. Use {name} or {uuid} placeholder</small>
+                                    <input type="text" class="form-control" name="avatar_url"
+                                           value="<?= htmlspecialchars($config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://crafatar.com/avatars/{uuid}?size=64&overlay=true">
+                                    <small class="form-text text-muted">Premium (online-mode) players, looked up by {uuid}</small>
                                 </div>
                             </div>
                             
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Avatar URL (Offline)</label>
-                                    <input type="text" class="form-control" name="avatar_url_offline" 
-                                           value="<?= htmlspecialchars($config['avatar_url_offline'] ?? 'https://mineskin.eu/helm/{name}', ENT_QUOTES, 'UTF-8') ?>"
-                                           placeholder="https://mineskin.eu/helm/{name}">
-                                    <small class="form-text text-muted">URL for offline mode avatars. Use {name} or {uuid} placeholder</small>
+                                    <input type="text" class="form-control" name="avatar_url_offline"
+                                           value="<?= htmlspecialchars($config['avatar_url_offline'] ?? 'https://cravatar.eu/avatar/{name}/64', ENT_QUOTES, 'UTF-8') ?>"
+                                           placeholder="https://cravatar.eu/avatar/{name}/64">
+                                    <small class="form-text text-muted">Cracked (offline-mode) players, looked up by {name} — crafatar cannot resolve their UUID</small>
                                 </div>
                             </div>
                         </div>
@@ -906,6 +906,42 @@ if (!$controller->isAuthenticated()) {
                         <p class="text-muted small mb-2">Tells Bing, Yandex and other IndexNow search engines about your pages right away. It sends the home page, ban, mute, warning and kick lists, statistics, protest, privacy and the list pages. Individual punishments (a player and an ID) are never sent. Site URL used: <code><?= htmlspecialchars($seoSiteUrl, ENT_QUOTES, 'UTF-8') ?></code></p>
                         <button type="button" class="btn btn-outline-primary" id="indexnow-submit"><i class="fas fa-paper-plane"></i> Submit all pages to IndexNow</button>
                         <div id="indexnow-result" class="mt-3"></div>
+                        <hr>
+                        <h6 class="mb-2">llms.txt</h6>
+                        <p class="text-muted small mb-2">The file AI assistants read to understand this site. It is generated from your site name, description, URL and settings. The check verifies it has a heading, Markdown links to this site, and that the public URL serves it. <a href="<?= htmlspecialchars(url('llms.txt'), ENT_QUOTES, 'UTF-8') ?>" target="_blank">Open /llms.txt</a></p>
+                        <button type="button" class="btn btn-outline-primary" id="llms-check"><i class="fas fa-check-circle"></i> Check llms.txt</button>
+                        <div id="llms-result" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <?php $homeLink = \core\SiteExtras::homeLink($config); ?>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3"><i class="fas fa-globe text-primary"></i> Main website menu item</h5>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="home-link-enabled" <?= $homeLink ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="home-link-enabled">Show a last menu item with a globe icon</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="home-link-url">Link</label>
+                                <input type="text" class="form-control" id="home-link-url" placeholder="https://example.com" value="<?= htmlspecialchars((string)($homeLink['url'] ?? $seoExtras['home_link_url'] ?? $config['home_link_url'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                <small class="text-muted">https://, http:// or a path starting with /. Default comes from HOME_LINK_URL in .env.</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="home-link-label">Text</label>
+                                <input type="text" class="form-control" id="home-link-label" maxlength="40" value="<?= htmlspecialchars((string)($homeLink['label'] ?? $config['home_link_label'] ?? 'Main website'), ENT_QUOTES, 'UTF-8') ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="home-link-target">Open in</label>
+                                <select class="form-control" id="home-link-target">
+                                    <option value="0" <?= empty($homeLink['newtab']) ? 'selected' : '' ?>>Same tab</option>
+                                    <option value="1" <?= !empty($homeLink['newtab']) ? 'selected' : '' ?>>New tab</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1420,7 +1456,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!form) return;
         const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
         // Text of each language as visitors see it now (saved text, else English, else the built-in default)
-        const privacy = <?= json_encode((object)$seoPrivacyShown, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
+        const privacy = <?= json_encode((object)($seoPrivacyShown ?? []), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>;
         const privacyShown = { ...privacy };
         const privacySaved = <?= json_encode(array_keys((array)($seoExtras['privacy'] ?? [])), JSON_HEX_TAG) ?>;
         const langSelect = document.getElementById('seo-privacy-lang');
@@ -1476,7 +1512,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     cookie_banner: document.getElementById('seo-cookie-banner').checked,
                     custom_head: document.getElementById('seo-custom-head').value,
                     custom_footer: document.getElementById('seo-custom-footer').value,
-                    privacy: changed
+                    privacy: changed,
+                    home_link_enabled: document.getElementById('home-link-enabled').checked,
+                    home_link_url: document.getElementById('home-link-url').value.trim(),
+                    home_link_label: document.getElementById('home-link-label').value.trim(),
+                    home_link_newtab: document.getElementById('home-link-target').value === '1'
                 });
                 show(savedBox, 'Saved. Changes are live on the public pages.');
             } catch (error) {
@@ -1495,6 +1535,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await postJson('<?= url('admin/indexnow') ?>', {});
                 out.innerHTML = '<div class="alert alert-success mb-2"><i class="fas fa-check"></i> ' + escapeHtml(result.message) + '</div>' +
                     '<details><summary class="small">URLs</summary><ul class="small mb-0">' + result.urls.map(u => '<li>' + escapeHtml(u) + '</li>').join('') + '</ul></details>';
+            } catch (error) {
+                out.innerHTML = '<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(error.message) + '</div>';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('llms-check').addEventListener('click', async function () {
+            const btn = this;
+            const out = document.getElementById('llms-result');
+            const icon = { ok: 'check text-success', warn: 'exclamation-triangle text-warning', error: 'times text-danger', info: 'info-circle text-muted' };
+            btn.disabled = true;
+            out.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Checking...';
+            try {
+                const result = await postJson('<?= url('admin/check-llms') ?>', {});
+                out.innerHTML = '<div class="alert alert-' + (result.ok ? 'success' : 'danger') + ' mb-2">' +
+                    (result.ok ? 'llms.txt meets the recommendations.' : 'llms.txt does not meet the recommendations.') + '</div>' +
+                    '<ul class="list-unstyled small mb-0">' + result.checks.map(c => '<li><i class="fas fa-' + icon[c[0]] + '"></i> ' + escapeHtml(c[1]) + '</li>').join('') + '</ul>';
             } catch (error) {
                 out.innerHTML = '<div class="alert alert-danger mb-0"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(error.message) + '</div>';
             } finally {
@@ -1586,6 +1644,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <small class="text-muted">
                                             <i class="fas fa-user-shield"></i> ${escapeHtml(p.staff)} 
                                             <i class="fas fa-clock ms-2"></i> ${escapeHtml(p.date)}
+                                            ${p.ip ? ' <i class="fas fa-network-wired ms-2"></i> ' + escapeHtml(p.ip) : ''}
                                             ${p.until ? ' <i class="fas fa-hourglass-end ms-2"></i> ' + escapeHtml(p.until) : ''}
                                             ${p.server !== 'Global' ? ' <i class="fas fa-server ms-2"></i> ' + escapeHtml(p.server) : ''}
                                         </small>

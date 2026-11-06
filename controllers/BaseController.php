@@ -68,6 +68,19 @@ abstract class BaseController
         exit;
     }
     
+    public function isAdminLoggedIn(): bool
+    {
+        if (empty($_SESSION['admin_authenticated'])) {
+            return false;
+        }
+        // Password login has no user id and is a full administrator; Google/Discord users carry a role
+        if (empty($_SESSION['admin_user_id'])) {
+            return true;
+        }
+        $user = (new \core\AuthManager($this->config))->getUserById($_SESSION['admin_user_id']);
+        return ($user['role'] ?? '') === 'admin';
+    }
+
     protected function getPage(): int
     {
         $page = $_GET['page'] ?? 1;

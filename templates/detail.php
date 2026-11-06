@@ -89,6 +89,18 @@
                             </div>
                         </div>
                         
+                        <?php if (!empty($punishment['ip'])): ?>
+                        <!-- IP (admin only) -->
+                        <div class="detail-item">
+                            <label class="detail-label">
+                                <i class="fas fa-network-wired"></i> IP
+                            </label>
+                            <div class="detail-value font-monospace">
+                                <?= htmlspecialchars($punishment['ip'], ENT_QUOTES, 'UTF-8') ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <!-- Date -->
                         <div class="detail-item">
                             <label class="detail-label">

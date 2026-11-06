@@ -90,6 +90,11 @@ class HomeController extends BaseController
                 $punishments = $this->searchById((int)$query);
             }
             
+            // Admin only: search by (partial) IP address
+            if (empty($punishments) && $this->isAdminLoggedIn() && preg_match('/^[0-9a-fA-F:.]{3,45}$/', $query) && preg_match('/[.:]/', $query)) {
+                $punishments = $this->searchByIp($query);
+            }
+
             // If no results from ID search, try player search
             if (empty($punishments)) {
                 $punishments = $this->repository->getPlayerPunishments($query);
@@ -155,6 +160,48 @@ class HomeController extends BaseController
         }
     }
     
+    /**
+     * Admin only: find punishments by IP (exact or prefix match, e.g. "192.168.")
+     */
+    private function searchByIp(string $ip): array
+    {
+        try {
+            $results = [];
+            $historyTable = $this->repository->getTablePrefix() . 'history';
+
+            foreach (['bans', 'mutes', 'warnings', 'kicks'] as $table) {
+                $fullTable = $this->repository->getTablePrefix() . $table;
+
+                $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
+                        FROM {$fullTable} p
+                        LEFT JOIN (
+                            SELECT h1.uuid, h1.name
+                            FROM {$historyTable} h1
+                            INNER JOIN (
+                                SELECT uuid, MAX(date) as max_date
+                                FROM {$historyTable}
+                                GROUP BY uuid
+                            ) h2 ON h1.uuid = h2.uuid AND h1.date = h2.max_date
+                        ) h ON p.uuid = h.uuid
+                        WHERE p.ip LIKE :ip
+                        AND p.uuid IS NOT NULL AND p.uuid != '#'
+                        ORDER BY p.time DESC
+                        LIMIT 50";
+
+                $stmt = $this->repository->getConnection()->prepare($sql);
+                $stmt->execute([':ip' => addcslashes($ip, '%_\\') . '%']);
+                $results = array_merge($results, $stmt->fetchAll());
+            }
+
+            usort($results, fn($a, $b) => ($b['time'] ?? 0) <=> ($a['time'] ?? 0));
+
+            return array_slice($results, 0, 50);
+        } catch (Exception $e) {
+            error_log("IP search error: " . $e->getMessage());
+            return [];
+        }
+    }
+
     /**
      * Flexible search that can handle partial names and case variations
      */
@@ -255,7 +302,9 @@ class HomeController extends BaseController
                     : null,
                 // Effective active status (handles expired temp bans/mutes whose DB flag is still 1)
                 'active' => $this->isPunishmentActive($punishment, $rowType)
-            ];
+            ] + ($this->isAdminLoggedIn() && !empty($punishment['ip']) && $punishment['ip'] !== '#'
+                ? ['ip' => SecurityManager::preventXss((string)$punishment['ip'])]
+                : []);
         }, $punishments);
     }
     

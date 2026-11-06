@@ -6,7 +6,7 @@
  *
  *  Plugin Name:   LiteBansU
  *  Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- *  Version:       3.7
+ *  Version:       5.0
  *  Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
  *  Author URI:    https://yamiru.com
  *  License:       MIT
@@ -31,7 +31,7 @@ return [
     'timezone' => EnvLoader::get('TIMEZONE', 'UTC'),
     'date_format' => EnvLoader::get('DATE_FORMAT', 'Y-m-d H:i:s'),
     'avatar_url' => EnvLoader::get('AVATAR_URL', 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true'),
-    'avatar_url_offline' => EnvLoader::get('AVATAR_URL_OFFLINE', 'https://crafatar.com/avatars/{uuid}?size=64'),
+    'avatar_url_offline' => EnvLoader::get('AVATAR_URL_OFFLINE', 'https://cravatar.eu/avatar/{name}/64'),
     'avatar_provider' => EnvLoader::get('AVATAR_PROVIDER', 'crafatar'), // crafatar, cravatar, or custom
     'base_path' => defined('BASE_PATH') ? BASE_PATH : '',
     'debug' => EnvLoader::get('DEBUG', 'false') === 'true',
@@ -99,6 +99,11 @@ return [
     'show_menu_protest' => EnvLoader::get('SHOW_MENU_PROTEST', 'true') === 'true',
     'show_menu_stats' => EnvLoader::get('SHOW_MENU_STATS', 'true') === 'true',
     'show_menu_admin' => EnvLoader::get('SHOW_MENU_ADMIN', 'true') === 'true',
+
+    // Last menu item linking to the main website (the admin panel overrides these)
+    'home_link_url' => EnvLoader::get('HOME_LINK_URL', ''),
+    'home_link_label' => EnvLoader::get('HOME_LINK_LABEL', 'Main website'),
+    'home_link_newtab' => EnvLoader::get('HOME_LINK_NEWTAB', 'false') === 'true',
     
     // SEO Advanced Configuration (v2.7)
     'seo_enable_schema' => EnvLoader::get('SEO_ENABLE_SCHEMA', 'true') === 'true',

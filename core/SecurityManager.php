@@ -128,7 +128,7 @@ class SecurityManager
     public static function preventXss(string $text): string
     {
         // Remove Minecraft color codes
-        $text = preg_replace('/[§&][0-9a-fk-or]/i', '', $text);
+        $text = preg_replace('/[§&][0-9a-fk-or]/ui', '', $text);
         
         // Remove hex color codes  
         $text = preg_replace('/#[0-9a-f]{6}/i', '', $text);
@@ -164,7 +164,7 @@ class SecurityManager
         // Fallback to file-based rate limiting
         $cacheDir = sys_get_temp_dir() . '/litebans_cache';
         if (!is_dir($cacheDir)) {
-            @mkdir($cacheDir, 0777, true);
+            @mkdir($cacheDir, 0700, true);
         }
         
         $file = $cacheDir . '/' . $key;
@@ -205,20 +205,21 @@ class SecurityManager
      */
     public static function getClientIp(): string
     {
-        $headers = [
-            'HTTP_CF_CONNECTING_IP',     // Cloudflare
-            'HTTP_X_FORWARDED_FOR',       // Proxy
-            'HTTP_X_REAL_IP',            // Nginx
-            'REMOTE_ADDR'                // Default
-        ];
-        
-        foreach ($headers as $header) {
-            if (isset($_SERVER[$header]) && filter_var($_SERVER[$header], FILTER_VALIDATE_IP)) {
-                return $_SERVER[$header];
+        $remote = $_SERVER['REMOTE_ADDR'] ?? '';
+        $trusted = array_filter(array_map('trim', explode(',', (string)\core\EnvLoader::get('TRUSTED_PROXIES', ''))));
+
+        // Forwarding headers are client-controlled: only believe them when the connection comes from a listed proxy
+        if ($remote !== '' && in_array($remote, $trusted, true)) {
+            foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP'] as $header) {
+                // X-Forwarded-For: the entry added by our proxy is the last one
+                $value = isset($_SERVER[$header]) ? trim(substr(strrchr(',' . $_SERVER[$header], ','), 1)) : '';
+                if ($value !== '' && filter_var($value, FILTER_VALIDATE_IP)) {
+                    return $value;
+                }
             }
         }
-        
-        return '0.0.0.0';
+
+        return filter_var($remote, FILTER_VALIDATE_IP) ? $remote : '0.0.0.0';
     }
     
     /**
