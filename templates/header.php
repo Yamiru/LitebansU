@@ -53,9 +53,16 @@
     <meta property="og:url" content="<?= htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8') ?>">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="<?= htmlspecialchars($config['site_name'], ENT_QUOTES, 'UTF-8') ?>">
-    <?php if (isset($config['site_og_image'])): ?>
-    <meta property="og:image" content="<?= htmlspecialchars($config['site_og_image'], ENT_QUOTES, 'UTF-8') ?>">
-    <?php endif; ?>
+    <?php
+    // Default og-image.png in the site root; a path such as /og-image.png becomes a full URL (social sites need one)
+    $ogImage = trim((string)($config['site_og_image'] ?? '')) ?: '/og-image.png';
+    if ($ogImage[0] === '/') {
+        $ogImage = \core\SiteExtras::siteUrl($config) . $ogImage;
+    }
+    ?>
+    <meta property="og:image" content="<?= htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8') ?>">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
 
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="<?= htmlspecialchars(isset($title) ? $title . ' - ' . $config['site_name'] : $config['site_name'], ENT_QUOTES, 'UTF-8') ?>">
@@ -180,9 +187,7 @@
     <?php if (isset($config['seo_twitter_creator'])): ?>
     <meta name="twitter:creator" content="<?= htmlspecialchars($config['seo_twitter_creator'], ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
-    <?php if (isset($config['site_og_image'])): ?>
-    <meta name="twitter:image" content="<?= htmlspecialchars($config['site_og_image'], ENT_QUOTES, 'UTF-8') ?>">
-    <?php endif; ?>
+    <meta name="twitter:image" content="<?= htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8') ?>">
 
 
     <?php if (isset($config['seo_alternate_languages']) && is_array($config['seo_alternate_languages'])): ?>

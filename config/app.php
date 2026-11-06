@@ -76,7 +76,7 @@ return [
     'site_favicon' => EnvLoader::get('SITE_FAVICON', 'favicon.ico'),
     'site_apple_icon' => EnvLoader::get('SITE_APPLE_ICON', 'apple-touch-icon.png'),
     'site_theme_color' => EnvLoader::get('SITE_THEME_COLOR', '#ef4444'),
-    'site_og_image' => EnvLoader::get('SITE_OG_IMAGE'),
+    'site_og_image' => EnvLoader::get('SITE_OG_IMAGE', '/og-image.png'),
     'site_twitter_site' => EnvLoader::get('SITE_TWITTER_SITE'),
     'site_keywords' => EnvLoader::get('SITE_KEYWORDS'),
     'site_author' => EnvLoader::get('SITE_AUTHOR'),

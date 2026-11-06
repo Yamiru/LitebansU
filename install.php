@@ -129,7 +129,7 @@ SITE_ROBOTS=" . ($config['site_robots'] ?? 'index, follow') . "
 SITE_DESCRIPTION=" . ($config['site_description'] ?? 'View and search player punishments on our Minecraft server') . "
 SITE_TITLE_TEMPLATE={page} - {site}
 SITE_THEME_COLOR=" . ($config['site_theme_color'] ?? '#ef4444') . "
-SITE_OG_IMAGE=" . ($config['site_og_image'] ?? '') . "
+SITE_OG_IMAGE=" . (($config['site_og_image'] ?? '') ?: '/og-image.png') . "
 SITE_TWITTER_SITE=" . ($config['site_twitter_site'] ?? '') . "
 SITE_KEYWORDS=" . ($config['site_keywords'] ?? 'minecraft,litebans,punishments,bans,mutes,server') . "
 
@@ -158,6 +158,14 @@ SEO_TWITTER_CREATOR=
 SHOW_MENU_PROTEST=" . ($config['show_menu_protest'] ?? 'true') . "
 SHOW_MENU_STATS=" . ($config['show_menu_stats'] ?? 'true') . "
 SHOW_MENU_ADMIN=" . ($config['show_menu_admin'] ?? 'true') . "
+
+# Last menu item (globe icon) linking to your main website. Empty URL = no item.
+HOME_LINK_URL=" . ($config['home_link_url'] ?? '') . "
+HOME_LINK_LABEL=" . ($config['home_link_label'] ?? 'Main website') . "
+HOME_LINK_NEWTAB=" . ($config['home_link_newtab'] ?? 'false') . "
+
+# Reverse proxy / Cloudflare: comma-separated IPs of the proxies that connect to PHP
+TRUSTED_PROXIES=
 
 # Performance & Cache
 CACHE_ENABLED=true
