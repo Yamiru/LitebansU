@@ -16,7 +16,6 @@
 
 declare(strict_types=1);
 
-// Ensure EnvLoader is loaded
 if (!class_exists('core\\EnvLoader')) {
     require_once dirname(__DIR__) . '/core/EnvLoader.php';
 }
@@ -62,12 +61,10 @@ class DatabaseConfig
         $this->driver = EnvLoader::get('DB_DRIVER', 'mysql');
         $this->tablePrefix = EnvLoader::get('TABLE_PREFIX', 'litebans_');
         
-        // Validate port range
         if ($this->port < 1 || $this->port > 65535) {
             throw new \InvalidArgumentException('Invalid database port');
         }
         
-        // Validate required fields
         if (empty($this->database)) {
             throw new \InvalidArgumentException('Database name is required');
         }
@@ -77,18 +74,12 @@ class DatabaseConfig
         }
     }
     
-    /**
-     * Get MySQL init command attribute constant
-     * PHP 8.5+ deprecated PDO::MYSQL_ATTR_INIT_COMMAND in favor of Pdo\Mysql::ATTR_INIT_COMMAND
-     */
     private function getMysqlInitCommandAttribute(): int
     {
-        // Check if we're on PHP 8.5+ where Pdo\Mysql class exists
         if (class_exists('Pdo\\Mysql') && defined('Pdo\\Mysql::ATTR_INIT_COMMAND')) {
             return \Pdo\Mysql::ATTR_INIT_COMMAND;
         }
         
-        // Fallback for PHP < 8.5
         return \PDO::MYSQL_ATTR_INIT_COMMAND;
     }
     
@@ -99,9 +90,7 @@ class DatabaseConfig
             \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
             \PDO::ATTR_EMULATE_PREPARES => false,
             $this->getMysqlInitCommandAttribute() => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
-            // Short connect timeout: a dead DB host must fail fast, not hold a PHP-FPM worker for 30s
             \PDO::ATTR_TIMEOUT => 5,
-            // Persistent connection
             \PDO::ATTR_PERSISTENT => true,
         ];
     }
@@ -118,7 +107,6 @@ class DatabaseConfig
         try {
             $pdo = new \PDO($dsn, $this->username, $this->password, $this->options);
             
-            // Test connection
             $pdo->query('SELECT 1');
             
             return $pdo;

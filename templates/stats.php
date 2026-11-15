@@ -1,19 +1,17 @@
 <div class="stats-page">
-    <!-- Header - OPRAVENÉ -->
+    
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>
             <i class="fas fa-chart-bar text-primary"></i>
             <?= htmlspecialchars($lang->get('nav.statistics'), ENT_QUOTES, 'UTF-8') ?>
         </h1>
-        <!-- ZMENENÉ ID z "stats-clear-cache-btn" na "clear-cache-btn" -->
+        
         <button id="clear-cache-btn" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-sync-alt"></i>
             <span class="d-none d-sm-inline">Clear Cache</span>
         </button>
     </div>
 
-
-    <!-- Basic Statistics Grid - Fixed with consistent styling -->
     <div class="stats-grid-main mb-5">
         <div class="stat-card-main bg-danger-gradient">
             <div class="stat-icon-main">
@@ -68,7 +66,6 @@
         </div>
     </div>
 
-    <!-- Recent Activity -->
     <?php if (!empty($stats['recent_activity'])): ?>
     <div class="row mb-5">
         <div class="col-12">
@@ -160,7 +157,7 @@
     <?php endif; ?>
 
     <div class="row">
-        <!-- Top Banned Players -->
+        
         <?php if (!empty($stats['top_banned_players'])): ?>
         <div class="col-lg-6 mb-4">
             <div class="card h-100">
@@ -199,7 +196,6 @@
         </div>
         <?php endif; ?>
 
-        <!-- Most Active Staff -->
         <?php if (!empty($stats['most_active_staff'])): ?>
         <div class="col-lg-6 mb-4">
             <div class="card h-100">
@@ -245,7 +241,6 @@
         <?php endif; ?>
     </div>
 
-    <!-- Top Ban Reasons -->
     <?php if (!empty($stats['top_ban_reasons'])): ?>
     <div class="row mb-4">
         <div class="col-12">
@@ -276,7 +271,6 @@
     </div>
     <?php endif; ?>
 
-    <!-- Daily Activity Chart -->
     <?php if (!empty($stats['daily_activity'])): ?>
     <div class="row mb-4">
         <div class="col-12">
@@ -308,7 +302,7 @@
         </div>
     </div>
     <?php endif; ?>
-    <!-- Clear Cache Modal - NOVÝ -->
+    
     <div class="modal fade" id="cacheModal" tabindex="-1" aria-labelledby="cacheModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

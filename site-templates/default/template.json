@@ -1,0 +1,8 @@
+{
+  "id": "default",
+  "name": "Default",
+  "version": "1.0",
+  "author": "Yamiru",
+  "framework": "Bootstrap",
+  "description": "The original LiteBansU design. Its views live in templates/."
+}

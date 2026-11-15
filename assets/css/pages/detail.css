@@ -1,23 +1,7 @@
-/**
- * ============================================================================
- * LiteBansU
- * ============================================================================
- *
- * Plugin Name:   LiteBansU
- * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       2.0
- * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI:    https://yamiru.com
- * License:       MIT
- * License URI:   https://opensource.org/licenses/MIT
- * Repository:    https://github.com/Yamiru/LitebansU/
- * ============================================================================
- */
 .punishment-detail {
     animation: fadeIn var(--transition-slow);
 }
 
-/* Detail Card */
 .detail-card {
     margin-bottom: var(--space-xl);
     border: none;
@@ -36,7 +20,6 @@
     gap: var(--space-sm);
 }
 
-/* Player Card */
 .player-card {
     padding: var(--space-2xl);
     background: var(--bg-secondary);
@@ -63,7 +46,6 @@
     word-break: break-all;
 }
 
-/* Details Grid */
 .details-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -102,7 +84,6 @@
     font-size: 1rem;
 }
 
-/* Progress Bar */
 .detail-item .progress {
     height: 1.5rem;
     background-color: var(--bg-tertiary);
@@ -115,7 +96,6 @@
     color: white;
 }
 
-/* Related Punishments */
 .related-punishments-card .card-header h5 {
     margin: 0;
     display: flex;
@@ -135,7 +115,6 @@
     max-width: 200px;
 }
 
-/* Breadcrumb */
 .breadcrumb {
     background: var(--bg-secondary);
     padding: var(--space-md);
@@ -163,61 +142,57 @@
     color: var(--text-primary);
 }
 
-/* Status badges in header */
 .detail-card .badge {
     font-size: 0.875rem;
     padding: var(--space-xs) var(--space-md);
 }
 
-/* Flags section */
 .detail-value .badge {
     margin-right: var(--space-xs);
 }
 
-/* Mobile Responsive */
 @media (max-width: 768px) {
     .player-card {
         padding: var(--space-lg);
     }
-    
+
     .player-avatar {
         width: 96px;
         height: 96px;
     }
-    
+
     .details-grid {
         grid-template-columns: 1fr;
         gap: var(--space-md);
     }
-    
+
     .detail-item {
         padding: var(--space-sm);
     }
-    
+
     .detail-label {
         font-size: 0.8125rem;
     }
-    
+
     .detail-value {
         font-size: 0.9375rem;
     }
-    
+
     .breadcrumb {
         padding: var(--space-sm) var(--space-md);
         font-size: 0.875rem;
     }
-    
+
     .related-punishments-card .table {
         font-size: 0.875rem;
     }
-    
+
     .related-punishments-card .btn-sm {
         padding: var(--space-xs);
         font-size: 0.75rem;
     }
 }
 
-/* Animation */
 @keyframes fadeIn {
     from {
         opacity: 0;

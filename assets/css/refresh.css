@@ -1,18 +1,3 @@
-/**
- * ============================================================================
- * LiteBansU
- * ============================================================================
- *
- * Plugin Name:   LiteBansU
- * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       5.0
- * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI:    https://yamiru.com
- * License:       MIT
- * License URI:   https://opensource.org/licenses/MIT
- * Repository:    https://github.com/Yamiru/LitebansU/
- * ============================================================================
- */
 :root {
     --primary: #b3261e;
     --primary-hover: #8f1d17;
@@ -74,7 +59,6 @@
     --grid-line: rgba(255, 255, 255, 0.035);
 }
 
-/* ---- Type ---- */
 h1, h2, h3, h4 {
     font-family: var(--font-display);
     font-weight: 700;
@@ -89,7 +73,6 @@ body {
     font-size: 0.9375rem;
 }
 
-/* ---- Navbar ---- */
 .navbar-modern {
     box-shadow: none;
     backdrop-filter: blur(8px);
@@ -127,7 +110,6 @@ body {
     background: transparent !important;
 }
 
-/* Icons are SVG masks painted with background-color: keep it, only set the colour */
 .nav-link.active,
 .nav-link.active i,
 .nav-link.active span:not(.badge) {
@@ -164,7 +146,6 @@ body {
     border-color: var(--border-strong);
 }
 
-/* ---- Backdrop: flat geometric shapes, no images ---- */
 .hero-gradient,
 .theme-dark .hero-gradient {
     position: fixed;
@@ -208,7 +189,6 @@ body {
     .hero-gradient i:nth-child(6) { width: 140px; height: 140px; }
 }
 
-/* ---- Home hero ---- */
 .hero-section .card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -242,7 +222,6 @@ body {
     text-align: center;
 }
 
-/* ---- Stat tiles: paper cards with a coloured spine ---- */
 .stat-card-compact,
 .stat-card-compact.bg-danger,
 .stat-card-compact.bg-warning,
@@ -301,7 +280,6 @@ body {
     letter-spacing: -0.03em;
 }
 
-/* ---- Lists and tables ---- */
 .punishment-item {
     border-left: 2px solid var(--border-color);
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
@@ -318,7 +296,6 @@ body {
     color: var(--text-tertiary);
 }
 
-/* ---- Buttons and links that were hard-coded indigo ---- */
 .btn-primary,
 .btn-primary:focus {
     background: var(--primary);
@@ -354,7 +331,6 @@ body {
     transform: none;
 }
 
-/* ---- Motion: honour the OS setting ---- */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         transition-duration: 0.01ms !important;
@@ -369,7 +345,6 @@ body {
     }
 }
 
-/* ---- Cookie notice and privacy page ---- */
 .cookie-banner {
     position: fixed;
     inset-inline: 1rem;

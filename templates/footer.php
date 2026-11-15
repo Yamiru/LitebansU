@@ -1,9 +1,9 @@
 </div>
 </main>
-<!-- Bootstrap JS -->
+
 <script src="<?= htmlspecialchars(asset('assets/vendor/bootstrap/bootstrap.bundle.min.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 
-<!-- Custom JS -->
+
 <script src="<?= htmlspecialchars(bundle('js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php
 $siteExtras = $siteExtras ?? \core\SiteExtras::get();
@@ -19,7 +19,7 @@ $tx = fn(string $key): string => htmlspecialchars(\core\SiteExtras::t($key, $uiL
 <footer class="footer mt-auto">
     <div class="container">
         <div class="row text-center text-md-start align-items-center py-3">
-            <!-- Left side -->
+            
             <div class="col-md-6 mb-2 mb-md-0">
                 <p class="mb-0">
                     &#169; <?= htmlspecialchars($config['footer_site_name'], ENT_QUOTES, 'UTF-8') ?> <?= date('Y') ?>
@@ -31,7 +31,7 @@ $tx = fn(string $key): string => htmlspecialchars(\core\SiteExtras::t($key, $uiL
                     <?php endif; ?>
                 </p>
             </div>
-            <!-- Right side -->
+            
             <div class="col-md-6 text-md-end">
                 <p class="mb-0">
                     Powered by 

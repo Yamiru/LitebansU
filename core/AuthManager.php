@@ -39,11 +39,6 @@ class AuthManager
         $this->loadUsers();
     }
     
-    /**
-     * Why the user store cannot be trusted, or null when it is healthy.
-     * While this is set, nobody can sign in through Google or Discord and no user can be created:
-     * an unreadable or unwritable store must never turn into "the first person to sign in is admin".
-     */
     public function getStorageProblem(): ?string
     {
         return $this->storageProblem;
@@ -55,9 +50,6 @@ class AuthManager
         error_log('AuthManager: ' . $problem);
     }
 
-    /**
-     * Generate a unique encryption key based on server-specific data
-     */
     private function generateEncryptionKey(): string
     {
         if ($this->storageProblem !== null) {
@@ -75,13 +67,11 @@ class AuthManager
             return $key;
         }
 
-        // A missing key next to an existing user file means the users cannot be decrypted: never start over silently
         if (file_exists($this->dataFile)) {
             $this->failStorage('data/users.dat exists but data/.key is missing.');
             return '';
         }
 
-        // Generate a new key based on multiple factors
         $key = hash(self::HASH_ALGO,
             ($_SERVER['SERVER_NAME'] ?? 'localhost') .
             ($_SERVER['DOCUMENT_ROOT'] ?? __DIR__) .
@@ -98,9 +88,6 @@ class AuthManager
         return $key;
     }
 
-    /**
-     * Ensure data directory exists, is writable and is protected
-     */
     private function ensureDataDirectory(): void
     {
         $dataDir = dirname(__DIR__) . '/data';
@@ -110,7 +97,6 @@ class AuthManager
             return;
         }
 
-        // Prove that files can really be created here, not just that the folder claims to be writable
         $probe = $dataDir . '/.write-test-' . bin2hex(random_bytes(4));
         if (@file_put_contents($probe, 'ok') === false) {
             $this->failStorage('The data/ folder is not writable (check permissions and disk space).');
@@ -118,22 +104,17 @@ class AuthManager
         }
         @unlink($probe);
 
-        // Create .htaccess to protect directory
         $htaccess = $dataDir . '/.htaccess';
         if (!file_exists($htaccess)) {
             @file_put_contents($htaccess, "Require all denied\n");
         }
 
-        // Create index.php to prevent directory listing
         $index = $dataDir . '/index.php';
         if (!file_exists($index)) {
             @file_put_contents($index, "<?php http_response_code(403); exit('Forbidden');");
         }
     }
 
-    /**
-     * Encrypt data
-     */
     private function encrypt(string $data): string
     {
         $iv = random_bytes(openssl_cipher_iv_length(self::CIPHER_METHOD));
@@ -143,9 +124,6 @@ class AuthManager
         return base64_encode($iv . $hmac . $encrypted);
     }
 
-    /**
-     * Decrypt data
-     */
     private function decrypt(string $data): ?string
     {
         $data = base64_decode($data);
@@ -158,20 +136,15 @@ class AuthManager
         $hmac = substr($data, $ivLength, 32);
         $encrypted = substr($data, $ivLength + 32);
 
-        // Verify HMAC
         $calcHmac = hash_hmac(self::HASH_ALGO, $encrypted, $this->encryptionKey, true);
         if (!hash_equals($hmac, $calcHmac)) {
-            return null; // Data tampered
+            return null;
         }
 
         $plain = openssl_decrypt($encrypted, self::CIPHER_METHOD, $this->encryptionKey, 0, $iv);
         return $plain === false ? null : $plain;
     }
 
-    /**
-     * Load users from encrypted file. A missing file is a fresh install; any other failure to
-     * read it is a storage problem, not an empty user list.
-     */
     private function loadUsers(): void
     {
         $this->users = [];
@@ -199,9 +172,6 @@ class AuthManager
         $this->users = $users;
     }
 
-    /**
-     * Save users to encrypted file
-     */
     private function saveUsers(): bool
     {
         if ($this->storageProblem !== null) {
@@ -221,9 +191,6 @@ class AuthManager
         return true;
     }
 
-    /**
-     * Check if Google Auth is enabled
-     */
     public function isGoogleAuthEnabled(): bool
     {
         return ($this->config['google_auth_enabled'] ?? false) === true
@@ -231,9 +198,6 @@ class AuthManager
             && !empty($this->config['google_client_secret']);
     }
     
-    /**
-     * Check if Discord Auth is enabled
-     */
     public function isDiscordAuthEnabled(): bool
     {
         return ($this->config['discord_auth_enabled'] ?? false) === true
@@ -241,13 +205,11 @@ class AuthManager
             && !empty($this->config['discord_client_secret']);
     }
     
-    /** Random value tied to this browser session; the provider returns it unchanged (stops login CSRF). */
     private static function oauthState(): string
     {
         return $_SESSION['oauth_state'] ??= bin2hex(random_bytes(16));
     }
 
-    /** True when the "state" of the callback is the one issued to this session. It is single use. */
     public static function checkOauthState(string $state): bool
     {
         $expected = (string)($_SESSION['oauth_state'] ?? '');
@@ -255,9 +217,6 @@ class AuthManager
         return $expected !== '' && hash_equals($expected, $state);
     }
 
-    /**
-     * Get Google OAuth URL
-     */
     public function getGoogleAuthUrl(): string
     {
         $clientId = $this->config['google_client_id'] ?? '';
@@ -276,22 +235,15 @@ class AuthManager
         return 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
     }
     
-    /**
-     * Get redirect URI for OAuth
-     */
     public function getRedirectUri(string $provider = 'google'): string
     {
-        // Automatically detect the full base URL including subfolder
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? '';
         $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
         $basePath = ($scriptPath === '/' || $scriptPath === '\\') ? '' : $scriptPath;
         
-        // Construct full base URL
         $baseUrl = $protocol . '://' . $host . $basePath;
         
-        // For Google, use URI without provider param (backward compatibility)
-        // For Discord, add provider param
         if ($provider === 'discord') {
             return $baseUrl . '/admin/oauth-callback?provider=discord';
         }
@@ -299,9 +251,6 @@ class AuthManager
         return $baseUrl . '/admin/oauth-callback';
     }
     
-    /**
-     * Get Discord OAuth URL
-     */
     public function getDiscordAuthUrl(): string
     {
         $clientId = $this->config['discord_client_id'] ?? '';
@@ -318,16 +267,12 @@ class AuthManager
         return 'https://discord.com/api/oauth2/authorize?' . http_build_query($params);
     }
     
-    /**
-     * Process Google OAuth callback
-     */
     public function processGoogleCallback(string $code): ?array
     {
         $clientId = $this->config['google_client_id'] ?? '';
         $clientSecret = $this->config['google_client_secret'] ?? '';
         $redirectUri = $this->getRedirectUri('google');
         
-        // Exchange code for token
         $tokenUrl = 'https://oauth2.googleapis.com/token';
         $tokenData = [
             'code' => $code,
@@ -361,7 +306,6 @@ class AuthManager
             return null;
         }
         
-        // Get user info
         $userInfoUrl = 'https://www.googleapis.com/oauth2/v2/userinfo';
         $ch = curl_init($userInfoUrl);
         curl_setopt_array($ch, [
@@ -384,7 +328,6 @@ class AuthManager
             error_log("Google OAuth: Invalid user info response");
             return null;
         }
-        // The email picks the account (pre-registered user or first admin): it must be verified
         if (($userInfo['verified_email'] ?? false) !== true) {
             error_log("Google OAuth: email is not verified");
             return null;
@@ -393,16 +336,12 @@ class AuthManager
         return $userInfo;
     }
     
-    /**
-     * Process Discord OAuth callback
-     */
     public function processDiscordCallback(string $code): ?array
     {
         $clientId = $this->config['discord_client_id'] ?? '';
         $clientSecret = $this->config['discord_client_secret'] ?? '';
         $redirectUri = $this->getRedirectUri('discord');
         
-        // Exchange code for token
         $tokenUrl = 'https://discord.com/api/oauth2/token';
         $tokenData = [
             'client_id' => $clientId,
@@ -436,7 +375,6 @@ class AuthManager
             return null;
         }
         
-        // Get user info
         $userInfoUrl = 'https://discord.com/api/users/@me';
         $ch = curl_init($userInfoUrl);
         curl_setopt_array($ch, [
@@ -459,7 +397,6 @@ class AuthManager
             error_log("Discord OAuth: Invalid user info response");
             return null;
         }
-        // Discord lets an account carry an unverified email of someone else: never match a user by it
         if (($userInfo['verified'] ?? false) !== true) {
             error_log("Discord OAuth: email is not verified");
             return null;
@@ -468,9 +405,6 @@ class AuthManager
         return $userInfo;
     }
     
-    /**
-     * Authenticate user via Discord
-     */
     public function authenticateDiscord(array $discordUser): ?array
     {
         if ($this->storageProblem !== null) {
@@ -491,28 +425,22 @@ class AuthManager
             );
         }
         
-        // Check if user exists
         $user = $this->getUserByDiscordId($discordId);
         
         if (!$user) {
-            // Check if this is the first user
             $isFirstUser = empty($this->users);
             
-            // Check if user is allowed (either first user or already registered)
             if (!$isFirstUser) {
-                // Check if email is pre-registered
                 $user = $this->getUserByEmail($email);
                 if (!$user) {
-                    return null; // Not authorized
+                    return null;
                 }
                 
-                // Update existing user with Discord ID
                 $user['discord_id'] = $discordId;
                 $user['picture'] = $avatar;
                 $user['last_login'] = time();
                 $this->updateUser($user['id'], $user);
             } else {
-                // Create first admin user; if it cannot be stored, nobody gets in
                 try {
                     $user = $this->createUser([
                         'discord_id' => $discordId,
@@ -527,7 +455,6 @@ class AuthManager
                 }
             }
         } else {
-            // Update last login
             $user['last_login'] = time();
             $user['picture'] = $avatar;
             $this->updateUser($user['id'], $user);
@@ -536,9 +463,6 @@ class AuthManager
         return $user;
     }
     
-    /**
-     * Get user by Discord ID
-     */
     public function getUserByDiscordId(string $discordId): ?array
     {
         if ($discordId === '') {
@@ -552,9 +476,6 @@ class AuthManager
         return null;
     }
     
-    /**
-     * Authenticate user via Google
-     */
     public function authenticateGoogle(array $googleUser): ?array
     {
         if ($this->storageProblem !== null) {
@@ -565,28 +486,22 @@ class AuthManager
         $name = $googleUser['name'] ?? $email;
         $picture = $googleUser['picture'] ?? '';
         
-        // Check if user exists
         $user = $this->getUserByGoogleId($googleId);
         
         if (!$user) {
-            // Check if this is the first user
             $isFirstUser = empty($this->users);
             
-            // Check if user is allowed (either first user or already registered)
             if (!$isFirstUser) {
-                // Check if email is pre-registered
                 $user = $this->getUserByEmail($email);
                 if (!$user) {
-                    return null; // Not authorized
+                    return null;
                 }
                 
-                // Update existing user with Google ID
                 $user['google_id'] = $googleId;
                 $user['picture'] = $picture;
                 $user['last_login'] = time();
                 $this->updateUser($user['id'], $user);
             } else {
-                // Create first admin user; if it cannot be stored, nobody gets in
                 try {
                     $user = $this->createUser([
                         'google_id' => $googleId,
@@ -601,7 +516,6 @@ class AuthManager
                 }
             }
         } else {
-            // Update last login
             $user['last_login'] = time();
             $user['picture'] = $picture;
             $this->updateUser($user['id'], $user);
@@ -610,9 +524,6 @@ class AuthManager
         return $user;
     }
     
-    /**
-     * Get user by Google ID
-     */
     public function getUserByGoogleId(string $googleId): ?array
     {
         if ($googleId === '') {
@@ -626,9 +537,6 @@ class AuthManager
         return null;
     }
     
-    /**
-     * Get user by email
-     */
     public function getUserByEmail(string $email): ?array
     {
         if (trim($email) === '') {
@@ -642,17 +550,11 @@ class AuthManager
         return null;
     }
     
-    /**
-     * Get user by ID
-     */
     public function getUserById(string $id): ?array
     {
         return $this->users[$id] ?? null;
     }
     
-    /**
-     * Create new user
-     */
     public function createUser(array $data): array
     {
         $id = $this->generateUserId();
@@ -680,9 +582,6 @@ class AuthManager
         return $user;
     }
     
-    /**
-     * Update user
-     */
     public function updateUser(string $id, array $data): bool
     {
         if (!isset($this->users[$id])) {
@@ -693,16 +592,12 @@ class AuthManager
         return $this->saveUsers();
     }
     
-    /**
-     * Delete user
-     */
     public function deleteUser(string $id): bool
     {
         if (!isset($this->users[$id])) {
             return false;
         }
         
-        // Cannot delete the last admin
         if ($this->users[$id]['role'] === 'admin' && $this->countAdmins() <= 1) {
             return false;
         }
@@ -711,17 +606,11 @@ class AuthManager
         return $this->saveUsers();
     }
     
-    /**
-     * Get all users
-     */
     public function getAllUsers(): array
     {
         return array_values($this->users);
     }
     
-    /**
-     * Count admins
-     */
     public function countAdmins(): int
     {
         $count = 0;
@@ -733,9 +622,6 @@ class AuthManager
         return $count;
     }
     
-    /**
-     * Check if user has permission
-     */
     public function hasPermission(array $user, string $permission): bool
     {
         if ($user['role'] === 'admin' || in_array('all', $user['permissions'] ?? [])) {
@@ -744,17 +630,11 @@ class AuthManager
         return in_array($permission, $user['permissions'] ?? []);
     }
     
-    /**
-     * Generate unique user ID
-     */
     private function generateUserId(): string
     {
         return bin2hex(random_bytes(16));
     }
     
-    /**
-     * Get available roles
-     */
     public static function getRoles(): array
     {
         return [
@@ -776,9 +656,6 @@ class AuthManager
         ];
     }
     
-    /**
-     * Get available permissions
-     */
     public static function getPermissions(): array
     {
         return [

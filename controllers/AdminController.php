@@ -22,9 +22,9 @@ require_once __DIR__ . '/../core/Logger.php';
 
 class AdminController extends BaseController
 {
-    private const ADMIN_SESSION_TIMEOUT = 7200; // 2 hours (increased from 1 hour)
+    private const ADMIN_SESSION_TIMEOUT = 7200;
     private const MAX_LOGIN_ATTEMPTS = 5;
-    private const LOGIN_LOCKOUT_TIME = 900; // 15 minutes
+    private const LOGIN_LOCKOUT_TIME = 900;
     
     private ?\core\AuthManager $authManager = null;
     private ?\core\RememberMeManager $rememberMeManager = null;
@@ -56,25 +56,20 @@ class AdminController extends BaseController
     
     public function index(): void
     {
-        // Check if admin is enabled
         if (!($this->config['admin_enabled'] ?? false)) {
             $this->redirect(url('/'));
             return;
         }
         
-        // Check authentication
         if (!$this->isAuthenticated()) {
             $this->showLoginForm();
             return;
         }
         
-        // Log admin access
         $this->logAdminAction('dashboard_access', 'Accessed admin dashboard');
         
-        // Get current user for dashboard
         $currentUser = $this->getCurrentUser();
         
-        // Show admin dashboard
         $this->render('admin/dashboard', [
             'title' => $this->lang->get('admin.dashboard'),
             'currentPage' => 'admin',
@@ -92,7 +87,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Check if password login is allowed
         $allowPasswordLogin = $this->config['allow_password_login'] ?? true;
         $googleAuthEnabled = $this->config['google_auth_enabled'] ?? false;
         
@@ -102,21 +96,18 @@ class AdminController extends BaseController
             return;
         }
         
-        // Validate CSRF token
         if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
             $_SESSION['admin_error'] = 'Invalid security token';
             $this->redirect(url('admin'));
             return;
         }
         
-        // Check login attempts
         if (!$this->checkLoginAttempts()) {
             $_SESSION['admin_error'] = 'Too many login attempts. Please try again later.';
             $this->redirect(url('admin'));
             return;
         }
         
-        // Simple captcha (checked after the attempt was counted, so guessing it is rate limited too)
         if (!$this->checkLoginCaptcha()) {
             $_SESSION['admin_error'] = 'Wrong answer to the security question. Please try again.';
             $this->redirect(url('admin'));
@@ -126,7 +117,6 @@ class AdminController extends BaseController
         $password = $_POST['password'] ?? '';
         $rememberMe = isset($_POST['remember_me']) && $_POST['remember_me'] === '1';
 
-        // Verify password
         $adminPassword = $this->config['admin_password'] ?? '';
         if (empty($adminPassword) || !password_verify($password, $adminPassword)) {
             $_SESSION['admin_error'] = 'Invalid password';
@@ -138,26 +128,22 @@ class AdminController extends BaseController
             return;
         }
         
-        // Set admin session (new ID: a session ID planted before login must not become authenticated)
         session_regenerate_id(true);
         $_SESSION['admin_authenticated'] = true;
         $_SESSION['admin_login_time'] = time();
         $_SESSION['admin_user'] = 'Administrator';
         
-        // Handle Remember Me
         if ($rememberMe) {
             $this->getRememberMeManager()->createToken('legacy', 'password');
             $this->getLogger()->info('Remember me token created for password login');
         }
         
-        // Log successful login
         $this->logAdminAction('login_success', 'Successfully logged in');
         $this->getLogger()->info('Successful password login', [
             'ip' => SecurityManager::getClientIp(),
             'remember_me' => $rememberMe
         ]);
         
-        // Check for redirect after login (require_login feature)
         $redirectUrl = $_SESSION['redirect_after_login'] ?? null;
         unset($_SESSION['redirect_after_login']);
         
@@ -175,7 +161,6 @@ class AdminController extends BaseController
             'user' => $_SESSION['admin_user'] ?? 'unknown'
         ]);
         
-        // Clear remember me token
         $this->getRememberMeManager()->clearCurrentToken();
         
         unset($_SESSION['admin_authenticated']);
@@ -203,10 +188,8 @@ class AdminController extends BaseController
                 return;
             }
             
-            // Enhanced search that handles both names and UUIDs
             $punishments = $this->performAdvancedSearch($query, $type);
 
-            // Case evidence: summaries and free-text matches (reports, captions, appeal line)
             $evidenceData = null;
             $evidenceMatches = [];
             if ($this->loadCaseEvidence()) {
@@ -219,20 +202,17 @@ class AdminController extends BaseController
 
 
             
-            // Sort by time descending
             usort($punishments, function($a, $b) {
                 return ($b['time'] ?? 0) <=> ($a['time'] ?? 0);
             });
             
-            // Format punishments with enhanced data
             $formatted = array_map(function($p) use ($evidenceData, $evidenceMatches) {
-                // Get player name more reliably
                 $playerName = $p['player_name'] ?? null;
                 if (!$playerName && !empty($p['uuid']) && $p['uuid'] !== '#') {
                     $playerName = $this->repository->getPlayerName($p['uuid']);
                 }
                 
-                $rowType = rtrim($p['type'], 's'); // Normalize to singular
+                $rowType = rtrim($p['type'], 's');
                 
                 return [
                     'id' => (int)$p['id'],
@@ -242,7 +222,6 @@ class AdminController extends BaseController
                     'reason' => $p['reason'] ?? 'No reason provided',
                     'staff' => $p['banned_by_name'] ?? 'Console',
                     'date' => $this->formatDate((int)($p['time'] ?? 0)),
-                    // Effective active status - prevents expired temp bans/mutes showing as "Active"
                     'active' => $this->isPunishmentActive($p, $rowType),
                     'until' => isset($p['until']) && $p['until'] > 0 
                         ? $this->formatDate((int)$p['until']) 
@@ -252,7 +231,7 @@ class AdminController extends BaseController
                     'evidence_match' => isset($evidenceMatches[$rowType . '_' . (int)$p['id']]),
                     'ip' => !empty($p['ip']) && $p['ip'] !== '#' ? (string)$p['ip'] : null
                 ];
-            }, array_slice($punishments, 0, 100)); // Increase limit to 100 results
+            }, array_slice($punishments, 0, 100));
             
             $this->logAdminAction('search_punishments', "Searched for '{$query}' in {$type}", [
                 'query' => $query,
@@ -272,25 +251,20 @@ class AdminController extends BaseController
     {
         $results = [];
         $historyTable = $this->repository->getTablePrefix() . 'history';
-        $seenIds = []; // Track already found results to avoid duplicates
+        $seenIds = [];
         
-        // Determine which tables to search
         $allTables = ['bans', 'mutes', 'warnings', 'kicks'];
         $tables = in_array($type, $allTables, true) ? [$type] : $allTables;
 
-        // IPv4/IPv6, full or partial prefix (e.g. "192.168." or "192.168" which is_numeric would take for an ID)
         $isIp = (bool)preg_match('/^[0-9a-fA-F:.]{3,45}$/', $query) && (bool)preg_match('/[.:]/', $query);
 
-        // Check if query is numeric (for direct ID match)
         $isNumeric = !$isIp && is_numeric($query);
         
-        // Check if query is a UUID
         $isUuid = !$isNumeric && SecurityManager::validateUuid($query);
         
         foreach ($tables as $table) {
             $fullTable = $this->repository->getTablePrefix() . $table;
             
-            // 0. IP SEARCH (exact or prefix match)
             if ($isIp) {
                 $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
                         FROM {$fullTable} p
@@ -313,7 +287,6 @@ class AdminController extends BaseController
                 continue;
             }
 
-            // 1. NUMERIC ID SEARCH (exact match for numbers like "1", "123", etc.)
             if ($isNumeric) {
                 $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
                         FROM {$fullTable} p
@@ -334,10 +307,9 @@ class AdminController extends BaseController
                         $seenIds[$key] = true;
                     }
                 }
-                continue; // Skip other searches for numeric IDs
+                continue;
             }
             
-            // 1b. ALPHANUMERIC ID SEARCH (for IDs like "ban123", "mute456")
             $couldBeAlphanumericId = strlen($query) <= 20 && preg_match('/^[a-zA-Z0-9]+$/', $query);
             if ($couldBeAlphanumericId && !$isUuid) {
                 $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
@@ -359,10 +331,8 @@ class AdminController extends BaseController
                         $seenIds[$key] = true;
                     }
                 }
-                // Don't continue - still try name/reason searches for partial matches
             }
             
-            // 2. UUID SEARCH
             if ($isUuid) {
                 $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
                         FROM {$fullTable} p
@@ -381,10 +351,9 @@ class AdminController extends BaseController
                         $seenIds[$key] = true;
                     }
                 }
-                continue; // Skip name/reason searches for UUID
+                continue;
             }
             
-            // 3. NAME SEARCH (case-insensitive)
                 $nameSql = "SELECT DISTINCT p.uuid FROM {$historyTable} p
                            WHERE (LOWER(p.name) = LOWER(:exact_name) 
                            OR LOWER(p.name) LIKE LOWER(:partial_name))
@@ -400,7 +369,6 @@ class AdminController extends BaseController
                 $uuids = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 
                 if (!empty($uuids)) {
-                    // Search punishments for found UUIDs
                     $placeholders = implode(',', array_fill(0, count($uuids), '?'));
                     $sql = "SELECT p.*, '{$table}' as type, h.name as player_name
                             FROM {$fullTable} p
@@ -420,7 +388,6 @@ class AdminController extends BaseController
                     }
                 }
                 
-                // 4. REASON SEARCH (case-insensitive)
                 $reasonSql = "SELECT p.*, '{$table}' as type, h.name as player_name
                              FROM {$fullTable} p
                              LEFT JOIN {$historyTable} h ON p.uuid = h.uuid 
@@ -440,7 +407,6 @@ class AdminController extends BaseController
                     }
                 }
                 
-                // 5. STAFF NAME SEARCH (case-insensitive)
                 $staffSql = "SELECT p.*, '{$table}' as type, h.name as player_name
                             FROM {$fullTable} p
                             LEFT JOIN {$historyTable} h ON p.uuid = h.uuid 
@@ -471,7 +437,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Check if user has permission to remove punishments (admin or moderator only)
         $currentUser = $this->getCurrentUser();
         $userRole = $currentUser['role'] ?? 'admin';
         if ($userRole === 'viewer') {
@@ -488,11 +453,9 @@ class AdminController extends BaseController
             return;
         }
         
-        // Convert to table name
         $tableName = $type . 's';
         
         try {
-            // Check if punishment exists and is active
             $checkSql = "SELECT id, active, uuid FROM {$this->repository->getTablePrefix()}{$tableName} WHERE id = :id";
             $stmt = $this->repository->getConnection()->prepare($checkSql);
             $stmt->execute([':id' => $id]);
@@ -508,7 +471,6 @@ class AdminController extends BaseController
                 return;
             }
             
-            // Remove the punishment
             $table = $this->repository->getTablePrefix() . $tableName;
             $sql = "UPDATE {$table} SET 
                     active = 0,
@@ -524,7 +486,6 @@ class AdminController extends BaseController
             ]);
             
             if ($result) {
-                // Get player name for logging
                 $playerName = $this->repository->getPlayerName($punishment['uuid'] ?? '');
                 
                 $this->logAdminAction('remove_punishment', "Removed {$type} #{$id} for player {$playerName}", [
@@ -552,7 +513,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Check if user has permission to modify punishments (admin or moderator only)
         $currentUser = $this->getCurrentUser();
         $userRole = $currentUser['role'] ?? 'admin';
         if ($userRole === 'viewer') {
@@ -575,11 +535,9 @@ class AdminController extends BaseController
             return;
         }
         
-        // Convert to table name
         $tableName = $type . 's';
         
         try {
-            // Check if punishment exists
             $checkSql = "SELECT id, uuid, reason FROM {$this->repository->getTablePrefix()}{$tableName} WHERE id = :id";
             $stmt = $this->repository->getConnection()->prepare($checkSql);
             $stmt->execute([':id' => $id]);
@@ -592,7 +550,6 @@ class AdminController extends BaseController
             
             $oldReason = $punishment['reason'];
             
-            // Update the reason
             $table = $this->repository->getTablePrefix() . $tableName;
             $sql = "UPDATE {$table} SET reason = :reason WHERE id = :id";
             
@@ -603,7 +560,6 @@ class AdminController extends BaseController
             ]);
             
             if ($result) {
-                // Get player name for logging
                 $playerName = $this->repository->getPlayerName($punishment['uuid'] ?? '');
                 
                 $this->logAdminAction('modify_reason', "Modified reason for {$type} #{$id} for player {$playerName}", [
@@ -626,9 +582,6 @@ class AdminController extends BaseController
         }
     }
     
-    /**
-     * Loads the Case Evidence module (demos/case-evidence.php).
-     */
     private function loadCaseEvidence(): bool
     {
         $file = BASE_DIR . '/demos/case-evidence.php';
@@ -639,10 +592,6 @@ class AdminController extends BaseController
         return true;
     }
 
-    /**
-     * Case evidence for one punishment. GET returns the case, POST adds a report with files
-     * or sets the appeal outcome. Stored in demos/data, never in the LiteBans database.
-     */
     public function caseEvidence(): void
     {
         if (!$this->isAuthenticated()) {
@@ -656,7 +605,6 @@ class AdminController extends BaseController
 
         $isPost = $_SERVER['REQUEST_METHOD'] === 'POST';
         if ($isPost && ($overflow = sn_upload_overflow())) {
-            // The whole form was dropped by PHP because it exceeded post_max_size
             $this->jsonResponse(['ok' => false, 'message' => $overflow, 'error' => $overflow], 413);
             return;
         }
@@ -689,10 +637,6 @@ class AdminController extends BaseController
         $this->jsonResponse(['ok' => $ok, 'message' => $message], $ok ? 200 : 400);
     }
 
-    /**
-     * SEO & Tracking settings: crawlers, Google Analytics, cookie notice, privacy page, custom code.
-     * GET returns them, POST (JSON) saves them. Stored in data/site_extras.json. Admins only.
-     */
     public function siteExtras(): void
     {
         if (!$this->isAuthenticated()) {
@@ -755,9 +699,66 @@ class AdminController extends BaseController
         $this->jsonResponse(['success' => true, 'message' => 'Saved.', 'settings' => \core\SiteExtras::get()]);
     }
 
-    /**
-     * Submits every public page that is not tied to one person (no punishment IDs) to IndexNow.
-     */
+    public function templates(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->jsonResponse(['error' => 'Unauthorized'], 401);
+            return;
+        }
+        $this->requireAdminRole();
+        $active = \core\TemplateManager::activeId($this->config);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => true, 'templates' => \core\TemplateManager::all($active)]);
+            return;
+        }
+
+        $isUpload = isset($_FILES['template_zip']);
+        $input = $isUpload ? $_POST : (json_decode(file_get_contents('php://input'), true) ?: []);
+        if (!SecurityManager::validateCsrfToken((string)($input['csrf_token'] ?? ''))) {
+            $this->jsonResponse(['error' => 'Invalid security token. Reload the page and try again.'], 403);
+            return;
+        }
+
+        if ($isUpload) {
+            $file = $_FILES['template_zip'];
+            if ($file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name']) || strtolower(pathinfo((string)$file['name'], PATHINFO_EXTENSION)) !== 'zip') {
+                $this->jsonResponse(['error' => 'Upload a .zip file.'], 400);
+                return;
+            }
+            [$ok, $message] = \core\TemplateManager::install($file['tmp_name']);
+            if ($ok) {
+                $this->logAdminAction('template_installed', $message, ['severity' => 'warning']);
+            }
+            $this->jsonResponse($ok ? ['success' => true, 'message' => $message] : ['error' => $message], $ok ? 200 : 400);
+            return;
+        }
+
+        $id = (string)($input['id'] ?? '');
+        $action = (string)($input['action'] ?? '');
+        $known = array_column(\core\TemplateManager::all($active), 'id');
+        if (!in_array($id, $known, true)) {
+            $this->jsonResponse(['error' => 'Unknown template.'], 404);
+            return;
+        }
+        if ($action === 'activate') {
+            if (!\core\SiteExtras::save(['template' => $id])) {
+                $this->jsonResponse(['error' => 'Could not save. Check that the data/ folder is writable.'], 500);
+                return;
+            }
+            $this->logAdminAction('template_activated', 'Template set to ' . $id, ['severity' => 'info']);
+            $this->jsonResponse(['success' => true, 'message' => 'Template "' . $id . '" is now active.']);
+        } elseif ($action === 'delete') {
+            if ($id === $active || !\core\TemplateManager::delete($id)) {
+                $this->jsonResponse(['error' => 'The active and built-in templates cannot be deleted.'], 400);
+                return;
+            }
+            $this->logAdminAction('template_deleted', 'Template ' . $id . ' deleted', ['severity' => 'warning']);
+            $this->jsonResponse(['success' => true, 'message' => 'Template deleted.']);
+        } else {
+            $this->jsonResponse(['error' => 'Unknown action.'], 400);
+        }
+    }
+
     public function indexNow(): void
     {
         if (!$this->isAuthenticated()) {
@@ -784,9 +785,6 @@ class AdminController extends BaseController
         $this->jsonResponse(['success' => $ok, 'message' => $message, 'error' => $ok ? null : $message, 'status' => $status, 'urls' => $urls], $ok ? 200 : 502);
     }
 
-    /**
-     * Checks llms.txt: the text this site generates, and what the public URL really serves.
-     */
     public function checkLlms(): void
     {
         if (!$this->isAuthenticated()) {
@@ -811,7 +809,6 @@ class AdminController extends BaseController
         $checks = [['info', 'Checked URL: ' . $siteUrl . '/llms.txt']];
         $checks = array_merge($checks, AiController::checkLlms($generated, $siteUrl, $siteName));
 
-        // What a crawler really gets from the public URL (a stale file or a proxy can differ from the generated text)
         $ctx = stream_context_create(['http' => ['timeout' => 5, 'ignore_errors' => true, 'header' => "User-Agent: LiteBansU-check\r\n"]]);
         $live = @file_get_contents($siteUrl . '/llms.txt', false, $ctx);
         $status = 0;
@@ -843,20 +840,16 @@ class AdminController extends BaseController
             return;
         }
         
-        // Validate CSRF token
         if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
             $this->jsonResponse(['error' => 'Invalid security token'], 400);
             return;
         }
 
-        // These values are written to .env: administrators only
         $this->requireAdminRole();
 
         try {
-            // Only update settings that are actually submitted
             $settings = [];
             
-            // Only add settings if they exist in POST
             if (isset($_POST['site_name'])) {
                 $settings['SITE_NAME'] = $_POST['site_name'];
             }
@@ -876,10 +869,21 @@ class AdminController extends BaseController
                 $settings['DEFAULT_THEME'] = $_POST['default_theme'];
             }
             
-            // Checkboxes - only update if form was submitted with these fields
+            if (isset($_POST['site_template'])) {
+                $tplId = (string)$_POST['site_template'];
+                $known = array_column(\core\TemplateManager::all(), 'id');
+                $tplChange = ['avatar_cache' => !empty($_POST['avatar_cache'])];
+                if (in_array($tplId, $known, true)) {
+                    $tplChange['template'] = $tplId;
+                }
+                if (!\core\SiteExtras::save($tplChange)) {
+                    $this->jsonResponse(['error' => 'Could not save the template. Check that the data/ folder is writable.'], 500);
+                    return;
+                }
+            }
+
             $settings['SHOW_PLAYER_UUID'] = isset($_POST['show_player_uuid']) ? 'true' : 'false';
             
-            // Protest Settings
             if (isset($_POST['protest_discord'])) {
                 $settings['PROTEST_DISCORD'] = $_POST['protest_discord'];
             }
@@ -890,9 +894,7 @@ class AdminController extends BaseController
                 $settings['PROTEST_FORUM'] = $_POST['protest_forum'];
             }
             
-            // Authentication (Google, Discord, password login) is configured in .env only.
             
-            // Display Options
             $settings['SHOW_SILENT_PUNISHMENTS'] = isset($_POST['show_silent_punishments']) ? 'true' : 'false';
             $settings['SHOW_SERVER_ORIGIN'] = isset($_POST['show_server_origin']) ? 'true' : 'false';
             $settings['SHOW_SERVER_SCOPE'] = isset($_POST['show_server_scope']) ? 'true' : 'false';
@@ -902,10 +904,8 @@ class AdminController extends BaseController
             $settings['SHOW_MENU_PROTEST'] = isset($_POST['show_menu_protest']) ? 'true' : 'false';
             $settings['SHOW_MENU_STATS'] = isset($_POST['show_menu_stats']) ? 'true' : 'false';
             
-            // Require Login - all pages require authentication
             $settings['REQUIRE_LOGIN'] = isset($_POST['require_login']) ? 'true' : 'false';
             
-            // SEO Settings
             $settings['SEO_ENABLE_SCHEMA'] = isset($_POST['seo_enable_schema']) ? 'true' : 'false';
             if (isset($_POST['seo_organization_name'])) {
                 $settings['SEO_ORGANIZATION_NAME'] = $_POST['seo_organization_name'];
@@ -939,7 +939,6 @@ class AdminController extends BaseController
             }
             $settings['SEO_AI_TRAINING'] = isset($_POST['seo_ai_training']) ? 'true' : 'false';
             
-            // Additional Site Settings
             if (isset($_POST['site_url'])) {
                 $settings['SITE_URL'] = $_POST['site_url'];
             }
@@ -958,9 +957,6 @@ class AdminController extends BaseController
             if (isset($_POST['site_robots'])) {
                 $settings['SITE_ROBOTS'] = $_POST['site_robots'];
             }
-            if (isset($_POST['site_theme_color'])) {
-                $settings['SITE_THEME_COLOR'] = $_POST['site_theme_color'];
-            }
             if (isset($_POST['site_og_image'])) {
                 $settings['SITE_OG_IMAGE'] = $_POST['site_og_image'];
             }
@@ -971,7 +967,6 @@ class AdminController extends BaseController
                 $settings['DEFAULT_LANGUAGE'] = $_POST['default_language'];
             }
             
-            // Avatar Settings - save URLs directly
             if (isset($_POST['avatar_url'])) {
                 $settings['AVATAR_URL'] = $_POST['avatar_url'];
             }
@@ -979,18 +974,15 @@ class AdminController extends BaseController
                 $settings['AVATAR_URL_OFFLINE'] = $_POST['avatar_url_offline'];
             }
             
-            // Update .env file - only update provided settings
             $envFile = BASE_DIR . '/.env';
             $envContent = file_get_contents($envFile);
             
             foreach ($settings as $key => $value) {
-                // A line break would start a new .env entry (e.g. ADMIN_PASSWORD=...)
                 $value = str_replace(["\r", "\n", "\0"], '', (string)$value);
                 $pattern = "/^{$key}=.*/m";
                 $replacement = "{$key}={$value}";
 
                 if (preg_match($pattern, $envContent)) {
-                    // Callback: a value containing $1 or \0 must not be read as a back-reference
                     $envContent = preg_replace_callback($pattern, fn() => $replacement, $envContent);
                 } else {
                     $envContent .= "\n{$key}={$value}";
@@ -999,23 +991,18 @@ class AdminController extends BaseController
             
             file_put_contents($envFile, $envContent);
             
-            // Force reload .env to apply changes immediately
             \core\EnvLoader::reload();
             
-            // Clear opcache to force reload of .env and config files
             if (function_exists('opcache_reset')) {
                 opcache_reset();
             }
             
-            // Clear APCu cache if available
             if (function_exists('apcu_clear_cache')) {
                 apcu_clear_cache();
             }
             
-            // Reload config to apply new environment values
             $this->config = require BASE_DIR . '/config/app.php';
             
-            // Set cookie for show_uuid preference
             setcookie('show_uuid', $settings['SHOW_PLAYER_UUID'], [
                 'expires' => time() + 86400 * 365,
                 'path' => BASE_PATH ?: '/',
@@ -1040,9 +1027,6 @@ class AdminController extends BaseController
         }
     }
     
-    /**
-     * Keep-alive endpoint to prevent session timeout
-     */
     public function keepAlive(): void
     {
         if (!$this->isAuthenticated()) {
@@ -1050,7 +1034,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Session is automatically refreshed by isAuthenticated()
         $this->jsonResponse([
             'authenticated' => true,
             'timestamp' => time()
@@ -1068,7 +1051,7 @@ class AdminController extends BaseController
 
         $format = $_GET['format'] ?? 'json';
         $type = $_GET['type'] ?? 'all';
-        $filter = $_GET['filter'] ?? 'all'; // New: 'all' or 'active'
+        $filter = $_GET['filter'] ?? 'all';
 
         if (!in_array($type, ['all', 'bans', 'mutes', 'warnings', 'kicks'], true) || !in_array($filter, ['all', 'active'], true)) {
             http_response_code(400);
@@ -1102,7 +1085,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Validate CSRF token
         if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
             $this->jsonResponse(['error' => 'Invalid security token'], 400);
             return;
@@ -1134,7 +1116,6 @@ class AdminController extends BaseController
                 }
                 $imported = $this->importData($data);
             } else {
-                // XML import
                 $xml = simplexml_load_string($content);
                 if ($xml === false) {
                     throw new Exception('Invalid XML format');
@@ -1160,7 +1141,6 @@ class AdminController extends BaseController
             exit;
         }
         
-        // phpinfo shows server paths and settings: administrators only; no environment/variables (secrets)
         $this->requireAdminRole(false);
 
         $section = $_GET['section'] ?? 'general';
@@ -1183,11 +1163,9 @@ class AdminController extends BaseController
         
         $phpinfo = ob_get_clean();
         
-        // Extract just the body content
         preg_match('/<body[^>]*>(.*?)<\/body>/si', $phpinfo, $matches);
         $content = $matches[1] ?? $phpinfo;
         
-        // Apply custom styling
         $content = str_replace(
             ['<table', '<h1', '<h2', 'class="e"', 'class="v"', 'class="h"'],
             ['<table class="table table-sm"', '<h3', '<h4', 'class="text-muted"', '', 'class="table-active"'],
@@ -1198,26 +1176,20 @@ class AdminController extends BaseController
         exit;
     }
     
-    // Helper Methods - Changed from private to public
     
     public function isAuthenticated(): bool
     {
-        // First check session
         if (isset($_SESSION['admin_authenticated'])) {
-            // Check session timeout
             if (time() - ($_SESSION['admin_login_time'] ?? 0) > self::ADMIN_SESSION_TIMEOUT) {
                 unset($_SESSION['admin_authenticated']);
                 unset($_SESSION['admin_user_id']);
                 $this->getLogger()->debug('Session expired');
-                // Don't return yet - check remember me
             } else {
-                // Refresh session time on activity
                 $_SESSION['admin_login_time'] = time();
                 return true;
             }
         }
         
-        // Try remember me token
         $rememberMe = $this->getRememberMeManager();
         $tokenData = $rememberMe->validateToken();
         
@@ -1225,9 +1197,7 @@ class AdminController extends BaseController
             $userId = $tokenData['user_id'];
             $provider = $tokenData['provider'];
             
-            // Restore session based on provider
             if ($userId === 'legacy') {
-                // Password login remember me
                 $_SESSION['admin_authenticated'] = true;
                 $_SESSION['admin_login_time'] = time();
                 $_SESSION['admin_user'] = 'Administrator';
@@ -1235,7 +1205,6 @@ class AdminController extends BaseController
                 $this->getLogger()->info('Session restored from remember me token (password)');
                 return true;
             } else {
-                // OAuth login remember me
                 $user = $this->getAuthManager()->getUserById($userId);
                 
                 if ($user && ($user['active'] ?? true)) {
@@ -1250,7 +1219,6 @@ class AdminController extends BaseController
                     ]);
                     return true;
                 } else {
-                    // User no longer valid - clear token
                     $rememberMe->clearCurrentToken();
                     $this->getLogger()->warning('Remember me token invalid - user not found or inactive', [
                         'user_id' => $userId
@@ -1262,21 +1230,16 @@ class AdminController extends BaseController
         return false;
     }
     
-    /**
-     * Get current logged in user
-     */
     public function getCurrentUser(): ?array
     {
         if (!$this->isAuthenticated()) {
             return null;
         }
         
-        // If Google Auth is enabled and user has ID
         if (isset($_SESSION['admin_user_id'])) {
             return $this->getAuthManager()->getUserById($_SESSION['admin_user_id']);
         }
         
-        // Legacy password auth
         return [
             'id' => 'legacy',
             'name' => $_SESSION['admin_user'] ?? 'Administrator',
@@ -1287,9 +1250,6 @@ class AdminController extends BaseController
         ];
     }
     
-    /**
-     * Check if current user has permission
-     */
     public function hasPermission(string $permission): bool
     {
         $user = $this->getCurrentUser();
@@ -1297,7 +1257,6 @@ class AdminController extends BaseController
             return false;
         }
         
-        // Legacy admin has all permissions
         if ($user['id'] === 'legacy') {
             return true;
         }
@@ -1305,16 +1264,11 @@ class AdminController extends BaseController
         return $this->getAuthManager()->hasPermission($user, $permission);
     }
     
-    /**
-     * Counts every password attempt per connecting address outside the session, so dropping
-     * the session cookie or sending a forged X-Forwarded-For does not reset the limit.
-     */
     private function checkLoginAttempts(): bool
     {
         return SecurityManager::rateLimitCheck('admin_login_' . ($_SERVER['REMOTE_ADDR'] ?? ''), self::MAX_LOGIN_ATTEMPTS, self::LOGIN_LOCKOUT_TIME);
     }
 
-    /** New "a + b" question for the password form; the answer lives only in the session. */
     private function newLoginCaptcha(): string
     {
         $a = random_int(2, 9);
@@ -1323,7 +1277,6 @@ class AdminController extends BaseController
         return $a . ' + ' . $b;
     }
 
-    /** Single use: the stored answer is dropped whether or not the guess was right. */
     private function checkLoginCaptcha(): bool
     {
         $captcha = $_SESSION['login_captcha'] ?? null;
@@ -1332,7 +1285,6 @@ class AdminController extends BaseController
         return is_array($captcha) && time() - $captcha['time'] < 600 && ctype_digit($given) && (int)$given === $captcha['answer'];
     }
 
-    /** Admin role check for sensitive endpoints; sends 403 and stops otherwise. */
     private function requireAdminRole(bool $json = true): void
     {
         if (($this->getCurrentUser()['role'] ?? '') === 'admin') {
@@ -1345,7 +1297,6 @@ class AdminController extends BaseController
         exit('Forbidden');
     }
 
-    /** A post-login target is only used when it is a path on this site ("//host" and "\" are refused). */
     private function safeRedirectTarget($url): ?string
     {
         return is_string($url) && preg_match('#^/(?![/\\\\])[^\r\n\\\\]*$#', $url) && strpos($url, '/admin') !== 0 ? $url : null;
@@ -1360,11 +1311,9 @@ class AdminController extends BaseController
             $_SESSION['admin_error'] = 'Google and Discord sign-in are disabled: ' . $storageProblem . ' Fix the permissions of the data/ folder.';
         }
         
-        // Show password login if: not using OAuth, or explicitly allowed, and password is set
         $showPasswordLogin = ((!$authManager->isGoogleAuthEnabled() && !$authManager->isDiscordAuthEnabled()) || $allowPasswordLogin) 
                              && !empty($this->config['admin_password']);
         
-        // Check if any users exist (for first user message)
         $hasUsers = count($authManager->getAllUsers()) > 0;
         
         $this->render('admin/login', [
@@ -1384,9 +1333,6 @@ class AdminController extends BaseController
         unset($_SESSION['admin_error']);
     }
     
-    /**
-     * Google OAuth callback
-     */
     public function oauthCallback(): void
     {
         $authManager = $this->getAuthManager();
@@ -1396,21 +1342,17 @@ class AdminController extends BaseController
             $this->redirect(url('admin'));
             return;
         }
-        // Default to google for backward compatibility (when no provider param)
         $provider = $_GET['provider'] ?? 'google';
         
-        // Check for remember me from session (set in oauthPrepare)
         $rememberMe = $_SESSION['oauth_remember_me'] ?? false;
         unset($_SESSION['oauth_remember_me']);
         
-        // Validate provider
         if (!in_array($provider, ['google', 'discord'])) {
             $_SESSION['admin_error'] = 'Invalid OAuth provider';
             $this->redirect(url('admin'));
             return;
         }
         
-        // Check if provider is enabled
         if ($provider === 'google' && !$authManager->isGoogleAuthEnabled()) {
             $_SESSION['admin_error'] = 'Google authentication is not enabled';
             $this->redirect(url('admin'));
@@ -1442,7 +1384,6 @@ class AdminController extends BaseController
             return;
         }
 
-        // The code must answer a sign-in that this browser started (state), else it is a forged callback
         if (!\core\AuthManager::checkOauthState((string)($_GET['state'] ?? ''))) {
             $_SESSION['admin_error'] = 'Invalid OAuth state. Please try signing in again.';
             $this->getLogger()->warning('OAuth callback with a wrong state', ['provider' => $provider]);
@@ -1450,7 +1391,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Process OAuth callback based on provider
         if ($provider === 'google') {
             $oauthUser = $authManager->processGoogleCallback($code);
             $user = $oauthUser ? $authManager->authenticateGoogle($oauthUser) : null;
@@ -1482,14 +1422,12 @@ class AdminController extends BaseController
             return;
         }
         
-        // Set session (new ID: a session ID planted before login must not become authenticated)
         session_regenerate_id(true);
         $_SESSION['admin_authenticated'] = true;
         $_SESSION['admin_login_time'] = time();
         $_SESSION['admin_user'] = $user['name'];
         $_SESSION['admin_user_id'] = $user['id'];
         
-        // Handle Remember Me for OAuth
         if ($rememberMe) {
             $this->getRememberMeManager()->createToken($user['id'], $provider);
             $this->getLogger()->info('Remember me token created for OAuth login', [
@@ -1509,7 +1447,6 @@ class AdminController extends BaseController
             'remember_me' => $rememberMe
         ]);
         
-        // Check for redirect after login (require_login feature)
         $redirectUrl = $_SESSION['redirect_after_login'] ?? null;
         unset($_SESSION['redirect_after_login']);
         
@@ -1520,9 +1457,6 @@ class AdminController extends BaseController
         }
     }
     
-    /**
-     * Prepare OAuth login - stores remember me preference before redirect
-     */
     public function oauthPrepare(): void
     {
         if (!SecurityManager::validateRequestMethod('POST')) {
@@ -1530,7 +1464,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Validate CSRF token
         if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
             $_SESSION['admin_error'] = 'Invalid security token';
             $this->redirect(url('admin'));
@@ -1540,7 +1473,6 @@ class AdminController extends BaseController
         $provider = $_POST['provider'] ?? 'google';
         $rememberMe = isset($_POST['remember_me']) && $_POST['remember_me'] === '1';
         
-        // Store remember me preference in session
         $_SESSION['oauth_remember_me'] = $rememberMe;
         
         $this->getLogger()->debug('OAuth prepare', [
@@ -1548,7 +1480,6 @@ class AdminController extends BaseController
             'remember_me' => $rememberMe
         ]);
         
-        // Redirect to OAuth provider
         $authManager = $this->getAuthManager();
         if ($authManager->getStorageProblem() !== null) {
             $_SESSION['admin_error'] = 'Sign-in is disabled: ' . $authManager->getStorageProblem() . ' Fix the permissions of the data/ folder.';
@@ -1566,9 +1497,6 @@ class AdminController extends BaseController
         }
     }
     
-    /**
-     * Get all users (API)
-     */
     public function getUsers(): void
     {
         if (!$this->isAuthenticated()) {
@@ -1585,9 +1513,6 @@ class AdminController extends BaseController
         $this->jsonResponse(['success' => true, 'users' => $users]);
     }
     
-    /**
-     * Add new user
-     */
     public function addUser(): void
     {
         if (!$this->isAuthenticated()) {
@@ -1619,7 +1544,6 @@ class AdminController extends BaseController
             return;
         }
 
-        // Check if the email or Discord ID already exists
         if ($email !== '' && $this->getAuthManager()->getUserByEmail($email)) {
             $this->jsonResponse(['error' => 'User with this email already exists'], 400);
             return;
@@ -1658,9 +1582,6 @@ class AdminController extends BaseController
         $this->jsonResponse(['success' => true, 'user' => $user]);
     }
     
-    /**
-     * Update user
-     */
     public function updateUser(): void
     {
         if (!$this->isAuthenticated()) {
@@ -1690,7 +1611,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Cannot demote the last admin
         $roles = \core\AuthManager::getRoles();
         if ($user['role'] === 'admin' && $role !== 'admin' && $this->getAuthManager()->countAdmins() <= 1) {
             $this->jsonResponse(['error' => 'Cannot demote the last administrator'], 400);
@@ -1717,9 +1637,6 @@ class AdminController extends BaseController
         $this->jsonResponse(['success' => true]);
     }
     
-    /**
-     * Delete user
-     */
     public function deleteUser(): void
     {
         if (!$this->isAuthenticated()) {
@@ -1740,7 +1657,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Cannot delete yourself
         if ($userId === ($_SESSION['admin_user_id'] ?? '')) {
             $this->jsonResponse(['error' => 'Cannot delete your own account'], 400);
             return;
@@ -1778,7 +1694,6 @@ class AdminController extends BaseController
         foreach ($types as $t) {
             $table = $this->repository->getTablePrefix() . $t;
             
-            // Build query based on filter
             $whereClause = "WHERE uuid IS NOT NULL AND uuid != '#'";
             if ($filter === 'active' && in_array($t, ['bans', 'mutes'])) {
                 $whereClause .= " AND active = 1";
@@ -1832,18 +1747,14 @@ class AdminController extends BaseController
         foreach ($data as $table => $rows) {
             if (empty($rows)) continue;
             
-            // Write table name
             fputcsv($output, ["Table: $table"]);
             
-            // Write headers
             fputcsv($output, array_keys($rows[0]));
             
-            // Write data
             foreach ($rows as $row) {
                 fputcsv($output, array_values($row));
             }
             
-            // Empty line between tables
             fputcsv($output, []);
         }
         
@@ -1861,20 +1772,16 @@ class AdminController extends BaseController
             $tableName = $this->repository->getTablePrefix() . $table;
 
             foreach ($rows as $row) {
-                // Column names go into the SQL text, so only plain identifiers are accepted
                 if (!is_array($row) || array_filter(array_keys($row), fn($c) => !preg_match('/^[A-Za-z_][A-Za-z0-9_]{0,63}$/', (string)$c))) continue;
 
                 try {
-                    // Check if record exists
                     $sql = "SELECT id FROM {$tableName} WHERE id = :id";
                     $stmt = $this->repository->getConnection()->prepare($sql);
                     $stmt->execute([':id' => $row['id'] ?? 0]);
                     
                     if ($stmt->fetch()) {
-                        // Update existing
                         $this->updateRecord($tableName, $row);
                     } else {
-                        // Insert new
                         $this->insertRecord($tableName, $row);
                     }
                     
@@ -1922,7 +1829,6 @@ class AdminController extends BaseController
     private function logAdminAction(string $action, string $description, array $details = []): void
     {
         try {
-            // Create admin_logs table if it doesn't exist
             $sql = "CREATE TABLE IF NOT EXISTS {$this->repository->getTablePrefix()}admin_logs (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1935,7 +1841,6 @@ class AdminController extends BaseController
                     )";
             $this->repository->getConnection()->exec($sql);
             
-            // Insert log entry
             $sql = "INSERT INTO {$this->repository->getTablePrefix()}admin_logs 
                     (user, ip, action_type, description, details, severity) 
                     VALUES (:user, :ip, :action, :desc, :details, :severity)";
@@ -1954,7 +1859,6 @@ class AdminController extends BaseController
         }
     }
     
-    // Add missing methods
     public function getDatabaseSize(): string
     {
         try {
@@ -1983,9 +1887,6 @@ class AdminController extends BaseController
         return $this->repository->getStats();
     }
     
-    /**
-     * Diagnostic endpoint - shows current avatar config
-     */
     public function diagnosticAvatar(): void
     {
         if (!$this->isAuthenticated()) {
@@ -1994,11 +1895,9 @@ class AdminController extends BaseController
         }
         
         try {
-            // Read .env file directly
             $envFile = BASE_DIR . '/.env';
             $envContent = file_get_contents($envFile);
             
-            // Extract avatar settings from .env
             $envAvatarProvider = null;
             $envAvatarUrl = null;
             $envAvatarUrlOffline = null;
@@ -2013,22 +1912,18 @@ class AdminController extends BaseController
                 $envAvatarUrlOffline = trim($matches[1]);
             }
             
-            // Get from EnvLoader
             $envLoaderProvider = \core\EnvLoader::get('AVATAR_PROVIDER');
             $envLoaderUrl = \core\EnvLoader::get('AVATAR_URL');
             $envLoaderUrlOffline = \core\EnvLoader::get('AVATAR_URL_OFFLINE');
             
-            // Get from current config
             $configProvider = $this->config['avatar_provider'] ?? null;
             $configUrl = $this->config['avatar_url'] ?? null;
             $configUrlOffline = $this->config['avatar_url_offline'] ?? null;
             
-            // Test getAvatarUrl
-            $testUuid = '069a79f4-44e9-4726-a5be-fca90e38aaf5'; // Notch
+            $testUuid = '069a79f4-44e9-4726-a5be-fca90e38aaf5';
             $testName = 'Notch';
             $testAvatarUrl = $this->getAvatarUrl($testUuid, $testName);
             
-            // Check if opcache is enabled
             $opcacheEnabled = function_exists('opcache_get_status') && opcache_get_status();
             $apcuEnabled = function_exists('apcu_cache_info') && apcu_enabled();
             
@@ -2092,7 +1987,6 @@ class AdminController extends BaseController
             return 'Config is not loading from EnvLoader. Clear OPcache and reload config.';
         }
         
-        // Check if test URL matches expected provider
         if ($configProvider === 'mineatar' && strpos($testUrl, 'mineatar.io') === false) {
             return 'getAvatarUrl() is not using the correct provider. Config is not being applied to BaseController.';
         }
@@ -2108,9 +2002,6 @@ class AdminController extends BaseController
         return 'All settings match correctly. Clear browser cache (Ctrl+F5) if avatars still appear old.';
     }
     
-    /**
-     * Test database structure and timestamps
-     */
     public function testDatabase(): void
     {
         if (!$this->isAuthenticated()) {
@@ -2128,12 +2019,10 @@ class AdminController extends BaseController
             
             $tables = ['bans', 'mutes', 'warnings', 'kicks', 'history'];
             
-            // Test each table
             foreach ($tables as $tableName) {
                 $fullTable = $this->repository->getTablePrefix() . $tableName;
                 
                 try {
-                    // Check if table exists
                     $stmt = $this->repository->getConnection()->query(
                         "SHOW TABLES LIKE '" . $fullTable . "'"
                     );
@@ -2148,7 +2037,6 @@ class AdminController extends BaseController
                         continue;
                     }
                     
-                    // Get column info
                     $stmt = $this->repository->getConnection()->query(
                         "DESCRIBE {$fullTable}"
                     );
@@ -2162,7 +2050,6 @@ class AdminController extends BaseController
                         if ($col['Field'] === 'until') $hasUntil = true;
                     }
                     
-                    // Test timestamp if this table has time/until columns
                     if ($hasTime && in_array($tableName, ['bans', 'mutes'])) {
                         $stmt = $this->repository->getConnection()->query(
                             "SELECT time, until, active FROM {$fullTable} ORDER BY time DESC LIMIT 1"
@@ -2184,7 +2071,6 @@ class AdminController extends BaseController
                                 'is_valid' => $timeInSeconds > 0 && $timeInSeconds < 2147483647
                             ];
                             
-                            // Check for invalid timestamps
                             if ($timeInSeconds <= 0) {
                                 $results['warnings'][] = "Invalid timestamp in {$tableName}: time={$row['time']}";
                             }
@@ -2213,7 +2099,6 @@ class AdminController extends BaseController
                 }
             }
             
-            // Test current time
             $results['server_info'] = [
                 'php_time' => time(),
                 'php_time_ms' => time() * 1000,
@@ -2231,9 +2116,6 @@ class AdminController extends BaseController
         }
     }
     
-    /**
-     * Clear all caches including opcache
-     */
     public function clearAllCache(): void
     {
         if (!$this->isAuthenticated()) {
@@ -2241,7 +2123,6 @@ class AdminController extends BaseController
             return;
         }
         
-        // Validate CSRF token
         if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
             $this->jsonResponse(['error' => 'Invalid security token'], 400);
             return;
@@ -2250,17 +2131,14 @@ class AdminController extends BaseController
         try {
             $cleared = [];
             
-            // Clear opcache
             if (function_exists('opcache_reset')) {
                 opcache_reset();
                 $cleared[] = 'OPcache';
             }
             
-            // Reload .env
             \core\EnvLoader::reload();
             $cleared[] = 'Environment config';
             
-            // Clear APCu if available
             if (function_exists('apcu_clear_cache')) {
                 apcu_clear_cache();
                 $cleared[] = 'APCu cache';
@@ -2282,20 +2160,14 @@ class AdminController extends BaseController
         }
     }
     
-    /**
-     * Check latest version on GitHub
-     */
     public function checkGitHubVersion(): void
     {
         try {
-            // GitHub repository info
             $owner = 'Yamiru';
             $repo = 'LiteBansU';
             
-            // Try to read .version file from GitHub main branch
             $url = "https://raw.githubusercontent.com/{$owner}/{$repo}/main/.version";
             
-            // Set timeout and user agent
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 5,
@@ -2303,7 +2175,6 @@ class AdminController extends BaseController
                 ]
             ]);
             
-            // Fetch version from GitHub
             $githubVersion = @file_get_contents($url, false, $context);
             
             if ($githubVersion === false) {
@@ -2314,14 +2185,12 @@ class AdminController extends BaseController
                 return;
             }
             
-            // Read local version
             $localVersion = file_exists(BASE_DIR . '/.version') 
                 ? trim(file_get_contents(BASE_DIR . '/.version')) 
                 : '3.3';
             
             $githubVersion = trim($githubVersion);
             
-            // Compare versions
             $updateAvailable = version_compare($githubVersion, $localVersion, '>');
             
             $this->jsonResponse([
@@ -2340,9 +2209,6 @@ class AdminController extends BaseController
         }
     }
     
-    /**
-     * Generate sitemap XML for SEO
-     */
     public function generateSitemap(): string
     {
         $baseUrl = rtrim($this->config['site_url'] ?? 'https://yoursite.com', '/');

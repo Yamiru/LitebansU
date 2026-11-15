@@ -1,0 +1,8 @@
+{
+  "id": "bulma",
+  "name": "Bulma",
+  "version": "1.0",
+  "author": "Yamiru",
+  "framework": "Bulma",
+  "description": "A Bulma design with a dark/light switch. Covers every public page; the admin panel always uses the default template."
+}

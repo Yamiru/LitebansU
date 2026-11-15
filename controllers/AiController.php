@@ -19,10 +19,6 @@ declare(strict_types=1);
 
 class AiController extends BaseController
 {
-    /**
-     * GET /agent.json
-     * Returns the AI agent discovery manifest - capabilities, endpoints, data model.
-     */
     public function manifest(): void
     {
         $siteUrl = $this->resolveSiteUrl();
@@ -98,10 +94,6 @@ class AiController extends BaseController
         $this->sendJson($manifest, 3600);
     }
     
-    /**
-     * GET /ai/stats.json
-     * Returns aggregate punishment counts and metadata in a stable JSON shape.
-     */
     public function stats(): void
     {
         try {
@@ -157,11 +149,6 @@ class AiController extends BaseController
         $this->sendJson($payload, 60);
     }
     
-    /**
-     * GET /sitemap.xml
-     * Dynamic sitemap of canonical pages. Does not list individual punishments
-     * (high churn, easily reaches the 50k limit) - those are reachable via /bans?page=N.
-     */
     public function sitemap(): void
     {
         $siteUrl = $this->resolveSiteUrl();
@@ -177,7 +164,6 @@ class AiController extends BaseController
             ['loc' => $siteUrl . '/privacy',   'priority' => '0.3', 'changefreq' => 'monthly'],
         ];
         
-        // Pages that can be switched off in the settings
         if ($this->config['show_menu_stats'] ?? true) {
             $urls[] = ['loc' => $siteUrl . '/stats', 'priority' => '0.7', 'changefreq' => 'daily'];
         }
@@ -185,14 +171,13 @@ class AiController extends BaseController
             $urls[] = ['loc' => $siteUrl . '/protest', 'priority' => '0.5', 'changefreq' => 'monthly'];
         }
 
-        // Add paginated listings for the first few pages of each high-volume type
         try {
             $perPage = max(1, (int)($this->config['items_per_page'] ?? 20));
             foreach (['bans', 'mutes'] as $type) {
                 $totalMethod = 'getTotal' . ucfirst($type);
                 if (method_exists($this->repository, $totalMethod)) {
                     $total = (int)$this->repository->$totalMethod(false);
-                    $pages = min(50, (int)ceil($total / $perPage)); // cap at 50 pages per type
+                    $pages = min(50, (int)ceil($total / $perPage));
                     for ($p = 2; $p <= $pages; $p++) {
                         $urls[] = [
                             'loc' => $siteUrl . '/' . $type . '?page=' . $p,
@@ -203,12 +188,11 @@ class AiController extends BaseController
                 }
             }
         } catch (Exception $e) {
-            // Ignore - sitemap with core pages is still valid
             error_log('AiController::sitemap pagination error: ' . $e->getMessage());
         }
         
         $supportedLangs = $this->lang->getSupportedLanguages();
-        $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>'; // split to avoid any short_open_tag edge cases
+        $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
         $xml = $xmlDecl . "\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">' . "\n";
         
@@ -222,25 +206,17 @@ class AiController extends BaseController
         
         $xml .= '</urlset>' . "\n";
         
-        // Drop any earlier Content-Type that index.php may have set, then send XML.
-        // Some Apache + mod_php combinations otherwise leave text/html on dynamically-routed .xml URLs.
         if (!headers_sent()) {
             header_remove('Content-Type');
             header('Content-Type: application/xml; charset=UTF-8');
             header('Access-Control-Allow-Origin: *');
             header('Cache-Control: public, max-age=3600');
             header('X-Robots-Tag: noindex, follow');
-            // Belt and suspenders: prevent any framework/server from re-sniffing the body
             header('X-Content-Type-Options: nosniff');
         }
         echo $xml;
     }
     
-    /**
-     * GET /robots.txt
-     * Dynamic robots.txt with absolute Sitemap URL that auto-detects BASE_PATH.
-     * Works on any deployment (root domain, subdomain, subdirectory) with no manual editing.
-     */
     public function robots(): void
     {
         $siteUrl = $this->resolveSiteUrl();
@@ -248,7 +224,6 @@ class AiController extends BaseController
         
         $lines = [];
         if (!(\core\SiteExtras::get()['allow_crawlers'] ?? true)) {
-            // Crawlers switched off in the admin panel (SEO & Tracking)
             if (!headers_sent()) {
                 header('Content-Type: text/plain; charset=UTF-8');
             }
@@ -333,9 +308,6 @@ class AiController extends BaseController
         echo $body;
     }
     
-    /**
-     * GET /llms.txt
-     */
     public function llms(): void
     {
         if (!headers_sent()) {
@@ -348,14 +320,12 @@ class AiController extends BaseController
         echo $this->buildLlms();
     }
 
-    /** The llms.txt text. Also used by the admin check, so both always see the same thing. */
     public function buildLlms(): string
     {
         $siteUrl = $this->resolveSiteUrl();
         $siteName = trim((string)($this->config['site_name'] ?? '')) ?: 'LiteBansU';
 
         if (!(\core\SiteExtras::get()['allow_crawlers'] ?? true)) {
-            // Crawlers switched off in the admin panel (SEO & Tracking) - same signal as robots.txt
             return "# {$siteName}\n\nThe operator has closed this site to crawlers and AI agents. See [robots.txt]({$siteUrl}/robots.txt).\n";
         }
 
@@ -416,10 +386,6 @@ class AiController extends BaseController
             . "- Avatars come from third-party services and are not stored on this server.\n";
     }
 
-    /**
-     * Checks an llms.txt body against the llms.txt recommendations and this site's own settings.
-     * Returns a list of [level, message] where level is ok|warn|error.
-     */
     public static function checkLlms(string $body, string $siteUrl, string $siteName): array
     {
         $r = [];
@@ -474,16 +440,6 @@ class AiController extends BaseController
         echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
     
-    /**
-     * Resolve the canonical base URL of this deployment.
-     *
-     * Priority:
-     *   1. $config['site_url'] (operator-defined absolute URL, including any subdir like /litebansU)
-     *   2. Scheme + host + BASE_PATH (auto-detected from the current request)
-     *
-     * This makes the AI/SEO endpoints work on any hosting layout - root domain,
-     * subdomain, or subdirectory - without forcing the operator to configure it.
-     */
     private function resolveSiteUrl(): string
     {
         $configured = $this->config['site_url'] ?? '';

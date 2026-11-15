@@ -24,11 +24,9 @@ class HomeController extends BaseController
         $recentBans = $this->repository->getBans(5, 0, true);
         $recentMutes = $this->repository->getMutes(5, 0, true);
         
-        // Ensure data is properly formatted
         $recentBans = $this->ensurePlayerNames($recentBans);
         $recentMutes = $this->ensurePlayerNames($recentMutes);
         
-        // Check if there's a search parameter
         $searchQuery = $_GET['search'] ?? null;
         
         $this->render('home', [
@@ -55,13 +53,11 @@ class HomeController extends BaseController
     
     private function handleSearch(): void
     {
-        // Verify it's an AJAX request
         if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || $_SERVER['HTTP_X_REQUESTED_WITH'] !== 'XMLHttpRequest') {
             $this->jsonResponse(['error' => 'Invalid request'], 400);
             return;
         }
         
-        // Validate CSRF token
         if (!SecurityManager::validateCsrfToken($_POST['csrf_token'] ?? '')) {
             $this->jsonResponse(['error' => 'Invalid CSRF token'], 400);
             return;
@@ -73,7 +69,6 @@ class HomeController extends BaseController
             return;
         }
         
-        // Rate limiting
         $clientIp = SecurityManager::getClientIp();
         if (!SecurityManager::rateLimitCheck('search_' . $clientIp, 30, 60)) {
             $this->jsonResponse(['error' => 'Too many requests. Please try again later.'], 429);
@@ -85,22 +80,18 @@ class HomeController extends BaseController
         try {
             $punishments = [];
             
-            // First, check if query is a numeric ID (ban ID search)
             if (is_numeric($query)) {
                 $punishments = $this->searchById((int)$query);
             }
             
-            // Admin only: search by (partial) IP address
             if (empty($punishments) && $this->isAdminLoggedIn() && preg_match('/^[0-9a-fA-F:.]{3,45}$/', $query) && preg_match('/[.:]/', $query)) {
                 $punishments = $this->searchByIp($query);
             }
 
-            // If no results from ID search, try player search
             if (empty($punishments)) {
                 $punishments = $this->repository->getPlayerPunishments($query);
             }
             
-            // If still no results, try flexible search
             if (empty($punishments)) {
                 $punishments = $this->searchFlexible($query);
             }
@@ -116,9 +107,6 @@ class HomeController extends BaseController
         }
     }
     
-    /**
-     * Search punishments by ID (ban/mute/warning/kick ID)
-     */
     private function searchById(int $id): array
     {
         try {
@@ -160,9 +148,6 @@ class HomeController extends BaseController
         }
     }
     
-    /**
-     * Admin only: find punishments by IP (exact or prefix match, e.g. "192.168.")
-     */
     private function searchByIp(string $ip): array
     {
         try {
@@ -202,9 +187,6 @@ class HomeController extends BaseController
         }
     }
 
-    /**
-     * Flexible search that can handle partial names and case variations
-     */
     private function searchFlexible(string $query): array
     {
         try {
@@ -212,7 +194,6 @@ class HomeController extends BaseController
             $results = [];
             $historyTable = $this->repository->getTablePrefix() . 'history';
             
-            // First try to find player in history by partial name match
             $sql = "SELECT DISTINCT uuid, name FROM {$historyTable} 
                     WHERE LOWER(name) LIKE LOWER(:query) 
                     ORDER BY date DESC 
@@ -222,7 +203,6 @@ class HomeController extends BaseController
             $stmt->execute([':query' => '%' . $query . '%']);
             $players = $stmt->fetchAll();
             
-            // For each matching player, get their punishments
             foreach ($players as $player) {
                 if (!empty($player['uuid'])) {
                     $playerPunishments = $this->repository->getPlayerPunishments($player['uuid']);
@@ -230,7 +210,6 @@ class HomeController extends BaseController
                 }
             }
             
-            // If still no results, search directly in punishment tables
             if (empty($results)) {
                 foreach ($tables as $table) {
                     $fullTable = $this->repository->getTablePrefix() . $table;
@@ -266,12 +245,11 @@ class HomeController extends BaseController
                 }
             }
             
-            // Sort by time descending
             usort($results, function($a, $b) {
                 return ($b['time'] ?? 0) <=> ($a['time'] ?? 0);
             });
             
-            return array_slice($results, 0, 50); // Limit to 50 results
+            return array_slice($results, 0, 50);
             
         } catch (Exception $e) {
             error_log("Flexible search error: " . $e->getMessage());
@@ -282,7 +260,6 @@ class HomeController extends BaseController
     private function formatPunishmentsForSearch(array $punishments): array
     {
         return array_map(function($punishment) {
-            // Ensure player name exists
             $playerName = $punishment['player_name'] ?? $punishment['name'] ?? null;
             if (empty($playerName) && !empty($punishment['uuid'])) {
                 $playerName = $this->repository->getPlayerName($punishment['uuid']);
@@ -300,7 +277,6 @@ class HomeController extends BaseController
                 'until' => isset($punishment['until']) && $punishment['until'] > 0 
                     ? $this->formatDuration((int)$punishment['until']) 
                     : null,
-                // Effective active status (handles expired temp bans/mutes whose DB flag is still 1)
                 'active' => $this->isPunishmentActive($punishment, $rowType)
             ] + ($this->isAdminLoggedIn() && !empty($punishment['ip']) && $punishment['ip'] !== '#'
                 ? ['ip' => SecurityManager::preventXss((string)$punishment['ip'])]
@@ -311,7 +287,6 @@ class HomeController extends BaseController
     private function ensurePlayerNames(array $punishments): array
     {
         foreach ($punishments as &$punishment) {
-            // Ensure player name exists
             if (empty($punishment['player_name']) && empty($punishment['name'])) {
                 if (!empty($punishment['uuid'])) {
                     $name = $this->repository->getPlayerName($punishment['uuid']);
@@ -323,19 +298,14 @@ class HomeController extends BaseController
                 $punishment['player_name'] = $punishment['name'];
             }
             
-            // Ensure UUID exists
             if (empty($punishment['uuid'])) {
                 $punishment['uuid'] = '';
             }
             
-            // Ensure other required fields exist
             $punishment['reason'] = $punishment['reason'] ?? 'No reason provided';
             $punishment['time'] = $punishment['time'] ?? 0;
             $punishment['active'] = $punishment['active'] ?? 0;
             
-            // Override active flag with effective state so "Recent" widgets on the home page
-            // do not show "Active" for temp punishments whose `until` is already in the past.
-            // Type is inferred from presence of `until` column - both bans and mutes have it.
             $inferredType = isset($punishment['until']) ? 'ban' : 'warning';
             $punishment['active'] = $this->isPunishmentActive($punishment, $inferredType) ? 1 : 0;
         }

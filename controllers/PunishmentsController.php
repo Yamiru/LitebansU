@@ -18,7 +18,6 @@ declare(strict_types=1);
 
 class PunishmentsController extends BaseController
 {
-    /** Tracks which punishment type is being rendered (bans/mutes/warnings/kicks). Used to decide whether `until` should affect active status. */
     private string $currentType = '';
     
     private function getSort(): string
@@ -33,15 +32,12 @@ class PunishmentsController extends BaseController
         $sort = $this->getSort();
         $requestedOrder = strtoupper($_GET['order'] ?? '');
         
-        // Determine default sort order based on column type
-        $defaultOrder = 'DESC'; // Default for numbers, dates, and active status
+        $defaultOrder = 'DESC';
         
-        // For text fields (name, reason, staff, server), default to ASC (A-Z)
         if (in_array($sort, ['name', 'reason', 'banned_by_name', 'server'])) {
             $defaultOrder = 'ASC';
         }
         
-        // If user explicitly requested an order, use it
         if (in_array($requestedOrder, ['ASC', 'DESC'])) {
             return $requestedOrder;
         }
@@ -125,14 +121,12 @@ class PunishmentsController extends BaseController
     
     private function formatPunishments(array $punishments): array
     {
-        // $this->currentType is set in each action (bans/mutes/warnings/kicks/info) before rendering
         return $this->formatPunishmentsTyped($punishments, $this->currentType);
     }
     
     private function formatPunishmentsTyped(array $punishments, string $type): array
     {
         return array_map(function($punishment) use ($type) {
-            // Get player name - handle null values properly
             $playerName = $punishment['player_name'] ?? $punishment['name'] ?? null;
             if (!$playerName && !empty($punishment['uuid'])) {
                 $playerName = $this->repository->getPlayerName($punishment['uuid']);
@@ -146,7 +140,6 @@ class PunishmentsController extends BaseController
                 'staff' => SecurityManager::preventXss($punishment['banned_by_name'] ?? 'Console'),
                 'date' => $this->formatDate((int)($punishment['time'] ?? 0)),
                 'until' => isset($punishment['until']) ? $this->formatDuration((int)$punishment['until']) : null,
-                // Use effective active status - prevents "Active + Expired" mismatch for expired temp bans/mutes
                 'active' => $this->isPunishmentActive($punishment, $type),
                 'removed_by' => isset($punishment['removed_by_name']) ? SecurityManager::preventXss($punishment['removed_by_name']) : null,
                 'avatar' => $this->getAvatarUrl($punishment['uuid'] ?? '', $playerName ?? 'Unknown'),
@@ -162,11 +155,9 @@ class PunishmentsController extends BaseController
         $currentPage = $this->getPage();
         $limit = $this->getLimit();
         
-        // Get total count for accurate pagination
         $totalCount = $this->getTotalCount($type, $activeOnly);
         $totalPages = max(1, (int)ceil($totalCount / $limit));
         
-        // Ensure current page is within bounds
         if ($currentPage > $totalPages) {
             $currentPage = $totalPages;
         }

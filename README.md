@@ -52,7 +52,7 @@ Also new. This tab in the admin panel controls whether search engines can crawl 
 3. Open `https://yoursite.com/install.php` and follow the steps, or skip it and copy `.env_example_clean` to `.env` yourself.
 4. Delete `install.php` and `hash.php` once the site is up.
 
-Apache reads the `.htaccess` that ships with the project, so there's nothing else to configure there beyond turning on `AllowOverride All` for the folder. nginx doesn't read `.htaccess` at all, so it needs its own rules to keep `config/`, `core/`, `data/` and `demos/data/` from being served directly. Ask if you want an example server block.
+Apache reads the `.htaccess` that ships with the project, so there's nothing else to configure there beyond turning on `AllowOverride All` for the folder. nginx doesn't read `.htaccess` at all, so it needs its own rules to keep `config/`, `core/`, `data/` and `demos/data/` from being served directly. A step-by-step guide with ready nginx and Apache configs for a separate site, a subdomain or a folder is in [docs/INSTALL.md](docs/INSTALL.md) (Slovak: [docs/NAVOD.md](docs/NAVOD.md)), together with how to switch and add site templates.
 
 ## Setting it up
 

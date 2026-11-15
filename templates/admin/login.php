@@ -23,7 +23,7 @@
                         <?php endif; ?>
                         
                         <?php if (($googleAuthEnabled ?? false) || ($discordAuthEnabled ?? false)): ?>
-                            <!-- Remember Me for OAuth -->
+                            
                             <div class="form-check mb-3 text-center">
                                 <input class="form-check-input" type="checkbox" id="oauth-remember-me" checked>
                                 <label class="form-check-label" for="oauth-remember-me">
@@ -33,7 +33,7 @@
                         <?php endif; ?>
                         
                         <?php if ($googleAuthEnabled ?? false): ?>
-                            <!-- Google Sign In Button -->
+                            
                             <form action="<?= htmlspecialchars(url('admin/oauth-prepare'), ENT_QUOTES, 'UTF-8') ?>" method="POST" class="mb-3" id="google-form">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(SecurityManager::generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                                 <input type="hidden" name="provider" value="google">
@@ -51,7 +51,7 @@
                         <?php endif; ?>
                         
                         <?php if ($discordAuthEnabled ?? false): ?>
-                            <!-- Discord Sign In Button -->
+                            
                             <form action="<?= htmlspecialchars(url('admin/oauth-prepare'), ENT_QUOTES, 'UTF-8') ?>" method="POST" class="mb-3" id="discord-form">
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(SecurityManager::generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
                                 <input type="hidden" name="provider" value="discord">
@@ -98,8 +98,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                
-                                <!-- Simple captcha -->
+
                                 <div class="mb-3">
                                     <label for="captcha" class="form-label">
                                         <i class="fas fa-shield-alt"></i>
@@ -109,7 +108,6 @@
                                            inputmode="numeric" pattern="[0-9]*" autocomplete="off" maxlength="3" required>
                                 </div>
 
-                                <!-- Remember Me for Password Login -->
                                 <div class="form-check mb-4">
                                     <input class="form-check-input" type="checkbox" name="remember_me" value="1" id="password-remember-me" checked>
                                     <label class="form-check-label" for="password-remember-me">
@@ -304,7 +302,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Toggle password form visibility when divider is clicked
     if (divider && passwordForm) {
         divider.style.cursor = 'pointer';
         divider.addEventListener('click', function() {
@@ -315,7 +312,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Sync OAuth remember me checkbox with hidden inputs
     if (oauthRememberMe) {
         oauthRememberMe.addEventListener('change', function() {
             const value = this.checked ? '1' : '0';

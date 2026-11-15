@@ -30,12 +30,10 @@ class ThemeManager
     
     private function detectTheme(): string
     {
-        // Check cookie first (from theme switcher)
         if (isset($_COOKIE['selected_theme']) && in_array($_COOKIE['selected_theme'], self::AVAILABLE_THEMES)) {
             return $_COOKIE['selected_theme'];
         }
         
-        // Use default from config if available
         if (class_exists('core\\EnvLoader')) {
             $defaultTheme = \core\EnvLoader::get('DEFAULT_THEME', self::DEFAULT_THEME);
             return in_array($defaultTheme, self::AVAILABLE_THEMES) ? $defaultTheme : self::DEFAULT_THEME;
@@ -56,7 +54,6 @@ class ThemeManager
     
     public function getThemeClasses(): array
     {
-        // Return simple theme class for body
         return [
             'body' => 'theme-' . $this->currentTheme
         ];
@@ -69,13 +66,9 @@ class ThemeManager
     
     public function getCssVariables(): string
     {
-        // CSS variables are now handled by CSS classes, not inline styles
         return '';
     }
     
-    /**
-     * Get theme-specific button classes for backwards compatibility
-     */
     public function getButtonClasses(): array
     {
         return [
@@ -88,25 +81,16 @@ class ThemeManager
         ];
     }
     
-    /**
-     * Check if current theme is dark mode
-     */
     public function isDarkMode(): bool
     {
         return $this->currentTheme === 'dark';
     }
     
-    /**
-     * Check if current theme is light mode
-     */
     public function isLightMode(): bool
     {
         return $this->currentTheme === 'light';
     }
     
-    /**
-     * Get theme name for display
-     */
     public function getThemeName(?string $theme = null): string
     {
         $theme = $theme ?? $this->currentTheme;

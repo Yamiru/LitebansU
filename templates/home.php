@@ -12,7 +12,6 @@
     </div>
 </div>
 
-<!-- Search Section -->
 <div class="search-container mb-5">
     <h3 class="mb-3">
         <i class="fas fa-search text-primary"></i>
@@ -69,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <?php endif; ?>
-<!-- Statistics Grid - Improved 2x2 Layout -->
+
 <div class="stats-overview mb-5">
     <h3 class="mb-4 text-center">
         <i class="fas fa-chart-bar text-primary"></i>
@@ -128,8 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
     </div>
-    
-    <!-- Quick Link to Full Statistics -->
+
     <div class="text-center mt-4">
         <a href="<?= htmlspecialchars(url('stats'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-primary">
             <i class="fas fa-chart-line"></i>
@@ -138,7 +136,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<!-- Recent Activity -->
 <div class="row">
     <div class="col-12">
         <h3 class="mb-4">

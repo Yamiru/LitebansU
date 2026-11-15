@@ -21,7 +21,6 @@ class StatsController extends BaseController
     public function index(): void
     {
         try {
-            // Get comprehensive statistics
             $stats = $this->getAdvancedStats();
             
             $this->render('stats', [
@@ -41,7 +40,6 @@ class StatsController extends BaseController
     
     public function clearCache(): void
     {
-        // Check if request is from admin or authorized user
         $isAdmin = false;
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -50,7 +48,6 @@ class StatsController extends BaseController
             $isAdmin = true;
         }
         
-        // Verify CSRF token
         if (!isset($_POST['csrf_token'])) {
             $this->jsonResponse(['success' => false, 'message' => 'Missing CSRF token'], 400);
             return;
@@ -61,7 +58,6 @@ class StatsController extends BaseController
             return;
         }
         
-        // Rate limiting only for non-admin users
         if (!$isAdmin) {
             $clientIp = SecurityManager::getClientIp();
             if (!SecurityManager::rateLimitCheck('cache_clear_' . $clientIp, 5, 300)) {
@@ -74,10 +70,8 @@ class StatsController extends BaseController
             $clearAll = isset($_POST['clear_all']) && $_POST['clear_all'] === '1';
             
             if ($clearAll) {
-                // Clear all cache including opcache
                 $cleared = $this->clearAllCache();
             } else {
-                // Clear only stats cache
                 $cleared = $this->clearStatsCache();
             }
             
@@ -90,7 +84,7 @@ class StatsController extends BaseController
                 $this->jsonResponse([
                     'success' => false,
                     'message' => 'No cache files were found or cleared'
-                ], 200); // Return 200 but with success: false
+                ], 200);
             }
             
         } catch (Exception $e) {
@@ -104,7 +98,6 @@ class StatsController extends BaseController
         $cacheKey = 'advanced_stats';
         $cacheFile = sys_get_temp_dir() . '/litebans_' . md5($cacheKey) . '.cache';
         
-        // Check cache first (5 minute expiry)
         if (file_exists($cacheFile) && (time() - filemtime($cacheFile)) < 300) {
             $cached = @file_get_contents($cacheFile);
             if ($cached !== false) {
@@ -115,28 +108,20 @@ class StatsController extends BaseController
             }
         }
         
-        // Get basic stats
         $stats = $this->repository->getStats();
         
-        // Get top banned players
         $stats['top_banned_players'] = $this->getTopBannedPlayers();
         
-        // Get most active staff
         $stats['most_active_staff'] = $this->getMostActiveStaff();
         
-        // Get punishment trends (last 30 days)
         $stats['punishment_trends'] = $this->getPunishmentTrends();
         
-        // Get recent activity summary
         $stats['recent_activity'] = $this->getRecentActivity();
         
-        // Get ban reasons analysis
         $stats['top_ban_reasons'] = $this->getTopBanReasons();
         
-        // Get server activity by day
         $stats['daily_activity'] = $this->getDailyActivity();
         
-        // Cache the results
         @file_put_contents($cacheFile, json_encode($stats), LOCK_EX);
         
         return $stats;
@@ -221,7 +206,6 @@ class StatsController extends BaseController
                 }
             }
             
-            // Sort by total punishments
             uasort($results, function($a, $b) {
                 return $b['total_punishments'] <=> $a['total_punishments'];
             });
@@ -373,12 +357,11 @@ class StatsController extends BaseController
                 }
             }
             
-            // Also clear APCu cache if available
             if (function_exists('apcu_enabled') && apcu_enabled()) {
                 apcu_clear_cache();
             }
             
-            return $cleared > 0 || true; // Return true even if no files (cache might be empty)
+            return $cleared > 0 || true;
         } catch (Exception $e) {
             error_log("Error clearing cache: " . $e->getMessage());
             return false;
@@ -388,25 +371,20 @@ class StatsController extends BaseController
     private function clearAllCache(): bool
     {
         try {
-            // Clear stats cache
             $statsCleared = $this->clearStatsCache();
             
-            // Clear OPcache if available
             if (function_exists('opcache_reset')) {
                 opcache_reset();
             }
             
-            // Clear APCu completely if available
             if (function_exists('apcu_enabled') && apcu_enabled()) {
                 apcu_clear_cache();
             }
             
-            // Clear session cache files
             $sessionPattern = sys_get_temp_dir() . '/sess_*';
             $sessionFiles = glob($sessionPattern);
             if ($sessionFiles) {
                 foreach ($sessionFiles as $file) {
-                    // Only delete old sessions (older than 1 hour)
                     if (filemtime($file) < (time() - 3600)) {
                         @unlink($file);
                     }

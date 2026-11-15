@@ -1,17 +1,3 @@
-/**
- * ============================================================================
- * LiteBansU
- * ============================================================================
- *
- * Plugin Name: LiteBansU
- * Description: A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version: 5.0
- * Market URI: https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI: https://yamiru.com
- * License: MIT
- * License URI: https://opensource.org/licenses/MIT
- * ============================================================================
- */
 class LiteBansUI {
     constructor() {
         this.basePath = this.getBasePath();
@@ -30,7 +16,7 @@ class LiteBansUI {
     }
 
     initialize() {
-        // Core functionality
+
         this.setupThemeSwitcher();
         this.setupLanguageSwitcher();
         this.setupSearch();
@@ -43,8 +29,7 @@ class LiteBansUI {
         this.setupTables();
         this.setupClickableRows();
         this.setupBackButton();
-        
-        // Initialize Bootstrap components
+
         this.initializeBootstrapComponents();
     }
 
@@ -111,24 +96,23 @@ class LiteBansUI {
 
         try {
             results.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Searching...</span></div></div>';
-            
+
             const response = await this.fetchSearch(query);
-            
+
             if (response.success) {
                 this.searchCache.set(query, response);
                 setTimeout(() => this.searchCache.delete(query), 300000);
             }
-            
+
             this.displaySearchResults(response, results);
         } catch (error) {
             console.error('Search error:', error);
             results.innerHTML = `<div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i> 
+                    <i class="fas fa-exclamation-triangle"></i>
                     ${this.escapeHtml(error.message || 'An error occurred while searching. Please try again.')}
                 </div>`;
         }
     }
-
 
     setupSearch() {
         const form = document.getElementById('search-form');
@@ -137,7 +121,6 @@ class LiteBansUI {
 
         if (!form || !input || !results) return;
 
-        // Prevent zoom on iOS when focusing input
         input.addEventListener('focus', (e) => {
             if (window.innerWidth <= 768) {
                 e.target.setAttribute('style', 'font-size: 16px !important');
@@ -153,8 +136,6 @@ class LiteBansUI {
             this.performSearch();
         });
 
-
-        // Auto-search with debounce
         input.addEventListener('input', () => {
             clearTimeout(this.debounceTimer);
             if (input.value.length >= 1) {
@@ -165,14 +146,12 @@ class LiteBansUI {
                 results.innerHTML = '';
             }
         });
-        // =====================================================================
 
-        // Clear search on ESC
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 input.value = '';
                 results.innerHTML = '';
-                input.blur(); // Remove focus on mobile
+                input.blur();
             }
         });
     }
@@ -183,7 +162,7 @@ class LiteBansUI {
         formData.append('csrf_token', this.csrfToken);
 
         const searchUrl = this.basePath + '/search';
-        
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -210,7 +189,7 @@ class LiteBansUI {
             }
 
             const data = await response.json();
-            
+
             if (!data || typeof data !== 'object') {
                 throw new Error('Invalid response data');
             }
@@ -231,7 +210,7 @@ class LiteBansUI {
     displaySearchResults(data, container) {
         if (!data.success) {
             container.innerHTML = `<div class="alert alert-danger">
-                <i class="fas fa-exclamation-circle"></i> 
+                <i class="fas fa-exclamation-circle"></i>
                 ${this.escapeHtml(data.error || 'Search failed. Please try again.')}
             </div>`;
             return;
@@ -242,7 +221,6 @@ class LiteBansUI {
             return;
         }
 
-        // Mobile-friendly display for phones
         if (window.innerWidth <= 768) {
             const html = `
                 <div class="search-results fade-in">
@@ -279,17 +257,16 @@ class LiteBansUI {
             `;
             container.innerHTML = html;
         }
-        
+
         this.fadeIn(container.querySelector('.search-results'));
-        
-        // Add click handlers for punishment rows
+
         this.setupPunishmentRowClicks();
     }
 
     renderMobilePunishmentCard(punishment) {
         const statusClass = punishment.active ? 'status-active' : 'status-inactive';
         const statusText = punishment.active ? 'Active' : 'Inactive';
-        
+
         const typeClass = {
             'ban': 'bg-danger',
             'bans': 'bg-danger',
@@ -361,7 +338,7 @@ class LiteBansUI {
     renderPunishmentRow(punishment) {
         const statusClass = punishment.active ? 'status-active' : 'status-inactive';
         const statusText = punishment.active ? 'Active' : 'Inactive';
-        
+
         const typeClass = {
             'ban': 'bg-danger',
             'bans': 'bg-danger',
@@ -405,13 +382,13 @@ class LiteBansUI {
     }
 
     setupPunishmentRowClicks() {
-        // Use event delegation for dynamically added rows
+
         document.addEventListener('click', (e) => {
             const row = e.target.closest('.punishment-row');
             if (row) {
                 const type = row.dataset.type;
                 const id = row.dataset.id;
-                
+
                 if (type && id) {
                     const detailUrl = `${this.basePath}/detail?type=${type}&id=${id}`;
                     window.location.href = detailUrl;
@@ -423,17 +400,16 @@ class LiteBansUI {
     setupMobileMenu() {
         const toggler = document.querySelector('.navbar-toggler');
         const collapse = document.querySelector('.navbar-collapse');
-        
+
         if (!toggler || !collapse) return;
-        
+
         toggler.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             collapse.classList.toggle('show');
             toggler.setAttribute('aria-expanded', collapse.classList.contains('show'));
         });
-        
-        // Close on outside click
+
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.navbar-modern') && collapse.classList.contains('show')) {
                 collapse.classList.remove('show');
@@ -441,7 +417,6 @@ class LiteBansUI {
             }
         });
 
-        // Close on ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && collapse.classList.contains('show')) {
                 collapse.classList.remove('show');
@@ -453,19 +428,19 @@ class LiteBansUI {
     setupScrollEffects() {
         const navbar = document.getElementById('mainNavbar');
         if (!navbar) return;
-        
+
         let lastScroll = 0;
         let ticking = false;
 
         const updateNavbar = () => {
             const currentScroll = window.pageYOffset;
-            
+
             if (currentScroll > 50) {
                 navbar.classList.add('scrolled');
             } else {
                 navbar.classList.remove('scrolled');
             }
-            
+
             lastScroll = currentScroll;
             ticking = false;
         };
@@ -481,7 +456,7 @@ class LiteBansUI {
     setupTooltips() {
         const tooltips = document.querySelectorAll('[title]:not([data-bs-toggle="tooltip"])');
         tooltips.forEach(el => {
-            if (!el.closest('.navbar-nav')) { // Skip nav items
+            if (!el.closest('.navbar-nav')) {
                 el.setAttribute('data-bs-toggle', 'tooltip');
                 el.setAttribute('data-bs-placement', 'top');
             }
@@ -489,12 +464,11 @@ class LiteBansUI {
     }
 
     setupDetailPageFeatures() {
-        // No automatic refresh: it wiped forms in progress. The page has a manual refresh button.
+
         document.querySelectorAll('[data-refresh-page]').forEach(btn => {
             btn.addEventListener('click', () => location.reload());
         });
 
-        // Copy UUID on click
         const uuidElements = document.querySelectorAll('.font-monospace');
         uuidElements.forEach(el => {
             if (el.textContent.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
@@ -509,28 +483,28 @@ class LiteBansUI {
     setupClearCache() {
         const clearCacheBtn = document.getElementById('clear-cache-btn');
         const confirmBtn = document.getElementById('confirm-clear-cache');
-        
+
         if (!clearCacheBtn || !confirmBtn) return;
-        
+
         clearCacheBtn.addEventListener('click', () => {
             const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('cacheModal'));
             modal.show();
         });
-        
+
         confirmBtn.addEventListener('click', async () => {
             const modal = bootstrap.Modal.getInstance(document.getElementById('cacheModal'));
-            
+
             try {
                 const formData = new FormData();
                 formData.append('csrf_token', this.csrfToken);
-                
+
                 const response = await fetch(this.basePath + '/stats/clear-cache', {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     modal.hide();
                     this.showNotification('success', data.message || 'Cache cleared successfully');
@@ -547,7 +521,7 @@ class LiteBansUI {
     }
 
     setupModals() {
-        // Handle all modal close buttons
+
         document.querySelectorAll('.modal .btn-close, [data-bs-dismiss="modal"]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const modal = btn.closest('.modal');
@@ -560,11 +534,10 @@ class LiteBansUI {
     }
 
     setupTables() {
-        // Make table rows clickable
+
         document.querySelectorAll('.table tbody tr[onclick]').forEach(row => {
             row.style.cursor = 'pointer';
-            
-            // Prevent navigation when clicking on buttons/links
+
             row.querySelectorAll('a, button').forEach(el => {
                 el.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -572,21 +545,19 @@ class LiteBansUI {
             });
         });
 
-        // Sort tables (if needed in future)
         this.setupTableSort();
     }
 
     setupTableSort() {
-        // Placeholder for table sorting functionality
-        // Can be implemented later if needed
+
     }
 
     setupClickableRows() {
-        // Handle clickable rows with data-href attribute
+
         document.addEventListener('click', (e) => {
             const clickableRow = e.target.closest('.clickable-row');
             if (clickableRow && clickableRow.dataset.href) {
-                // Don't navigate if clicking on a link or button inside the row
+
                 if (e.target.closest('a, button')) {
                     return;
                 }
@@ -596,7 +567,7 @@ class LiteBansUI {
     }
 
     setupBackButton() {
-        // Handle back buttons
+
         document.addEventListener('click', (e) => {
             if (e.target.closest('.back-button')) {
                 e.preventDefault();
@@ -606,10 +577,10 @@ class LiteBansUI {
     }
 
     initializeBootstrapComponents() {
-        // Initialize all Bootstrap tooltips
+
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
-            // Check if element has valid title attribute
+
             const title = tooltipTriggerEl.getAttribute('title') || tooltipTriggerEl.getAttribute('data-bs-title');
             if (title && title !== 'null' && title.trim() !== '') {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
@@ -617,10 +588,9 @@ class LiteBansUI {
             return null;
         });
 
-        // Initialize all Bootstrap popovers
         const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
         popoverTriggerList.map(function (popoverTriggerEl) {
-            // Check if element has valid content
+
             const content = popoverTriggerEl.getAttribute('data-bs-content');
             if (content && content !== 'null' && content.trim() !== '') {
                 return new bootstrap.Popover(popoverTriggerEl);
@@ -629,7 +599,6 @@ class LiteBansUI {
         });
     }
 
-    // Utility functions
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = String(text);
@@ -640,7 +609,7 @@ class LiteBansUI {
         if (!element) return;
         element.style.opacity = '0';
         element.style.transition = 'opacity 300ms ease-in-out';
-        
+
         setTimeout(() => {
             element.style.opacity = '1';
         }, 10);
@@ -665,14 +634,14 @@ class LiteBansUI {
         textArea.style.opacity = '0';
         document.body.appendChild(textArea);
         textArea.select();
-        
+
         try {
             document.execCommand('copy');
             this.showNotification('success', 'Copied to clipboard!');
         } catch (err) {
             this.showNotification('danger', 'Failed to copy');
         }
-        
+
         document.body.removeChild(textArea);
     }
 
@@ -681,24 +650,22 @@ class LiteBansUI {
         alert.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
         alert.style.zIndex = '9999';
         alert.style.minWidth = '250px';
-        
+
         const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
-        
+
         alert.innerHTML = `
             <i class="fas fa-${icon}"></i> ${this.escapeHtml(message)}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        
+
         document.body.appendChild(alert);
-        
-        // Auto dismiss after 3 seconds
+
         setTimeout(() => {
             alert.classList.remove('show');
             setTimeout(() => alert.remove(), 150);
         }, 3000);
     }
 
-    // Public API methods
     refresh() {
         location.reload();
     }
@@ -708,8 +675,6 @@ class LiteBansUI {
     }
 }
 
-// Initialize the UI when DOM is ready
 const LiteBansU = new LiteBansUI();
 
-// Expose to global scope for external access
 window.LiteBansU = LiteBansU;

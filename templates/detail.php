@@ -1,5 +1,5 @@
 <div class="punishment-detail">
-    <!-- Breadcrumb -->
+    
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
@@ -18,7 +18,7 @@
         </ol>
     </nav>
 
-    <!-- Main Detail Card -->
+    
     <div class="card detail-card mb-4">
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-center">
@@ -53,7 +53,7 @@
         
         <div class="card-body">
             <div class="row g-4">
-                <!-- Player Info -->
+                
                 <div class="col-md-4">
                     <div class="player-card text-center">
                         <img src="<?= htmlspecialchars($punishment['avatar'], ENT_QUOTES, 'UTF-8') ?>" 
@@ -66,10 +66,10 @@
                     </div>
                 </div>
                 
-                <!-- Punishment Details -->
+                
                 <div class="col-md-8">
                     <div class="details-grid">
-                        <!-- Reason -->
+                        
                         <div class="detail-item">
                             <label class="detail-label">
                                 <i class="fas fa-comment-alt"></i> <?= htmlspecialchars($lang->get('table.reason'), ENT_QUOTES, 'UTF-8') ?>
@@ -79,7 +79,7 @@
                             </div>
                         </div>
                         
-                        <!-- Staff -->
+                        
                         <div class="detail-item">
                             <label class="detail-label">
                                 <i class="fas fa-user-shield"></i> <?= htmlspecialchars($lang->get('table.staff'), ENT_QUOTES, 'UTF-8') ?>
@@ -90,7 +90,7 @@
                         </div>
                         
                         <?php if (!empty($punishment['ip'])): ?>
-                        <!-- IP (admin only) -->
+                        
                         <div class="detail-item">
                             <label class="detail-label">
                                 <i class="fas fa-network-wired"></i> IP
@@ -101,7 +101,7 @@
                         </div>
                         <?php endif; ?>
 
-                        <!-- Date -->
+                        
                         <div class="detail-item">
                             <label class="detail-label">
                                 <i class="fas fa-calendar"></i> <?= htmlspecialchars($lang->get('table.date'), ENT_QUOTES, 'UTF-8') ?>
@@ -111,7 +111,7 @@
                             </div>
                         </div>
                         
-                        <!-- Server -->
+                        
                         <div class="detail-item">
                             <label class="detail-label">
                                 <i class="fas fa-server"></i> <?= htmlspecialchars($lang->get('table.server'), ENT_QUOTES, 'UTF-8') ?>
@@ -124,7 +124,7 @@
                         </div>
                         
                         <?php if (($config['show_server_origin'] ?? true) && !empty($punishment['server_origin']) && $punishment['server_origin'] !== '*'): ?>
-                        <!-- Server Origin -->
+                        
                         <div class="detail-item">
                             <label class="detail-label">
                                 <i class="fas fa-sign-in-alt"></i> Server Origin
@@ -139,7 +139,7 @@
                         <?php endif; ?>
                         
                         <?php if (($config['show_server_scope'] ?? true) && !empty($punishment['server_scope']) && $punishment['server_scope'] !== '*'): ?>
-                        <!-- Server Scope -->
+                        
                         <div class="detail-item">
                             <label class="detail-label">
                                 <i class="fas fa-globe"></i> Server Scope
@@ -154,7 +154,7 @@
                         <?php endif; ?>
                         
                         <?php if (in_array($type, ['ban', 'mute']) && ($punishment['duration'] || $punishment['until'])): ?>
-                            <!-- Duration -->
+                            
                             <div class="detail-item">
                                 <label class="detail-label">
                                     <i class="fas fa-hourglass-half"></i> <?= htmlspecialchars($lang->get('detail.duration'), ENT_QUOTES, 'UTF-8') ?>
@@ -172,7 +172,7 @@
                                 </div>
                             </div>
                             
-                            <!-- Time Left -->
+                            
                             <?php if ($punishment['active'] && $punishment['timeLeft']): ?>
                                 <div class="detail-item">
                                     <label class="detail-label">
@@ -195,7 +195,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Progress Bar -->
+                                
                                 <?php if ($punishment['active'] && $punishment['until_timestamp'] > 0): ?>
                                     <div class="detail-item full-width">
                                         <label class="detail-label">
@@ -219,7 +219,7 @@
                             <?php endif; ?>
                         <?php endif; ?>
                         
-                        <!-- Expires -->
+                        
                         <?php if ($punishment['until'] && in_array($type, ['ban', 'mute'])): ?>
                             <div class="detail-item">
                                 <label class="detail-label">
@@ -231,7 +231,7 @@
                             </div>
                         <?php endif; ?>
                         
-                        <!-- Removed By -->
+                        
                         <?php if ($punishment['removed']): ?>
                             <div class="detail-item">
                                 <label class="detail-label">
@@ -254,7 +254,7 @@
                             <?php endif; ?>
                         <?php endif; ?>
                         
-                        <!-- Additional Flags -->
+                        
                         <div class="detail-item full-width">
                             <label class="detail-label">
                                 <i class="fas fa-tags"></i> <?= htmlspecialchars($lang->get('detail.flags'), ENT_QUOTES, 'UTF-8') ?>
@@ -286,8 +286,8 @@
         </div>
     </div>
     
-    <?php /* case-evidence:begin */ try { $snFile = __DIR__ . '/../demos/case-evidence.php'; if (is_file($snFile)) { require_once $snFile; echo sn_panel_html($type, (int)$punishment['id']); } } catch (Throwable $e) {} /* case-evidence:end */ ?>
-    <!-- Related Punishments -->
+    <?php try { $snFile = __DIR__ . '/../demos/case-evidence.php'; if (is_file($snFile)) { require_once $snFile; echo sn_panel_html($type, (int)$punishment['id']); } } catch (Throwable $e) {} ?>
+    
     <?php if (!empty($relatedPunishments)): ?>
         <div class="card">
             <div class="card-header">
@@ -353,7 +353,7 @@
     <?php endif; ?>
 </div>
 
-<!-- Additional CSS for detail page -->
+
 <style>
 .punishment-detail {
     animation: fadeIn 0.3s ease-out;

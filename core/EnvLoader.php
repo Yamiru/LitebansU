@@ -32,9 +32,6 @@ class EnvLoader
         self::$loaded = true;
     }
     
-    /**
-     * Force reload .env file (useful after changes)
-     */
     public static function reload(?string $path = null): void
     {
         self::$loaded = false;
@@ -53,30 +50,24 @@ class EnvLoader
         $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         
         foreach ($lines as $line) {
-            // Skip comments
             if (strpos(trim($line), '#') === 0) {
                 continue;
             }
             
-            // Parse key=value
             if (strpos($line, '=') !== false) {
                 list($key, $value) = explode('=', $line, 2);
                 $key = trim($key);
                 $value = trim($value);
                 
-                // Remove quotes if present
                 if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
                     (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
                     $value = substr($value, 1, -1);
                 }
                 
-                // Set environment variable
                 $_ENV[$key] = $value;
                 
-                // Also set in $_SERVER for compatibility
                 $_SERVER[$key] = $value;
                 
-                // Set as actual environment variable
                 putenv("$key=$value");
             }
         }

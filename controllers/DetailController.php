@@ -20,26 +20,22 @@ class DetailController extends BaseController
 {
     public function show(): void
     {
-        // Get parameters
         $type = $_GET['type'] ?? '';
         $id = (int)($_GET['id'] ?? 0);
         
-        // Validate type - normalize to singular form
-        $type = rtrim($type, 's'); // Remove 's' if present
+        $type = rtrim($type, 's');
         if (!in_array($type, ['ban', 'mute', 'warning', 'kick'], true)) {
             $this->showError('Invalid punishment type');
             return;
         }
         
-        // Validate ID
         if ($id <= 0) {
             $this->showError('Invalid punishment ID');
             return;
         }
         
         try {
-            // Get punishment details
-            $tableName = $type . 's'; // Convert ban -> bans, mute -> mutes, etc.
+            $tableName = $type . 's';
             $punishment = $this->repository->getPunishmentById($tableName, $id);
             
             if (!$punishment) {
@@ -47,17 +43,13 @@ class DetailController extends BaseController
                 return;
             }
             
-            // Get player name
             $playerName = $punishment['player_name'] ?? $this->repository->getPlayerName($punishment['uuid'] ?? '');
             
-            // Format the punishment data
             $formattedPunishment = $this->formatPunishmentDetail($punishment, $type, $playerName);
             
-            // Get related punishments for this player
             $relatedPunishments = [];
             if (!empty($punishment['uuid']) && $punishment['uuid'] !== '#') {
                 $relatedPunishments = $this->repository->getPlayerPunishments($punishment['uuid']);
-                // Filter out current punishment
                 $relatedPunishments = array_filter($relatedPunishments, function($p) use ($id, $tableName) {
                     return !($p['id'] == $id && $p['type'] == $tableName);
                 });
@@ -91,7 +83,6 @@ class DetailController extends BaseController
         $uuid = $punishment['uuid'] ?? '';
         $name = $playerName ?? 'Unknown';
         
-        // Calculate duration for bans/mutes only (warnings and kicks don't have 'until' field)
         $duration = null;
         $timeLeft = null;
         $progress = 0;
@@ -102,16 +93,13 @@ class DetailController extends BaseController
             $currentTime = time() * 1000;
             
             if ($endTime > 0) {
-                // Calculate total duration
                 $totalDuration = $endTime - $startTime;
                 $duration = $this->formatDurationDetailed($totalDuration / 1000);
                 
-                // Calculate time left
                 if ($punishment['active'] && $endTime > $currentTime) {
                     $timeLeftMs = $endTime - $currentTime;
                     $timeLeft = $this->formatDurationDetailed($timeLeftMs / 1000);
                     
-                    // Calculate progress percentage
                     $elapsed = $currentTime - $startTime;
                     $progress = min(100, max(0, ($elapsed / $totalDuration) * 100));
                 } else {
@@ -140,7 +128,6 @@ class DetailController extends BaseController
             'duration' => $duration,
             'timeLeft' => $timeLeft,
             'progress' => $progress,
-            // Effective active status (respects expired temp bans/mutes even if DB flag still says 1)
             'active' => $this->isPunishmentActive($punishment, $type),
             'removed' => !empty($punishment['removed_by_name']),
             'removed_by' => isset($punishment['removed_by_name']) 
@@ -156,7 +143,6 @@ class DetailController extends BaseController
             'server_scope' => $punishment['server_scope'] ?? null,
             'avatar' => $this->getAvatarUrl($uuid, $name),
             'type' => $type,
-            // IP is private data: only exposed to a logged-in admin
             'ip' => $this->isAdminLoggedIn() && !empty($punishment['ip']) && $punishment['ip'] !== '#'
                 ? SecurityManager::preventXss((string)$punishment['ip'])
                 : null
@@ -184,7 +170,6 @@ class DetailController extends BaseController
                 $parts[] = $count . $unit;
                 $seconds = fmod($seconds, $value);
                 
-                // Only show 2 units max
                 if (count($parts) >= 2) break;
             }
         }
@@ -194,26 +179,20 @@ class DetailController extends BaseController
     
     private function formatRemovedDate($removedDate): ?string
     {
-        // Handle NULL or empty values
         if (empty($removedDate) || $removedDate === 'NULL' || $removedDate === '#expired') {
             return null;
         }
         
-        // Check if it's a numeric timestamp
         if (!is_numeric($removedDate)) {
             return null;
         }
         
         $timestamp = (int)$removedDate;
         
-        // Validate timestamp - must be greater than 1000000000 (Sep 2001)
-        // This filters out invalid small numbers that would result in 1970 dates
         if ($timestamp < 1000000000) {
             return null;
         }
         
-        // LiteBans stores removed_by_date in seconds (not milliseconds like other timestamps)
-        // So we need to multiply by 1000 before passing to formatDate
         return $this->formatDate($timestamp * 1000);
     }
     
@@ -225,7 +204,6 @@ class DetailController extends BaseController
                 $playerName = $this->repository->getPlayerName($punishment['uuid']);
             }
             
-            // Type is needed so isPunishmentActive can check `until` only for bans/mutes
             $rowType = $punishment['type'] ?? 'unknown';
             
             return [

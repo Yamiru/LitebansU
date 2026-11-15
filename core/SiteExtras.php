@@ -32,11 +32,12 @@ class SiteExtras
         'custom_footer' => '',
         'privacy' => [],
         'indexnow_key' => '',
-        // null = fall back to the .env value
         'home_link_enabled' => null,
         'home_link_url' => null,
         'home_link_label' => null,
         'home_link_newtab' => null,
+        'template' => null,
+        'avatar_cache' => null,
     ];
 
     private const ALLOWED_TAGS = '<p><br><strong><b><em><i><u><ul><ol><li><h2><h3><h4><a><blockquote><code><hr>';
@@ -46,7 +47,6 @@ class SiteExtras
     public static function get(): array
     {
         if (self::$cache === null) {
-            // Stored as a PHP file that exits at once, so no web server can hand the JSON out
             $raw = @file_get_contents(is_file(self::FILE) ? self::FILE : self::LEGACY);
             $data = $raw ? json_decode((string)preg_replace('/^<\?php[^\n]*\?>\r?\n/', '', $raw), true) : null;
             self::$cache = array_merge(self::DEFAULTS, is_array($data) ? $data : []);
@@ -57,7 +57,6 @@ class SiteExtras
         return self::$cache;
     }
 
-    /** Merges $changes into the stored settings. Returns false when data/ cannot be written. */
     public static function save(array $changes): bool
     {
         $data = array_merge(self::get(), array_intersect_key($changes, self::DEFAULTS));
@@ -71,14 +70,12 @@ class SiteExtras
         return true;
     }
 
-    /** Only http(s) URLs and site paths: anything else (javascript:, data:) is refused. */
     public static function normalizeLinkUrl(string $value): string
     {
         $url = trim($value);
         return preg_match('#^(https?://[^\s<>"]+|/[^\s<>"]*)$#i', $url) ? $url : '';
     }
 
-    /** The "main website" menu item: [url, label, newtab], or null when it is off. Admin settings beat .env. */
     public static function homeLink(array $config): ?array
     {
         $x = self::get();
@@ -95,7 +92,6 @@ class SiteExtras
         ];
     }
 
-    /** A valid Google tag ID (G-, GT-, AW- or UA-), or an empty string. */
     public static function gaId(): string
     {
         $id = strtoupper(trim((string)self::get()['ga_id']));
@@ -108,7 +104,6 @@ class SiteExtras
         return preg_match('/^(G|GT|AW|UA)-[A-Z0-9-]{4,20}$/', $id) ? $id : '';
     }
 
-    /** The IndexNow key. With $create it is generated on first use; returns null if it cannot be stored. */
     public static function indexNowKey(bool $create = true): ?string
     {
         $key = (string)self::get()['indexnow_key'];
@@ -141,7 +136,6 @@ class SiteExtras
         return $all[$lang][$key] ?? $all['en'][$key] ?? $key;
     }
 
-    /** Sanitized privacy page HTML for a language: the admin's text, else English, else the built-in default. */
     public static function privacyHtml(string $lang, string $siteName): string
     {
         $privacy = self::get()['privacy'];
@@ -166,7 +160,6 @@ class SiteExtras
             . "<h2>Your rights</h2><p>You can ask the site operator to correct or remove personal data that concerns you. Contact the operator using the details on the protest page.</p>";
     }
 
-    /** Keeps a small set of formatting tags, drops every attribute except a safe href on links. */
     public static function sanitizeHtml(string $html): string
     {
         $html = strip_tags($html, self::ALLOWED_TAGS);
@@ -194,9 +187,6 @@ class SiteExtras
         return $out;
     }
 
-    /**
-     * Public pages worth indexing. Individual punishments (they contain a player and an ID) are left out.
-     */
     public static function indexableUrls(array $config, $repository = null): array
     {
         $site = self::siteUrl($config);
@@ -229,7 +219,6 @@ class SiteExtras
         return $urls;
     }
 
-    /** POSTs a URL list to IndexNow. Returns [succeeded, HTTP status, message]. */
     public static function submitIndexNow(array $config, array $urls): array
     {
         $key = self::indexNowKey();

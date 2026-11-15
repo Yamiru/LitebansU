@@ -16,17 +16,14 @@
 
 declare(strict_types=1);
 
-// Compress dynamic pages even when the web server does not (Apache's mod_deflate skips this if it already did)
 if (extension_loaded('zlib') && !ini_get('zlib.output_compression') && !headers_sent()) {
     ini_set('zlib.output_compression', '1');
 }
 
-// Error handling - capture all errors
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 
-// Load environment first
 $envLoaderPath = __DIR__ . '/core/EnvLoader.php';
 if (!file_exists($envLoaderPath)) {
     die('EnvLoader.php not found at: ' . $envLoaderPath);
@@ -39,23 +36,19 @@ try {
     die('Failed to load environment: ' . $e->getMessage());
 }
 
-// Load Logger immediately after EnvLoader so we can log errors
 require_once __DIR__ . '/core/Logger.php';
 $logger = \core\Logger::getInstance();
 $logger->rotateIfNeeded();
 
-// Helper function for error pages - defined early so it's available everywhere
 function showErrorPage(int $code, string $title, string $message, ?string $details = null): string {
     http_response_code($code);
     $safeTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
     $safeMessage = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
     
-    // Get base path for home link
     $scriptPath = dirname($_SERVER['SCRIPT_NAME'] ?? '');
     $basePath = ($scriptPath === '/' || $scriptPath === '\\') ? '' : $scriptPath;
     $homeUrl = htmlspecialchars($basePath ?: '/', ENT_QUOTES, 'UTF-8');
     
-    // Show details in debug mode
     $detailsHtml = '';
     $debug = core\EnvLoader::get('DEBUG', 'false') === 'true';
     if ($details && $debug) {
@@ -103,18 +96,13 @@ function showErrorPage(int $code, string $title, string $message, ?string $detai
 HTML;
 }
 
-/**
- * Parse database error and return user-friendly message with details
- */
 function parseDatabaseError(PDOException $e): array {
     $code = $e->getCode();
     $message = $e->getMessage();
     
-    // Default
     $userMessage = 'Unable to connect to the database.';
     $details = "Error: {$message}";
     
-    // Parse specific MySQL error codes
     if ($code == 1045 || stripos($message, 'Access denied') !== false) {
         $userMessage = 'Database access denied - invalid username or password.';
         $details = "Check DB_USER and DB_PASS in your .env file.\n\nOriginal error: {$message}";
@@ -154,7 +142,9 @@ function parseDatabaseError(PDOException $e): array {
     ];
 }
 
-// Session start
+require_once __DIR__ . '/core/AvatarCache.php';
+\core\AvatarCache::serveCached((string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
+
 session_start([
     'cookie_httponly' => true,
     'cookie_secure' => isset($_SERVER['HTTPS']),
@@ -163,24 +153,20 @@ session_start([
     'gc_maxlifetime' => (int)core\EnvLoader::get('SESSION_LIFETIME', 3600)
 ]);
 
-// Security headers
 header('Content-Type: text/html; charset=UTF-8');
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 
-// Encoding
 mb_internal_encoding('UTF-8');
 mb_http_output('UTF-8');
 
-// Paths
 $scriptPath = dirname($_SERVER['SCRIPT_NAME']);
 $basePath = ($scriptPath === '/' || $scriptPath === '\\') ? '' : $scriptPath;
 define('BASE_PATH', $basePath);
 define('BASE_DIR', __DIR__);
 
-// Required files
 $requiredFiles = [
     'config/app.php',
     'config/database.php',
@@ -210,7 +196,6 @@ foreach ($requiredFiles as $file) {
     require_once $fullPath;
 }
 
-// Load config
 try {
     $config = require BASE_DIR . '/config/app.php';
     if (!is_array($config)) {
@@ -221,7 +206,6 @@ try {
     die(showErrorPage(500, 'Configuration Error', 'Failed to load configuration.', $e->getMessage()));
 }
 
-// Initialize database config - this can throw if .env has invalid values
 try {
     $dbConfig = new DatabaseConfig();
     $config['db_name'] = $dbConfig->getDatabase();
@@ -234,10 +218,8 @@ try {
     die(showErrorPage(500, 'Configuration Error', $e->getMessage()));
 }
 
-// Set timezone
 date_default_timezone_set($config['timezone'] ?? 'UTC');
 
-// Helpers
 function url(string $path = ''): string {
     $path = ltrim($path, '/');
     $basePath = rtrim(BASE_PATH, '/');
@@ -253,14 +235,6 @@ function url(string $path = ''): string {
     return $basePath . '/' . $path;
 }
 
-/**
- * URL of a combined asset bundle (assets/bundle.php): all CSS in one request, or the main JS,
- * served with gzip and a one-year cache. The version changes when any source file changes.
- */
-/**
- * Base URL for CSS, JS, fonts and images. ASSETS_URL in .env (e.g. https://static.example.com or https://example.com/mcbans)
- * serves them from a cookie-free domain; empty keeps them on this site.
- */
 function assetBase(): string {
     $url = trim((string)\core\EnvLoader::get('ASSETS_URL', ''));
     return preg_match('#^https?://[^\s/?\#]+(/[\w./-]*)?$#i', rtrim($url, '/')) ? rtrim($url, '/') : rtrim(BASE_PATH, '/');
@@ -279,16 +253,12 @@ function bundle(string $type): string {
 function asset(string $path): string {
     $path = ltrim($path, '/');
     $fullPath = BASE_DIR . '/' . $path;
-    $version = file_exists($fullPath) ? '?v=' . substr(md5_file($fullPath), 0, 8) : '';
+    $version = is_file($fullPath) ? '?v=' . substr(md5(filemtime($fullPath) . ':' . filesize($fullPath)), 0, 8) : '';
     return assetBase() . '/' . $path . $version;
 }
 
-/**
- * Check if user is authenticated for require_login feature
- */
 function isUserAuthenticated(): bool {
     if (!isset($_SESSION['admin_authenticated'])) {
-        // Try remember me
         $rememberMe = new \core\RememberMeManager();
         $tokenData = $rememberMe->validateToken();
         
@@ -330,9 +300,7 @@ function isUserAuthenticated(): bool {
     return true;
 }
 
-// Main application logic
 try {
-    // Language switch
     if (isset($_GET['lang'])) {
         $selectedLang = preg_replace('/[^a-z]/', '', substr($_GET['lang'], 0, 2));
         if (in_array($selectedLang, ['ar', 'cs', 'de', 'gr', 'en', 'es', 'fr', 'hu', 'it', 'ja', 'pl', 'ro', 'ru', 'sk', 'sr', 'tr', 'cn'])) {
@@ -344,27 +312,21 @@ try {
                 'httponly' => true,
                 'samesite' => 'Lax'
             ]);
-            // Make value available in current request too (in case anything reads $_COOKIE before next request)
             $_COOKIE['selected_lang'] = $selectedLang;
         }
-        // Ensure session is flushed to disk before the redirect so the next request sees it
         session_write_close();
-        // Prevent the browser from serving a cached (old-language) version of the destination
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
         header('Pragma: no-cache');
-        // Drop only ?lang=, so pages like /detail?type=ban&id=12 keep their parameters
         $cleanUrl = strtok($_SERVER['REQUEST_URI'], '?');
         $keptQuery = $_GET;
         unset($keptQuery['lang']);
         if ($keptQuery) {
             $cleanUrl .= '?' . http_build_query($keptQuery);
         }
-        // 303 See Other forces a GET on the new URL and discourages caching of this response
         header("Location: " . $cleanUrl, true, 303);
         exit;
     }
 
-    // Theme switch
     if (isset($_GET['theme'])) {
         $selectedTheme = preg_replace('/[^a-z]/', '', strtolower($_GET['theme']));
         if (in_array($selectedTheme, ['light', 'dark'])) {
@@ -388,7 +350,6 @@ try {
         exit;
     }
 
-    // Database connection - with detailed error handling
     try {
         $connection = $dbConfig->createConnection();
         $repository = new DatabaseRepository($connection, $dbConfig->getTablePrefix());
@@ -402,7 +363,12 @@ try {
         die(showErrorPage(500, 'Database Error', $errorInfo['userMessage'], $errorInfo['details']));
     }
 
-    // Init managers
+    if (preg_match('#/avatar/([A-Za-z0-9_-]{1,40})\.webp$#', (string)parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), $avatarMatch)) {
+        session_write_close();
+        require_once BASE_DIR . '/core/AvatarCache.php';
+        \core\AvatarCache::serve($avatarMatch[1], $repository->getConnection(), $repository->getTablePrefix(), $config);
+    }
+
     $lang = new LanguageManager(LanguageManager::detectLanguage());
     $theme = new ThemeManager();
     
@@ -423,7 +389,6 @@ try {
     $GLOBALS['stats'] = $stats;
     $GLOBALS['config'] = $config;
 
-    // Check require_login
     $requireLogin = $config['require_login'] ?? false;
     $isAdminRoute = str_starts_with($requestUri, '/admin');
     
@@ -433,7 +398,6 @@ try {
         exit;
     }
 
-    // Routing
     if ($requestUri === '/' || $requestUri === '/index.php') {
         (new HomeController($repository, $lang, $theme, $config))->index();
     } elseif ($requestUri === '/search') {
@@ -455,7 +419,6 @@ try {
     } elseif ($requestUri === '/privacy') {
         (new PrivacyController($repository, $lang, $theme, $config))->index();
     } elseif (preg_match('#^/([a-f0-9]{32})\.txt$#', $requestUri, $keyMatch) && \core\SiteExtras::indexNowKey(false) === $keyMatch[1]) {
-        // IndexNow ownership proof: the key file must contain the key
         header('Content-Type: text/plain; charset=UTF-8');
         echo $keyMatch[1];
     } elseif ($requestUri === '/protest') {
@@ -496,6 +459,7 @@ try {
             '/admin/modify-reason'      => $admin->modifyReason(),
             '/admin/case-evidence'      => $admin->caseEvidence(),
             '/admin/site-extras'        => $admin->siteExtras(),
+            '/admin/templates'          => $admin->templates(),
             '/admin/indexnow'           => $admin->indexNow(),
             '/admin/check-llms'         => $admin->checkLlms(),
             '/admin/save-settings'      => $admin->saveSettings(),

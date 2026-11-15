@@ -15,7 +15,6 @@
  * ============================================================================
  */
 
-// Ensure user is authenticated
 if (!$controller->isAuthenticated()) {
     header('Location: ' . url('admin'));
     exit;
@@ -34,7 +33,7 @@ if (!$controller->isAuthenticated()) {
         </a>
     </div>
 
-    <!-- Admin Navigation Tabs -->
+    
     <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
@@ -72,24 +71,23 @@ if (!$controller->isAuthenticated()) {
             </button>
         </li>
        <?php endif; ?>
-      <li class="nav-item" role="presentation"><button class="nav-link" id="case-evidence-tab" data-bs-toggle="tab" data-bs-target="#case-evidence" type="button"><i class="fas fa-folder-open"></i> <?php /* case-evidence:tab */ try { require_once __DIR__ . '/../../demos/case-evidence.php'; echo sn_e(sn_t('tab')); } catch (Throwable $e) { echo 'Evidence'; } ?></button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="case-evidence-tab" data-bs-toggle="tab" data-bs-target="#case-evidence" type="button"><i class="fas fa-folder-open"></i> <?php try { require_once __DIR__ . '/../../demos/case-evidence.php'; echo sn_e(sn_t('tab')); } catch (Throwable $e) { echo 'Evidence'; } ?></button></li>
       <?php if (($currentUser['role'] ?? 'admin') === 'admin'): ?>
       <li class="nav-item" role="presentation"><button class="nav-link" id="seo-tracking-tab" data-bs-toggle="tab" data-bs-target="#seo-tracking" type="button"><i class="fas fa-bullseye"></i> SEO &amp; Tracking</button></li>
       <?php endif; ?>
     </ul>
     <script>
-    // Keep the chosen tab in view when the row scrolls sideways
     document.getElementById('adminTabs').addEventListener('shown.bs.tab', function (e) {
         e.target.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
     });
     </script>
 
-    <!-- Tab Content -->
+    
     <div class="tab-content" id="adminTabContent">
-        <!-- Overview Tab -->
+        
         <div class="tab-pane fade show active" id="overview" role="tabpanel">
             <div class="row">
-                <!-- Stats Cards -->
+                
                 <div class="col-md-3 mb-4">
                     <div class="card admin-stat-card bg-danger">
                         <div class="card-body">
@@ -149,7 +147,7 @@ if (!$controller->isAuthenticated()) {
                 </div>
             </div>
             
-            <!-- System Info Cards -->
+            
             <div class="row">
                 <div class="col-md-6 mb-4">
                     <div class="card">
@@ -260,7 +258,7 @@ if (!$controller->isAuthenticated()) {
             </div>
         </div>
 
-        <!-- Search & Manage Tab -->
+        
         <div class="tab-pane fade" id="search" role="tabpanel">
             <div class="card">
                 <div class="card-body">
@@ -294,7 +292,7 @@ if (!$controller->isAuthenticated()) {
         </div>
 
         <?php if (($currentUser['role'] ?? 'admin') === 'admin'): ?>
-        <!-- Export/Import Tab -->
+        
         <div class="tab-pane fade" id="export" role="tabpanel">
             <div class="row">
                 <div class="col-md-6 mb-4">
@@ -366,7 +364,7 @@ if (!$controller->isAuthenticated()) {
         </div>
         <?php endif; ?>
 
-        <!-- Settings Tab -->
+        
         <div class="tab-pane fade" id="settings" role="tabpanel">
             <div class="card">
                 <div class="card-body">
@@ -401,8 +399,17 @@ if (!$controller->isAuthenticated()) {
                                     <select class="form-control" name="default_theme">
                                         <option value="light" <?= ($config['default_theme'] ?? 'dark') === 'light' ? 'selected' : '' ?>>Light</option>
                                         <option value="dark" <?= ($config['default_theme'] ?? 'dark') === 'dark' ? 'selected' : '' ?>>Dark</option>
-                                        <option value="auto" <?= ($config['default_theme'] ?? 'dark') === 'auto' ? 'selected' : '' ?>>Auto</option>
                                     </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Site Template</label>
+                                    <select class="form-control" name="site_template">
+                                        <?php foreach (\core\TemplateManager::all(\core\TemplateManager::activeId($config)) as $tpl): ?>
+                                        <option value="<?= htmlspecialchars($tpl['id'], ENT_QUOTES, 'UTF-8') ?>" <?= $tpl['active'] ? 'selected' : '' ?>><?= htmlspecialchars($tpl['name'] . ($tpl['framework'] ? ' (' . $tpl['framework'] . ')' : ''), ENT_QUOTES, 'UTF-8') ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="text-muted">Found automatically in site-templates/. Upload new ones in SEO &amp; Tracking &rarr; Templates.</small>
                                 </div>
                             </div>
                             
@@ -437,7 +444,7 @@ if (!$controller->isAuthenticated()) {
                             </div>
                         </div>
                         
-                        <!-- Protest Settings -->
+                        
                         <hr class="my-4">
                         <h6 class="mb-3"><i class="fas fa-gavel"></i> Protest Settings</h6>
                         <div class="row">
@@ -479,7 +486,7 @@ if (!$controller->isAuthenticated()) {
                             </div>
                         </div>
                         
-                        <!-- Display Options -->
+                        
                         <hr class="my-4">
                         <h6 class="mb-3"><i class="fas fa-eye"></i> Display Options</h6>
                         <div class="row">
@@ -555,7 +562,7 @@ if (!$controller->isAuthenticated()) {
                             </div>
                         </div>
                         
-                        <!-- Access Control Settings -->
+                        
                         <hr class="my-4">
                         <h6 class="mb-3"><i class="fas fa-lock"></i> Access Control</h6>
                         <div class="row">
@@ -581,7 +588,7 @@ if (!$controller->isAuthenticated()) {
                             </div>
                         </div>
                         
-                        <!-- SEO Settings -->
+                        
                         <hr class="my-4">
                         <h6 class="mb-3"><i class="fas fa-search"></i> SEO Settings</h6>
                         <div class="row">
@@ -672,7 +679,7 @@ if (!$controller->isAuthenticated()) {
                             </div>
                         </div>
                         
-                        <!-- Advanced Site Settings -->
+                        
                         <hr class="my-4">
                         <h6 class="mb-3"><i class="fas fa-globe"></i> Advanced Site Settings</h6>
                         <div class="row">
@@ -743,17 +750,10 @@ if (!$controller->isAuthenticated()) {
                                     </select>
                                     <small class="form-text text-muted">Default language for new visitors</small>
                                 </div>
-                                
-                                <div class="mb-3">
-                                    <label class="form-label">Theme Color</label>
-                                    <input type="color" class="form-control form-control-color" name="site_theme_color" 
-                                           value="<?= htmlspecialchars($config['site_theme_color'] ?? '#ef4444', ENT_QUOTES, 'UTF-8') ?>">
-                                    <small class="form-text text-muted">Browser theme color for mobile devices</small>
-                                </div>
                             </div>
                         </div>
                         
-                        <!-- Avatar Configuration -->
+                        
                         <hr class="my-4">
                         <h6 class="mb-3"><i class="fas fa-user-circle"></i> Avatar Configuration</h6>
                         <div class="row">
@@ -777,7 +777,13 @@ if (!$controller->isAuthenticated()) {
                                 </div>
                             </div>
                         </div>
-                        
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="avatar_cache" id="avatar-cache" value="1" <?= \core\AvatarCache::enabled($config) ? 'checked' : '' ?><?= \core\AvatarCache::available() ? '' : ' disabled' ?>>
+                            <label class="form-check-label" for="avatar-cache">Download player heads and serve them from this site as WebP</label>
+                            <small class="form-text text-muted d-block">Off (default): visitors load heads from the URLs above. On: each head is downloaded once into <code>data/avatars/</code>.<?= \core\AvatarCache::available() ? '' : ' PHP GD with WebP support is not available on this server.' ?></small>
+                        </div>
+
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-save"></i> Save Settings
                         </button>
@@ -789,7 +795,7 @@ if (!$controller->isAuthenticated()) {
                     </div>
                     <?php endif; ?>
                     
-                    <!-- Cache Management Section -->
+                    
                     <hr class="my-4">
                     <div class="cache-management">
                         <h5 class="mb-3">
@@ -826,7 +832,7 @@ if (!$controller->isAuthenticated()) {
                         <div id="cache-status" class="mt-3"></div>
                     </div>
                     
-                    <!-- Database Diagnostic Section -->
+                    
                     <hr class="my-4">
                     <div class="database-diagnostic">
                         <h5 class="mb-3">
@@ -855,7 +861,7 @@ if (!$controller->isAuthenticated()) {
         </div>
 
         <?php if ((($config['google_auth_enabled'] ?? false) || ($config['discord_auth_enabled'] ?? false)) && ($currentUser['role'] ?? '') === 'admin'): ?>
-        <!-- Users Tab -->
+        
         <div class="tab-pane fade" id="users" role="tabpanel">
             <div class="card">
                 <div class="card-body">
@@ -884,7 +890,7 @@ if (!$controller->isAuthenticated()) {
         <?php endif; ?>
 
         <?php if (($currentUser['role'] ?? 'admin') === 'admin'): ?>
-        <!-- SEO & Tracking Tab -->
+        
         <?php
         $seoExtras = \core\SiteExtras::get();
         $seoLangs = $lang->getSupportedLanguages();
@@ -919,6 +925,70 @@ if (!$controller->isAuthenticated()) {
                         <div id="llms-result" class="mt-3"></div>
                     </div>
                 </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3"><i class="fas fa-palette text-primary"></i> Templates</h5>
+                        <p class="text-muted small">Pick the look of the public site. New templates in <code>site-templates/</code> appear here automatically. A template without a page's view shows that page with the default design. The admin panel always uses the default design.</p>
+                        <div id="tpl-list" class="mb-3"></div>
+                        <div class="alert alert-warning small mb-2">A template contains PHP code that runs on your server. Upload only templates you trust.</div>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="tpl-zip" accept=".zip">
+                            <button type="button" class="btn btn-primary" id="tpl-upload"><i class="fas fa-upload"></i> Upload template (.zip)</button>
+                        </div>
+                        <div id="tpl-msg" class="small mt-2"></div>
+                    </div>
+                </div>
+                <script>
+                (function () {
+                    const url = '<?= url('admin/templates') ?>';
+                    const list = document.getElementById('tpl-list');
+                    const msg = document.getElementById('tpl-msg');
+                    const csrf = () => document.querySelector('meta[name="csrf-token"]').content;
+                    const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                    const say = (text, ok) => { msg.className = 'small mt-2 text-' + (ok ? 'success' : 'danger'); msg.textContent = text; };
+                    async function call(init) {
+                        const r = await fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }, ...init });
+                        const j = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+                        if (!r.ok || j.error) throw new Error(j.error || 'Request failed');
+                        return j;
+                    }
+                    function post(body) {
+                        return call({ method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify({ ...body, csrf_token: csrf() }) });
+                    }
+                    async function load() {
+                        const j = await call({});
+                        list.innerHTML = j.templates.map(t => `
+                            <div class="d-flex align-items-center justify-content-between border rounded p-2 mb-2">
+                                <div>
+                                    <strong>${esc(t.name)}</strong> <small class="text-muted">v${esc(t.version)} ${t.author ? '- ' + esc(t.author) : ''} ${t.framework ? '- ' + esc(t.framework) : ''}</small>
+                                    ${t.active ? '<span class="badge bg-success ms-2">Active</span>' : ''}
+                                    <div class="small text-muted">${esc(t.description)}</div>
+                                </div>
+                                <div class="text-nowrap">
+                                    ${t.active ? '' : `<button class="btn btn-sm btn-primary" data-tpl="activate" data-id="${esc(t.id)}">Activate</button>`}
+                                    ${t.builtin || t.active ? '' : `<button class="btn btn-sm btn-outline-danger ms-1" data-tpl="delete" data-id="${esc(t.id)}">Delete</button>`}
+                                </div>
+                            </div>`).join('');
+                    }
+                    list.addEventListener('click', async e => {
+                        const b = e.target.closest('[data-tpl]');
+                        if (!b || (b.dataset.tpl === 'delete' && !confirm('Delete this template?'))) return;
+                        try { say((await post({ action: b.dataset.tpl, id: b.dataset.id })).message, true); await load(); } catch (err) { say(err.message, false); }
+                    });
+                    document.getElementById('tpl-upload').addEventListener('click', async function () {
+                        const f = document.getElementById('tpl-zip').files[0];
+                        if (!f) return say('Choose a .zip file first.', false);
+                        const fd = new FormData();
+                        fd.append('template_zip', f);
+                        fd.append('csrf_token', csrf());
+                        this.disabled = true;
+                        try { say((await call({ method: 'POST', body: fd })).message, true); await load(); } catch (err) { say(err.message, false); }
+                        this.disabled = false;
+                    });
+                    load().catch(err => say(err.message, false));
+                })();
+                </script>
 
                 <?php $homeLink = \core\SiteExtras::homeLink($config); ?>
                 <div class="card mb-4">
@@ -1009,8 +1079,8 @@ if (!$controller->isAuthenticated()) {
         </div>
         <?php endif; ?>
 
-        <?php /* case-evidence:pane */ try { require_once __DIR__ . '/../../demos/case-evidence.php'; echo sn_admin_pane_html(); } catch (Throwable $e) {} ?>
-        <!-- System Info Tab -->
+        <?php try { require_once __DIR__ . '/../../demos/case-evidence.php'; echo sn_admin_pane_html(); } catch (Throwable $e) {} ?>
+        
         <div class="tab-pane fade" id="info" role="tabpanel">
             <div class="card">
                 <div class="card-body">
@@ -1029,13 +1099,13 @@ if (!$controller->isAuthenticated()) {
     </div>
 </div>
 
-<!-- Admin Dashboard CSS -->
+
 <style>
 .admin-dashboard {
     animation: fadeIn 0.3s ease-out;
 }
 
-/* One row at every width: it scrolls sideways when the tabs do not fit (swipe on phones, tablets and iOS) */
+
 #adminTabs {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -1053,7 +1123,7 @@ if (!$controller->isAuthenticated()) {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    min-height: 44px; /* iOS touch target */
+    min-height: 44px; 
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 }
@@ -1065,7 +1135,7 @@ if (!$controller->isAuthenticated()) {
     .admin-dashboard > .d-flex:first-child { flex-wrap: wrap; gap: 0.75rem; }
     .admin-dashboard h1 { font-size: 1.5rem; }
 }
-/* iOS zooms into inputs under 16px */
+
 @media (max-width: 991.98px) {
     .admin-dashboard input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
     .admin-dashboard select,
@@ -1094,7 +1164,7 @@ if (!$controller->isAuthenticated()) {
     border-color: var(--primary);
 }
 
-/* Fixed admin stat card colors */
+
 .admin-stat-card h6,
 .admin-stat-card h2,
 .admin-stat-card small {
@@ -1105,7 +1175,7 @@ if (!$controller->isAuthenticated()) {
     color: white !important;
 }
 
-/* Fixed admin table text colors */
+
 .admin-table-text {
     color: var(--text-primary) !important;
 }
@@ -1195,7 +1265,7 @@ if (!$controller->isAuthenticated()) {
     }
 }
 
-/* Modal fixes */
+
 .modal {
     z-index: 1055 !important;
 }
@@ -1217,7 +1287,7 @@ if (!$controller->isAuthenticated()) {
 }
 </style>
 
-<!-- Modify Case Modal: reason (LiteBans database) plus case evidence (internal storage) -->
+
 <?php $snT = function (string $key): string { return function_exists('sn_t') ? htmlspecialchars(sn_t($key), ENT_QUOTES, 'UTF-8') : $key; }; ?>
 <div class="modal fade" id="modifyReasonModal" tabindex="-1" aria-labelledby="modifyReasonModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1288,7 +1358,7 @@ if (!$controller->isAuthenticated()) {
     </div>
 </div>
 
-<!-- Add User Modal -->
+
 <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -1332,7 +1402,7 @@ if (!$controller->isAuthenticated()) {
     </div>
 </div>
 
-<!-- Edit User Modal -->
+
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -1380,7 +1450,7 @@ if (!$controller->isAuthenticated()) {
     </div>
 </div>
 
-<!-- Admin Dashboard JavaScript -->
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;

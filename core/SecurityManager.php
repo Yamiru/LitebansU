@@ -23,25 +23,16 @@ class SecurityManager
     private const MAX_INPUT_LENGTH = 255;
     private const RATE_LIMIT_PREFIX = 'rate_limit_';
     
-    /**
-     * Validate UUID format
-     */
     public static function validateUuid(string $uuid): bool
     {
         return preg_match(self::UUID_PATTERN, $uuid) === 1;
     }
     
-    /**
-     * Validate Minecraft username
-     */
     public static function validateUsername(string $username): bool
     {
         return preg_match(self::USERNAME_PATTERN, $username) === 1;
     }
     
-    /**
-     * Sanitize user input
-     */
     public static function sanitizeInput(string $input): string
     {
         $input = trim($input);
@@ -50,18 +41,13 @@ class SecurityManager
             $input = substr($input, 0, self::MAX_INPUT_LENGTH);
         }
         
-        // Remove null bytes
         $input = str_replace("\0", '', $input);
         
-        // Normalize whitespace
         $input = preg_replace('/\s+/', ' ', $input);
         
         return htmlspecialchars($input, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
     
-    /**
-     * Validate and sanitize integer
-     */
     public static function validateInteger(mixed $value, int $min = 0, int $max = PHP_INT_MAX): int
     {
         $int = filter_var($value, FILTER_VALIDATE_INT, [
@@ -78,9 +64,6 @@ class SecurityManager
         return $int;
     }
     
-    /**
-     * Generate CSRF token
-     */
     public static function generateCsrfToken(): string
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -92,7 +75,6 @@ class SecurityManager
             $_SESSION['csrf_token_time'] = time();
         }
         
-        // Regenerate token every hour
         if (time() - $_SESSION['csrf_token_time'] > 3600) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
             $_SESSION['csrf_token_time'] = time();
@@ -101,9 +83,6 @@ class SecurityManager
         return $_SESSION['csrf_token'];
     }
     
-    /**
-     * Validate CSRF token
-     */
     public static function validateCsrfToken(string $token): bool
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -114,7 +93,6 @@ class SecurityManager
             return false;
         }
         
-        // Check token age
         if (!isset($_SESSION['csrf_token_time']) || time() - $_SESSION['csrf_token_time'] > 3600) {
             return false;
         }
@@ -122,34 +100,23 @@ class SecurityManager
         return hash_equals($_SESSION['csrf_token'], $token);
     }
     
-    /**
-     * Prevent XSS in output
-     */
     public static function preventXss(string $text): string
     {
-        // Remove Minecraft color codes
         $text = preg_replace('/[§&][0-9a-fk-or]/ui', '', $text);
         
-        // Remove hex color codes  
         $text = preg_replace('/#[0-9a-f]{6}/i', '', $text);
         
-        // Escape HTML but preserve UTF-8 characters properly
         $text = htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8', false);
         
-        // Convert newlines to breaks
         $text = nl2br($text);
         
         return $text;
     }
     
-    /**
-     * Rate limiting using file-based storage as fallback
-     */
     public static function rateLimitCheck(string $identifier, int $maxRequests = 60, int $timeWindow = 3600): bool
     {
         $key = self::RATE_LIMIT_PREFIX . md5($identifier);
         
-        // Try APCu first
         if (function_exists('apcu_enabled') && apcu_enabled()) {
             $current = apcu_fetch($key) ?: 0;
             
@@ -161,7 +128,6 @@ class SecurityManager
             return true;
         }
         
-        // Fallback to file-based rate limiting
         $cacheDir = sys_get_temp_dir() . '/litebans_cache';
         if (!is_dir($cacheDir)) {
             @mkdir($cacheDir, 0700, true);
@@ -177,7 +143,6 @@ class SecurityManager
             }
         }
         
-        // Reset if time window expired
         if (time() - $data['time'] > $timeWindow) {
             $data = ['count' => 0, 'time' => time()];
         }
@@ -192,26 +157,18 @@ class SecurityManager
         return true;
     }
     
-    /**
-     * Validate request method
-     */
     public static function validateRequestMethod(string $expected): bool
     {
         return $_SERVER['REQUEST_METHOD'] === strtoupper($expected);
     }
     
-    /**
-     * Get client IP address
-     */
     public static function getClientIp(): string
     {
         $remote = $_SERVER['REMOTE_ADDR'] ?? '';
         $trusted = array_filter(array_map('trim', explode(',', (string)\core\EnvLoader::get('TRUSTED_PROXIES', ''))));
 
-        // Forwarding headers are client-controlled: only believe them when the connection comes from a listed proxy
         if ($remote !== '' && in_array($remote, $trusted, true)) {
             foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP'] as $header) {
-                // X-Forwarded-For: the entry added by our proxy is the last one
                 $value = isset($_SERVER[$header]) ? trim(substr(strrchr(',' . $_SERVER[$header], ','), 1)) : '';
                 if ($value !== '' && filter_var($value, FILTER_VALIDATE_IP)) {
                     return $value;
@@ -222,9 +179,6 @@ class SecurityManager
         return filter_var($remote, FILTER_VALIDATE_IP) ? $remote : '0.0.0.0';
     }
     
-    /**
-     * Generate secure random string
-     */
     public static function generateRandomString(int $length = 32): string
     {
         return bin2hex(random_bytes($length / 2));

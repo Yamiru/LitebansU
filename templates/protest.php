@@ -1,5 +1,5 @@
 <div class="protest-page">
-    <!-- Header -->
+    
     <div class="page-header mb-5">
         <h1 class="display-4 text-center">
             <i class="fas fa-gavel text-primary"></i>
@@ -10,7 +10,6 @@
         </p>
     </div>
 
-    <!-- How To Section -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
             <h3 class="mb-0">
@@ -20,8 +19,7 @@
         </div>
         <div class="card-body">
             <p class="lead mb-4"><?= htmlspecialchars($lang->get('protest.how_to_subtitle'), ENT_QUOTES, 'UTF-8') ?></p>
-            
-            <!-- Step 1 -->
+
             <div class="protest-step">
                 <h4 class="text-primary mb-3">
                     <i class="fas fa-clipboard-list"></i>
@@ -49,7 +47,6 @@
 
             <hr class="my-4">
 
-            <!-- Step 2: Contact Methods -->
             <div class="protest-step">
                 <h4 class="text-primary mb-3">
                     <i class="fas fa-envelope"></i>
@@ -58,16 +55,14 @@
                 <p><?= htmlspecialchars($lang->get('protest.step2_desc'), ENT_QUOTES, 'UTF-8') ?></p>
                 
                 <div class="row g-4 mt-3 <?php 
-                    // Count enabled contact methods
                     $enabledMethods = 0;
                     if ($config['show_contact_discord'] ?? true) $enabledMethods++;
                     if ($config['show_contact_email'] ?? true) $enabledMethods++;
                     if ($config['show_contact_forum'] ?? true) $enabledMethods++;
                     
-                    // Center if only one method is enabled
                     echo ($enabledMethods === 1) ? 'justify-content-center' : '';
                 ?>">
-                    <!-- Discord -->
+                    
                     <?php if (($config['show_contact_discord'] ?? true)): ?>
                     <div class="col-md-4 <?= ($enabledMethods === 1) ? 'col-lg-4' : '' ?>">
                         <div class="contact-method-card h-100">
@@ -86,8 +81,7 @@
                         </div>
                     </div>
                     <?php endif; ?>
-                    
-                    <!-- Email -->
+
                     <?php if (($config['show_contact_email'] ?? true)): ?>
                     <div class="col-md-4 <?= ($enabledMethods === 1) ? 'col-lg-4' : '' ?>">
                         <div class="contact-method-card h-100">
@@ -102,8 +96,7 @@
                         </div>
                     </div>
                     <?php endif; ?>
-                    
-                    <!-- Forum -->
+
                     <?php if (($config['show_contact_forum'] ?? true)): ?>
                     <div class="col-md-4 <?= ($enabledMethods === 1) ? 'col-lg-4' : '' ?>">
                         <div class="contact-method-card h-100">
@@ -127,7 +120,6 @@
 
             <hr class="my-4">
 
-            <!-- Step 3 -->
             <div class="protest-step">
                 <h4 class="text-primary mb-3">
                     <i class="fas fa-edit"></i>
@@ -155,7 +147,6 @@
 
             <hr class="my-4">
 
-            <!-- Step 4 -->
             <div class="protest-step">
                 <h4 class="text-primary mb-3">
                     <i class="fas fa-clock"></i>
@@ -166,7 +157,6 @@
         </div>
     </div>
 
-    <!-- Guidelines -->
     <div class="card mb-4">
         <div class="card-header bg-info text-white">
             <h4 class="mb-0">
@@ -195,7 +185,6 @@
         </div>
     </div>
 
-    <!-- Warning -->
     <div class="alert alert-danger">
         <h5 class="alert-heading">
             <i class="fas fa-exclamation-triangle"></i>
@@ -205,7 +194,6 @@
     </div>
 </div>
 
-<!-- Protest Page Styles -->
 <style>
 .protest-page {
     max-width: 1000px;
@@ -317,7 +305,6 @@
     top: 0.25rem;
 }
 
-/* Dark mode adjustments */
 .theme-dark .contact-method-card {
     background: var(--bg-secondary);
 }
@@ -327,7 +314,6 @@
     background: var(--primary) !important;
 }
 
-/* Mobile responsive */
 @media (max-width: 768px) {
     .contact-method-card {
         padding: 1.5rem;

@@ -23,7 +23,7 @@
         </div>
     </div>
 <?php else: ?>
-    <!-- Desktop Table -->
+    
     <div class="table-responsive d-none d-lg-block">
         <table class="table table-hover">
             <thead>
@@ -146,13 +146,13 @@
         </table>
     </div>
 
-    <!-- Mobile Card Layout -->
+    
     <div class="mobile-punishment-list d-lg-none">
         <?php foreach ($punishments as $punishment): ?>
             <div class="mobile-punishment-card clickable-row" data-href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>">
                 <div class="card mb-3">
                     <div class="card-body">
-                        <!-- Player Header -->
+                        
                         <div class="d-flex align-items-center mb-3">
                             <img src="<?= $punishment['avatar'] ?>" 
                                  alt="<?= $punishment['name'] ?>" 
@@ -174,14 +174,14 @@
                             </div>
                         </div>
 
-                        <!-- UUID Display (conditionally shown) -->
+                        
                         <?php if ($config['show_uuid'] === true): ?>
                         <div class="mb-2">
                             <small class="text-muted font-monospace"><strong>UUID:</strong> <?= $punishment['uuid'] ?></small>
                         </div>
                         <?php endif; ?>
                         
-                        <!-- Server Badge -->
+                        
                         <div class="mb-2">
                             <span class="badge bg-secondary">
                                 <i class="fas fa-server"></i> <?= htmlspecialchars($punishment['server'] ?? 'Global', ENT_QUOTES, 'UTF-8') ?>
@@ -198,7 +198,7 @@
                             <?php endif; ?>
                         </div>
                         
-                        <!-- Reason -->
+                        
                         <div class="mb-2">
                             <strong class="text-muted small"><?= $lang->get('table.reason') ?>:</strong>
                             <div class="mt-1 reason-text" 
@@ -207,7 +207,7 @@
                             </div>
                         </div>
                         
-                        <!-- Meta Information -->
+                        
                         <div class="row g-2 small text-muted">
                             <div class="col-6">
                                 <strong><?= $lang->get('table.staff') ?>:</strong><br>
@@ -239,7 +239,7 @@
                             <?php endif; ?>
                         </div>
                         
-                        <!-- Action Button -->
+                        
                         <div class="text-end mt-3">
                             <a href="<?= htmlspecialchars(url('detail?type=' . rtrim($type, 's') . '&id=' . $punishment['id']), ENT_QUOTES, 'UTF-8') ?>"
                                class="btn btn-sm btn-outline-primary">
@@ -252,7 +252,7 @@
         <?php endforeach; ?>
     </div>
 
-    <!-- Pagination -->
+    
     <?php if ($pagination['total'] > 1): ?>
         <nav aria-label="<?= $lang->get('pagination.label') ?>">
             <div class="pagination">

@@ -33,7 +33,6 @@ const SN_VIDEOS = [
     'dem' => 'application/octet-stream', 'demo' => 'application/octet-stream',
 ];
 const SN_ACCEPT = 'image/png,image/jpeg,image/gif,image/webp,video/*,.mkv,.dem,.demo,.m4a';
-// Videos in these formats are re-encoded to a smaller MP4 in the background (needs ffmpeg on the server)
 const SN_OPTIMIZE = ['mp4', 'mkv', 'mov', 'avi', 'webm', 'flv', 'wmv', 'mpg', 'mpeg', 'm4v', '3gp'];
 const SN_MAX_BYTES = 8 * 1024 * 1024;
 const SN_MAX_VIDEO = 500 * 1024 * 1024;
@@ -48,7 +47,6 @@ function sn_e($value): string
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-/** UI strings. Missing keys fall back to English. Placeholders: %d numbers, %s text. */
 function sn_strings(): array
 {
     static $all = null;
@@ -606,7 +604,6 @@ function sn_strings(): array
     return $all = ['en' => $en] + array_map(fn($t) => $t + $en, $tr);
 }
 
-/** Interface language: session, cookie, browser, then English. Mirrors the site's own detection. */
 function sn_lang(): string
 {
     static $lang = null;
@@ -633,7 +630,6 @@ function sn_t(string $key, ...$args): string
     return $args ? vsprintf($text, $args) : $text;
 }
 
-/** Logged-in staff member with role and permissions, or null. Unknown accounts are read-only. */
 function sn_user(): ?array
 {
     static $cached = false;
@@ -644,7 +640,6 @@ function sn_user(): ?array
     if (empty($_SESSION['admin_authenticated'])) {
         return null;
     }
-    // Same 2 hour idle limit as the admin panel (AdminController::ADMIN_SESSION_TIMEOUT); activity here keeps it alive
     if (time() - (int)($_SESSION['admin_login_time'] ?? 0) > 7200) {
         return null;
     }
@@ -675,15 +670,10 @@ function sn_user(): ?array
             }
         }
     } catch (Throwable $e) {
-        // Keep the read-only defaults.
     }
     return $cached = ['id' => $id, 'name' => $name, 'role' => $role, 'permissions' => $permissions];
 }
 
-/**
- * view: any staff. add (reports and appeal outcome): admin or "modify".
- * edit/delete: admin, or "modify" on your own note.
- */
 function sn_can(?array $user, string $action, ?array $note = null): bool
 {
     if (!$user) {
@@ -716,7 +706,6 @@ function sn_normalize($data): array
     return $data;
 }
 
-/** Removes the guard line from the stored file, so the rest is plain JSON. */
 function sn_unguard(string $raw): string
 {
     return preg_replace('/^<\?php[^\n]*\?>\r?\n/', '', $raw) ?? $raw;
@@ -729,13 +718,11 @@ function sn_read(): array
     return sn_normalize($raw ? json_decode(sn_unguard($raw), true) : null);
 }
 
-/** Read-modify-write under an exclusive lock. Return false from $change to skip saving. */
 function sn_mutate(callable $change)
 {
     if (!is_dir(SN_EVIDENCE)) {
         @mkdir(SN_EVIDENCE, 0775, true);
     }
-    // Move an older unguarded staff_notes.json to the guarded file
     if (!is_file(SN_FILE) && is_file(SN_LEGACY)) {
         @rename(SN_LEGACY, SN_FILE);
     }
@@ -776,7 +763,6 @@ function sn_csrf(): string
     return $_SESSION['csrf_token'];
 }
 
-/** Site base path without trailing slash, whether called from the site or from /demos/. */
 function sn_base(): string
 {
     $dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/'));
@@ -816,10 +802,6 @@ function sn_mime(string $ext): string
     return SN_IMAGES[$ext] ?? SN_VIDEOS[$ext] ?? 'application/octet-stream';
 }
 
-/**
- * Validate and store uploaded images, videos and demos.
- * Returns [saved attachment entries, error message or null].
- */
 function sn_store_evidence(int $room, array $captions): array
 {
     $saved = [];
@@ -887,8 +869,6 @@ function sn_store_evidence(int $room, array $captions): array
     return [$saved, null];
 }
 
-/** Removes every stored variant of an attachment (original, WebP, optimised MP4, temp file). */
-/** Parses php.ini sizes such as "8M". */
 function sn_ini_bytes(string $value): int
 {
     $value = trim($value);
@@ -901,10 +881,6 @@ function sn_ini_bytes(string $value): int
     return (int)$number;
 }
 
-/**
- * When a request is bigger than post_max_size PHP throws the whole form away, so type and id are
- * empty. Returns a clear message in that case, null otherwise.
- */
 function sn_upload_overflow(): ?string
 {
     $length = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
@@ -926,7 +902,6 @@ function sn_remove_files(array $evidence): void
     }
 }
 
-/** Path of the stored file. An optimised video lives at <id>.mp4, next to or instead of the original. */
 function sn_ev_path(array $ev): string
 {
     $id = (string)($ev['id'] ?? '');
@@ -936,7 +911,6 @@ function sn_ev_path(array $ev): string
     return SN_EVIDENCE . '/' . basename((string)($ev['file'] ?? ''));
 }
 
-/** Download name with the extension of the file that is really stored. */
 function sn_ev_name(array $ev, string $path): string
 {
     return pathinfo((string)$ev['name'], PATHINFO_FILENAME) . '.' . strtolower(pathinfo($path, PATHINFO_EXTENSION));
@@ -948,7 +922,6 @@ function sn_gif_animated(string $path): bool
     return preg_match_all('#\x00\x21\xF9\x04.{4}\x00\x2C#s', $data) > 1;
 }
 
-/** Converts a JPEG, PNG or still GIF to WebP with GD. Returns false when it cannot (the original is kept). */
 function sn_webp(string $src, string $ext, string $dest): bool
 {
     if (!function_exists('imagewebp')) {
@@ -998,10 +971,6 @@ function sn_ffmpeg(): ?string
     return $binary;
 }
 
-/**
- * Re-encodes a video to a smaller MP4 (H.264, AAC, at most 720p) in a background process so the upload
- * request is not held up. The result replaces the original only if it is smaller. Needs ffmpeg and exec().
- */
 function sn_video_script(string $ffmpeg, string $path, string $id): string
 {
     $tmp = SN_EVIDENCE . '/' . $id . '.tmp.mp4';
@@ -1022,8 +991,6 @@ function sn_optimize_video(string $path, string $id): bool
     if (!$ffmpeg) {
         return false;
     }
-    // ffmpeg decides the format from the content, not the extension: a text playlist (HLS, ffconcat)
-    // renamed to .mp4 could make it read other local files. Only re-encode real video containers.
     $head = (string)@file_get_contents($path, false, null, 0, 16);
     $isContainer = substr($head, 4, 4) === 'ftyp'
         || strncmp($head, "\x1A\x45\xDF\xA3", 4) === 0
@@ -1043,7 +1010,6 @@ function sn_return_url(string $type, int $id): string
 {
     $target = (string)($_POST['return'] ?? '');
     if ($target === '' && !empty($_SERVER['HTTP_REFERER'])) {
-        // A dropped (too large) POST has no fields: go back to the page the form was on
         $ref = parse_url((string)$_SERVER['HTTP_REFERER']);
         if (($ref['host'] ?? '') === strtok((string)($_SERVER['HTTP_HOST'] ?? ''), ':')) {
             $target = ($ref['path'] ?? '/') . (isset($ref['query']) ? '?' . $ref['query'] : '');
@@ -1057,7 +1023,6 @@ function sn_return_url(string $type, int $id): string
     return sn_base() . '/detail?type=' . $type . '&id=' . $id . '#case-evidence';
 }
 
-/** Applies one POSTed action. Returns [succeeded, translated message]. */
 function sn_apply_post(): array
 {
     if ($overflow = sn_upload_overflow()) {
@@ -1191,7 +1156,6 @@ function sn_apply_post(): array
     return [true, sn_t($done[$action])];
 }
 
-/** Handles a form post from the detail page (redirect back) or an XHR (JSON). */
 function sn_handle_post(): void
 {
     [$ok, $message] = sn_apply_post();
@@ -1206,7 +1170,6 @@ function sn_handle_post(): void
     exit;
 }
 
-/** Streams an attachment to a logged-in staff member, with Range support for video seeking. */
 function sn_serve_evidence(string $evidenceId): void
 {
     $isStaff = sn_user() !== null;
@@ -1264,7 +1227,6 @@ function sn_serve_evidence(string $evidenceId): void
     exit;
 }
 
-/** Summary of one case for the admin search: report and attachment counts plus appeal status. */
 function sn_case_summary(string $type, int $id, ?array $data = null): array
 {
     $data = $data ?? sn_read();
@@ -1277,7 +1239,6 @@ function sn_case_summary(string $type, int $id, ?array $data = null): array
     ];
 }
 
-/** Cases whose reports, captions, file names or appeal line contain the query. Returns [[type, id], ...]. */
 function sn_search_cases(string $query): array
 {
     $data = sn_read();
@@ -1308,7 +1269,6 @@ function sn_search_cases(string $query): array
     return $out;
 }
 
-/** Everything the admin "Modify" dialog needs to show about a case. */
 function sn_case_json(string $type, int $id): array
 {
     $data = sn_read();
@@ -1327,7 +1287,6 @@ function sn_case_json(string $type, int $id): array
     ];
 }
 
-/** Styles and the caption helper, emitted once per page. Uses the site's theme variables. */
 function sn_css(): string
 {
     static $done = false;
@@ -1428,8 +1387,6 @@ function sn_file_icon(string $ext): string
     return in_array($ext, ['dem', 'demo'], true) ? 'fa-gamepad' : (str_starts_with(sn_mime($ext), 'audio') ? 'fa-music' : 'fa-film');
 }
 
-/** Panel for the punishment detail page. Empty string for anyone who is not logged in as staff. */
-/** Public reports of a punishment for visitors: text and files, no author names, no appeal. */
 function sn_public_html(string $type, int $id): string
 {
     if (!in_array($type, SN_TYPES, true) || $id <= 0) {
@@ -1479,7 +1436,6 @@ function sn_public_html(string $type, int $id): string
     return (string)ob_get_clean();
 }
 
-/** Panel for the punishment detail page: staff get the full case, everyone else the public reports. */
 function sn_panel_html(string $type, int $id): string
 {
     $user = sn_user();
@@ -1643,7 +1599,6 @@ function sn_panel_html(string $type, int $id): string
     return (string)ob_get_clean();
 }
 
-/** One row per punishment that has a report or an appeal outcome, newest activity first. */
 function sn_rows(): array
 {
     $data = sn_read();
@@ -1674,7 +1629,6 @@ function sn_stats(): array
     ];
 }
 
-/** The "Case Evidence" tab for templates/admin/dashboard.php: overview, add to a case, all cases. */
 function sn_admin_pane_html(): string
 {
     $user = sn_user();
@@ -1824,7 +1778,6 @@ function sn_admin_pane_html(): string
     return (string)ob_get_clean();
 }
 
-// Direct request to this file: form posts and attachment downloads. Everything else goes to the admin tab.
 if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         sn_handle_post();

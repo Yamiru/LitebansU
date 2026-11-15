@@ -1,0 +1,8 @@
+{
+  "id": "frost",
+  "name": "Frost",
+  "version": "1.0",
+  "author": "Yamiru",
+  "framework": "Plain CSS",
+  "description": "A calm, cold, typographic design in ice blue and slate with a dark and light switch. No framework, one small stylesheet. Covers every public page and the sign-in page."
+}

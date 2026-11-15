@@ -16,6 +16,9 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../core/AvatarCache.php';
+require_once __DIR__ . '/../core/TemplateManager.php';
+
 abstract class BaseController
 {
     protected DatabaseRepository $repository;
@@ -33,19 +36,24 @@ abstract class BaseController
     
     protected function render(string $template, array $data = []): void
     {
-        // Make controller instance available in templates
         $data['controller'] = $this;
         $data['lang'] = $this->lang;
         $data['theme'] = $this->theme;
         $data['config'] = $this->config;
         
+        $templateId = \core\TemplateManager::activeId($this->config);
+        if ((str_starts_with($template, 'admin/') && $template !== 'admin/login') || !\core\TemplateManager::has($templateId, $template)) {
+            $templateId = 'default';
+        }
+        $data['templateId'] = $templateId;
+
         extract($data);
-        
-        include __DIR__ . "/../templates/header.php";
-        include __DIR__ . "/../templates/{$template}.php";
-        include __DIR__ . "/../templates/footer.php";
+
+        include \core\TemplateManager::view($templateId, 'header');
+        include \core\TemplateManager::view($templateId, $template);
+        include \core\TemplateManager::view($templateId, 'footer');
     }
-    
+
     protected function renderPartial(string $template, array $data = []): string
     {
         ob_start();
@@ -73,7 +81,6 @@ abstract class BaseController
         if (empty($_SESSION['admin_authenticated'])) {
             return false;
         }
-        // Password login has no user id and is a full administrator; Google/Discord users carry a role
         if (empty($_SESSION['admin_user_id'])) {
             return true;
         }
@@ -101,7 +108,6 @@ abstract class BaseController
     {
         try {
             $timezone = new DateTimeZone($this->config['timezone'] ?? 'UTC');
-            // Handle millisecond timestamps
             $seconds = intval($timestamp / 1000);
             $date = new DateTime('@' . $seconds);
             $date->setTimezone($timezone);
@@ -137,22 +143,8 @@ abstract class BaseController
         }
     }
     
-    /**
-     * Resolve the effective active status of a punishment.
-     *
-     * LiteBans does not always clear the `active` flag in the database the instant a
-     * temporary ban/mute expires (it happens when the server checks the row, or never
-     * at all if the player is offline). The DB column can therefore stay at 1 even
-     * though `until` is already in the past. To avoid showing "Active" next to an
-     * "Expired" duration in the UI, we compute the real state here without touching
-     * the database.
-     *
-     * @param array  $punishment Raw or formatted punishment row (must contain `active` and optionally `until`)
-     * @param string $type       'ban', 'mute', 'warning', 'kick' or their plural forms
-     */
     protected function isPunishmentActive(array $punishment, string $type = ''): bool
     {
-        // Already removed by staff -> not active
         if (!empty($punishment['removed_by_name']) || !empty($punishment['removed_by'])) {
             return false;
         }
@@ -162,11 +154,9 @@ abstract class BaseController
             return false;
         }
         
-        // Only bans and mutes have a meaningful `until` for expiration
         $normalizedType = rtrim(strtolower($type), 's');
         if (in_array($normalizedType, ['ban', 'mute'], true) && isset($punishment['until'])) {
             $until = (int)$punishment['until'];
-            // until > 0 means temporary; if it's already in the past -> expired
             if ($until > 0 && $until <= time() * 1000) {
                 return false;
             }
@@ -175,39 +165,35 @@ abstract class BaseController
         return true;
     }
     
+    public function avatarUrl(?string $uuid, ?string $name): string
+    {
+        return $this->getAvatarUrl($uuid, $name);
+    }
+
     protected function getAvatarUrl(?string $uuid, ?string $name): string
     {
-        // Sanitize inputs
         $uuid = !empty($uuid) ? preg_replace('/[^a-f0-9-]/i', '', $uuid) : '';
         $name = !empty($name) ? preg_replace('/[^a-zA-Z0-9_]/i', '', $name) : '';
         
-        // Default avatar SVG
         $default = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHJ4PSI4IiBmaWxsPSIjNjY2Ii8+PHBhdGggZD0iTTMyIDE2Yy00LjQyIDAtOCAzLjU4LTggOHMzLjU4IDggOCA4IDgtMy41OCA4LTgtMy41OC04LTgtOHptMCAyMGMtOC44NCAwLTE2IDcuMTYtMTYgMTZ2NGg0di00YzAtNi42MiA1LjM3LTEyIDEyLTEyczEyIDUuMzggMTIgMTJ2NGg0di00YzAtOC44NC03LjE2LTE2LTE2LTE2eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==';
         
-        // CRITICAL FIX: Use EnvLoader to read avatar URLs from .env
-        // For offline players (cracked servers), use NAME to fetch original skin from Mojang
-        // For online players (premium), use UUID
         
-        // Detect if offline UUID (UUID v3 - offline/cracked servers)
-        // Offline UUID has '3' at position 14: xxxxxxxx-xxxx-3xxx-xxxx-xxxxxxxxxxxx
-        // Online UUID has '4' at position 14:  xxxxxxxx-xxxx-4xxx-xxxx-xxxxxxxxxxxx
         $isOffline = !empty($uuid) && strlen($uuid) === 36 && substr($uuid, 14, 1) === '3';
-        
-        // OFFLINE PLAYER (UUID v3) - Use name to fetch original Mojang skin
+
+        if (\core\AvatarCache::enabled($this->config) && ($localId = \core\AvatarCache::idFor((string)$uuid, (string)$name)) !== null) {
+            return url('avatar/' . $localId . '.webp');
+        }
+
         if ($isOffline && !empty($name)) {
-            // Crafatar/Mineatar can fetch original skin from Mojang using player name
-            // This works for premium players on cracked servers
             $offlineUrl = \core\EnvLoader::get('AVATAR_URL_OFFLINE', 'https://cravatar.eu/avatar/{name}/64');
             return str_replace(['{uuid}', '{name}'], [$uuid, $name], $offlineUrl);
         }
         
-        // ONLINE PLAYER (UUID v4) - Use UUID directly
         if (!empty($uuid) && !$isOffline) {
             $onlineUrl = \core\EnvLoader::get('AVATAR_URL', 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true');
             return str_replace(['{uuid}', '{name}'], [$uuid, $name], $onlineUrl);
         }
         
-        // FALLBACK - No valid UUID or name
         return $default;
     }
     

@@ -43,13 +43,11 @@ class DatabaseRepository
             $table = $this->tablePrefix . 'bans';
             $historyTable = $this->tablePrefix . 'history';
             
-            // Validate sort and order parameters
             $allowedSorts = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'until', 'active'];
             $sort = in_array($sort, $allowedSorts) ? $sort : 'time';
             $order = strtoupper($order);
             $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
             
-            // Map sort field to correct column
             $sortColumn = match($sort) {
                 'name' => 'h.name',
                 'reason' => 'b.reason',
@@ -61,7 +59,6 @@ class DatabaseRepository
                 default => 'b.time'
             };
             
-            // For active column, ensure DESC shows active first (1 > 0)
             if ($sort === 'active' && $order === 'DESC') {
                 $orderClause = "{$sortColumn} DESC";
             } else if ($sort === 'active' && $order === 'ASC') {
@@ -72,7 +69,6 @@ class DatabaseRepository
             
             $where = $activeOnly ? 'WHERE b.active = 1 AND b.uuid IS NOT NULL AND b.uuid != \'#\'' : 'WHERE b.uuid IS NOT NULL AND b.uuid != \'#\'';
             
-            // Add silent filter if needed
             if (!$showSilent) {
                 $where .= ' AND (b.silent = 0 OR b.silent IS NULL)';
             }
@@ -114,13 +110,11 @@ class DatabaseRepository
             $table = $this->tablePrefix . 'mutes';
             $historyTable = $this->tablePrefix . 'history';
             
-            // Validate sort and order parameters
             $allowedSorts = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'until', 'active'];
             $sort = in_array($sort, $allowedSorts) ? $sort : 'time';
             $order = strtoupper($order);
             $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
             
-            // Map sort field to correct column
             $sortColumn = match($sort) {
                 'name' => 'h.name',
                 'reason' => 'm.reason',
@@ -136,7 +130,6 @@ class DatabaseRepository
             
             $where = $activeOnly ? 'WHERE m.active = 1 AND m.uuid IS NOT NULL AND m.uuid != \'#\'' : 'WHERE m.uuid IS NOT NULL AND m.uuid != \'#\'';
             
-            // Add silent filter if needed
             if (!$showSilent) {
                 $where .= ' AND (m.silent = 0 OR m.silent IS NULL)';
             }
@@ -178,13 +171,11 @@ class DatabaseRepository
             $table = $this->tablePrefix . 'warnings';
             $historyTable = $this->tablePrefix . 'history';
             
-            // Validate sort and order parameters
             $allowedSorts = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'active'];
             $sort = in_array($sort, $allowedSorts) ? $sort : 'time';
             $order = strtoupper($order);
             $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
             
-            // Map sort field to correct column
             $sortColumn = match($sort) {
                 'name' => 'h.name',
                 'reason' => 'w.reason',
@@ -197,7 +188,7 @@ class DatabaseRepository
             
             $orderClause = "{$sortColumn} {$order}";
             
-            $currentTime = time() * 1000; // Current time in milliseconds
+            $currentTime = time() * 1000;
             
             $sql = "SELECT w.id, w.uuid, w.reason, w.banned_by_name, w.banned_by_uuid, w.time, 
                            CAST(w.warned AS UNSIGNED) as warned, 
@@ -241,13 +232,11 @@ class DatabaseRepository
             $table = $this->tablePrefix . 'kicks';
             $historyTable = $this->tablePrefix . 'history';
             
-            // Validate sort and order parameters
             $allowedSorts = ['id', 'name', 'server', 'reason', 'banned_by_name', 'time', 'active'];
             $sort = in_array($sort, $allowedSorts) ? $sort : 'time';
             $order = strtoupper($order);
             $order = in_array($order, ['ASC', 'DESC']) ? $order : 'DESC';
             
-            // Map sort field to correct column
             $sortColumn = match($sort) {
                 'name' => 'h.name',
                 'reason' => 'k.reason',
@@ -293,7 +282,6 @@ class DatabaseRepository
     public function getPlayerPunishments(string $identifier): array
     {
         try {
-            // Sanitize input
             $identifier = trim($identifier);
             if (empty($identifier)) {
                 return [];
@@ -306,12 +294,10 @@ class DatabaseRepository
                 $field = 'uuid';
                 $value = $identifier;
             } else {
-                // Validate username format
                 if (!SecurityManager::validateUsername($identifier)) {
                     return [];
                 }
                 
-                // If searching by name, first get UUID from history (case-insensitive search)
                 $stmt = $this->connection->prepare("SELECT uuid FROM {$historyTable} WHERE LOWER(name) = LOWER(:name) ORDER BY date DESC LIMIT 1");
                 $stmt->bindValue(':name', $identifier, PDO::PARAM_STR);
                 $stmt->execute();
@@ -359,7 +345,6 @@ class DatabaseRepository
                 $results = array_merge($results, $tableResults);
             }
             
-            // Sort by time descending
             usort($results, function($a, $b) {
                 return $b['time'] <=> $a['time'];
             });
@@ -373,8 +358,6 @@ class DatabaseRepository
     
     public function getStats(): array
     {
-        // 60-sekundový file cache - staty sa nemenia každú sekundu,
-        // a táto metóda je v slow logu zďaleka najčastejšia.
         $cacheDir = dirname(__DIR__) . '/data';
         $cacheFile = $cacheDir . '/.stats_cache.json';
         $cacheTtl = 60;
@@ -414,7 +397,6 @@ class DatabaseRepository
             }
         }
 
-        // Ulož cache (tichý fail ak nie je write access)
         if (is_dir($cacheDir) && is_writable($cacheDir)) {
             @file_put_contents($cacheFile, json_encode($stats), LOCK_EX);
         }
@@ -469,7 +451,6 @@ class DatabaseRepository
         try {
             $fullTable = $this->tablePrefix . $table;
             
-            // For bans and mutes, support activeOnly filter
             if (in_array($table, ['bans', 'mutes'])) {
                 $where = $activeOnly ? 'WHERE active = 1 AND uuid IS NOT NULL AND uuid != \'#\'' : 'WHERE uuid IS NOT NULL AND uuid != \'#\'';
             } else {
@@ -511,7 +492,6 @@ class DatabaseRepository
             $result = $stmt->fetch();
             
             if ($result) {
-                // Convert BIT fields to integers
                 $bitFields = ['active', 'silent', 'ipban', 'warned'];
                 foreach ($bitFields as $field) {
                     if (isset($result[$field])) {
@@ -550,7 +530,6 @@ class DatabaseRepository
         }
     }
     
-    // Advanced statistics methods for the StatsController
     
     public function getTopBannedPlayers(int $limit = 10): array
     {
@@ -631,7 +610,6 @@ class DatabaseRepository
                 }
             }
             
-            // Sort by total punishments
             uasort($results, function($a, $b) {
                 return $b['total_punishments'] <=> $a['total_punishments'];
             });

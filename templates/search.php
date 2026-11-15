@@ -41,8 +41,7 @@
             </div>
         </div>
     </div>
-    
-    <!-- Quick Search Tips -->
+
     <div class="row">
         <div class="col-12">
             <div class="card">

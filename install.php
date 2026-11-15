@@ -1,10 +1,5 @@
 <?php
-/**
- * LiteBansU - Installation Wizard
- * Complete configuration setup with all fields
- */
 
-// The wizard has no login: once the site is configured it must not run again (delete .env to reinstall)
 if (is_file(__DIR__ . '/.env')) {
     http_response_code(403);
     exit('Already installed. Delete install.php.');
@@ -15,22 +10,18 @@ ini_set('display_errors', '0');
 
 session_start();
 
-// Load version from .version file
 $version = file_exists(__DIR__ . '/.version') ? trim(file_get_contents(__DIR__ . '/.version')) : '3.3';
 
-// Initialize step
 if (!isset($_SESSION['step'])) {
     $_SESSION['step'] = 1;
 }
 
-// Reset
 if (isset($_GET['reset'])) {
     session_destroy();
     header('Location: install.php');
     exit;
 }
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($_SESSION['step'] == 1) {
         $_SESSION['step'] = 2;
@@ -74,6 +65,7 @@ BASE_URL=" . ($config['base_url'] ?? '') . "
 # Avatar Configuration
 AVATAR_URL=" . ($config['avatar_url'] ?? 'https://crafatar.com/avatars/{uuid}?size=64&overlay=true') . "
 AVATAR_URL_OFFLINE=" . ($config['avatar_url_offline'] ?? 'https://cravatar.eu/avatar/{name}/64') . "
+AVATAR_PROVIDER=crafatar
 
 # Default Settings
 DEFAULT_THEME=" . ($config['default_theme'] ?? 'dark') . "
@@ -96,6 +88,9 @@ ADMIN_PASSWORD=
 
 # Allow password login
 ALLOW_PASSWORD_LOGIN=true
+
+# Require every page to be signed in to view (private server)
+REQUIRE_LOGIN=" . (($config['require_login'] ?? 'false') === 'true' ? 'true' : 'false') . "
 
 # Google OAuth Configuration
 GOOGLE_AUTH_ENABLED=" . ($config['google_auth_enabled'] ?? 'false') . "
@@ -128,10 +123,13 @@ SITE_VIEWPORT=width=device-width, initial-scale=1.0
 SITE_ROBOTS=" . ($config['site_robots'] ?? 'index, follow') . "
 SITE_DESCRIPTION=" . ($config['site_description'] ?? 'View and search player punishments on our Minecraft server') . "
 SITE_TITLE_TEMPLATE={page} - {site}
-SITE_THEME_COLOR=" . ($config['site_theme_color'] ?? '#ef4444') . "
 SITE_OG_IMAGE=" . (($config['site_og_image'] ?? '') ?: '/og-image.png') . "
 SITE_TWITTER_SITE=" . ($config['site_twitter_site'] ?? '') . "
 SITE_KEYWORDS=" . ($config['site_keywords'] ?? 'minecraft,litebans,punishments,bans,mutes,server') . "
+SITE_FAVICON=favicon.ico
+SITE_APPLE_ICON=apple-touch-icon.png
+SITE_AUTHOR=
+SITE_GENERATOR=LitebansU
 
 # SEO Advanced
 SEO_ENABLE_SCHEMA=" . ($config['seo_enable_schema'] ?? 'true') . "
@@ -163,6 +161,15 @@ SHOW_MENU_ADMIN=" . ($config['show_menu_admin'] ?? 'true') . "
 HOME_LINK_URL=" . ($config['home_link_url'] ?? '') . "
 HOME_LINK_LABEL=" . ($config['home_link_label'] ?? 'Main website') . "
 HOME_LINK_NEWTAB=" . ($config['home_link_newtab'] ?? 'false') . "
+
+# Cookie-free domain for static files, e.g. https://static.yoursite.com (empty = this site)
+ASSETS_URL=" . (preg_match('#^https?://[^\s]+$#i', (string)($config['assets_url'] ?? '')) ? $config['assets_url'] : '') . "
+
+# Site template (folder in site-templates/): default or bulma
+TEMPLATE=" . (preg_match('/^[a-z0-9-]{2,31}$/', (string)($config['template'] ?? '')) ? $config['template'] : 'default') . "
+
+# true = download player heads once, convert them to WebP and serve them from this site (data/avatars/)
+AVATAR_CACHE=" . (($config['avatar_cache'] ?? 'false') === 'true' ? 'true' : 'false') . "
 
 # Reverse proxy / Cloudflare: comma-separated IPs of the proxies that connect to PHP
 TRUSTED_PROXIES=
@@ -268,13 +275,13 @@ CACHE_LIFETIME=3600
 <body>
     <div class="container">
         <div class="install-card p-5">
-            <!-- Header -->
+            
             <div class="text-center mb-4">
                 <h1 class="mb-2"><i class="fas fa-rocket text-primary"></i> LiteBansU <?= $version ?></h1>
                 <p class="text-muted">Installation Wizard</p>
             </div>
 
-            <!-- Step Indicator -->
+            
             <div class="step-indicator">
                 <div class="step <?= $step >= 1 ? 'active' : '' ?> <?= $step > 1 ? 'completed' : '' ?>">
                     <div class="step-circle">1</div>
@@ -291,7 +298,7 @@ CACHE_LIFETIME=3600
             </div>
 
             <?php if ($step == 1): ?>
-                <!-- Step 1: Welcome -->
+                
                 <div class="text-center">
                     <i class="fas fa-shield-alt fa-5x text-primary mb-4"></i>
                     <h3>Welcome to LiteBansU <?= $version ?></h3>
@@ -315,10 +322,10 @@ CACHE_LIFETIME=3600
                 </div>
 
             <?php elseif ($step == 2): ?>
-                <!-- Step 2: Configuration Form -->
+                
                 <form method="post">
                     
-                    <!-- Database Configuration -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-database"></i> Database Configuration <span class="required-badge">* Required</span></h5>
                         <div class="row">
@@ -359,7 +366,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Site Configuration -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-globe"></i> Site Configuration</h5>
                         <div class="row">
@@ -426,7 +433,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Appearance -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-palette"></i> Appearance</h5>
                         <div class="row">
@@ -451,11 +458,6 @@ CACHE_LIFETIME=3600
                                 <small class="form-text">URL for cracked (offline-mode) players, looked up by {name} — crafatar cannot resolve their UUID</small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Theme Color</label>
-                                <input type="color" class="form-control form-control-color" name="site_theme_color" value="#ef4444">
-                                <small class="form-text">Browser theme color for mobile devices</small>
-                            </div>
-                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Show Player UUIDs</label>
                                 <select class="form-control" name="show_player_uuid">
                                     <option value="false">No</option>
@@ -464,9 +466,34 @@ CACHE_LIFETIME=3600
                                 <small class="form-text">Display UUIDs in punishment lists</small>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Cookie-free static domain (optional)</label>
+                                <input type="text" class="form-control" name="assets_url" placeholder="https://static.yoursite.com">
+                                <small class="form-text">A subdomain with the same web root for CSS, JS, fonts and images. Leave empty to serve them from this site. Add it to the Content-Security-Policy too.</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Site Template</label>
+                                <select class="form-control" name="template">
+                                    <option value="default">Default (Bootstrap)</option>
+                                    <option value="bulma">Bulma</option>
+                                </select>
+                                <small class="form-text">Can be changed later in the admin panel</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Download player heads</label>
+                                <select class="form-control" name="avatar_cache">
+                                    <option value="false">No - load heads from the URLs above</option>
+                                    <option value="true">Yes - save them as WebP on this site</option>
+                                </select>
+                                <small class="form-text">Needs PHP GD with WebP; stored in data/avatars/</small>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- SEO Configuration -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-search"></i> SEO Configuration</h5>
                         <div class="mb-3">
@@ -520,7 +547,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Organization Info -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-building"></i> Organization Information (Optional)</h5>
                         <div class="row">
@@ -564,7 +591,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Geographic Info -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-map-marker-alt"></i> Geographic Information (Optional)</h5>
                         <div class="row">
@@ -581,7 +608,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Social Media -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-share-alt"></i> Social Media Links (Optional)</h5>
                         <div class="row">
@@ -603,7 +630,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Google OAuth -->
+                    
                     <div class="form-section">
                         <h5><i class="fab fa-google"></i> Google OAuth (Optional)</h5>
                         <div class="mb-3">
@@ -628,7 +655,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Discord OAuth -->
+                    
                     <div class="form-section">
                         <h5><i class="fab fa-discord"></i> Discord OAuth (Optional)</h5>
                         <div class="mb-3">
@@ -653,7 +680,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Protest/Contact Configuration -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-gavel"></i> Ban Protest Contact Methods</h5>
                         <div class="row">
@@ -675,7 +702,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Display Options -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-eye"></i> Display Options</h5>
                         <div class="row">
@@ -732,7 +759,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Menu Display -->
+                    
                     <div class="form-section">
                         <h5><i class="fas fa-bars"></i> Menu Display Options</h5>
                         <div class="row">
@@ -763,7 +790,7 @@ CACHE_LIFETIME=3600
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
+                    
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary btn-lg px-5">
                             <i class="fas fa-check"></i> Generate Configuration
@@ -772,7 +799,7 @@ CACHE_LIFETIME=3600
                 </form>
 
             <?php elseif ($step == 3): ?>
-                <!-- Step 3: Complete -->
+                
                 <div class="text-center">
                     <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
                     <h3 class="text-success mb-4">Installation Complete!</h3>

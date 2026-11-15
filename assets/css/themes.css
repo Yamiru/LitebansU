@@ -1,19 +1,3 @@
-/**
- * ============================================================================
- * LiteBansU
- * ============================================================================
- *
- * Plugin Name:   LiteBansU
- * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       3.0
- * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI:    https://yamiru.com
- * License:       MIT
- * License URI:   https://opensource.org/licenses/MIT
- * Repository:    https://github.com/Yamiru/LitebansU/
- * ============================================================================
- */
-/* Light Theme - Fixed contrast */
 .theme-light {
     --bg-primary: #ffffff;
     --bg-secondary: #f3f4f6;
@@ -43,7 +27,6 @@
     --badge-opacity: 1;
 }
 
-/* Dark Theme - Enhanced visibility */
 .theme-dark {
     --bg-primary: #0f0f0f;
     --bg-secondary: #1a1a1a;
@@ -73,7 +56,6 @@
     --badge-opacity: 1;
 }
 
-/* Enhanced component visibility for both themes */
 .theme-light .text-primary,
 .theme-dark .text-primary {
     color: var(--text-primary) !important;
@@ -89,7 +71,6 @@
     color: var(--text-muted) !important;
 }
 
-/* Fix admin panel colors */
 .theme-dark .admin-stat-card h6,
 .theme-dark .admin-stat-card h2,
 .theme-dark .admin-stat-card small {
@@ -118,9 +99,6 @@
     color: white !important;
 }
 
-/* PUNISHMENT TABLES FIX - COMPLETE DARK THEME SOLUTION */
-
-/* Main table container fix */
 .theme-dark .table-responsive {
     background: var(--card-bg) !important;
     border: 1px solid var(--border-color);
@@ -131,7 +109,6 @@
     color: var(--text-primary) !important;
 }
 
-/* Table headers */
 .theme-dark .table thead {
     background: var(--bg-tertiary) !important;
 }
@@ -143,7 +120,6 @@
     font-weight: 600;
 }
 
-/* Table body */
 .theme-dark .table tbody {
     background: var(--card-bg) !important;
 }
@@ -163,7 +139,6 @@
     background: var(--table-hover-bg) !important;
 }
 
-/* Player info cells */
 .theme-dark .player-info .fw-bold,
 .theme-dark .player-info div > div:first-child {
     color: var(--text-primary) !important;
@@ -174,22 +149,18 @@
     color: var(--text-secondary) !important;
 }
 
-/* Reason cells */
 .theme-dark .reason-cell {
     color: var(--text-primary) !important;
 }
 
-/* Staff names (keep primary color) */
 .theme-dark td .text-primary {
     color: var(--primary) !important;
 }
 
-/* Date cells */
 .theme-dark td small:not(.text-muted) {
     color: var(--text-secondary) !important;
 }
 
-/* Badge fixes in tables */
 .theme-dark .table .badge {
     opacity: 1 !important;
 }
@@ -214,7 +185,6 @@
     color: white !important;
 }
 
-/* Status badges in tables */
 .theme-dark .status-badge {
     font-weight: 600;
 }
@@ -239,7 +209,6 @@
     color: #d1d5db;
 }
 
-/* Action buttons in tables */
 .theme-dark .table .btn-outline-primary {
     color: #818cf8 !important;
     border-color: #818cf8 !important;
@@ -252,7 +221,6 @@
     border-color: #818cf8 !important;
 }
 
-/* Mobile punishment cards for dark theme */
 .theme-dark .mobile-punishment-card .card {
     background: var(--card-bg) !important;
     border-color: var(--border-color) !important;
@@ -283,7 +251,6 @@
     color: var(--primary) !important;
 }
 
-/* Light theme table adjustments */
 .theme-light .table {
     background: var(--table-bg) !important;
     color: var(--text-primary) !important;
@@ -304,7 +271,6 @@
     background: var(--table-hover-bg) !important;
 }
 
-/* Ensure all text in tables is visible */
 .theme-dark td,
 .theme-dark th,
 .theme-dark .table,
@@ -322,7 +288,6 @@
     color: var(--primary) !important;
 }
 
-/* Stats page tables */
 .theme-dark .stats-page .table td,
 .theme-dark .stats-page .table th {
     color: var(--text-primary) !important;
@@ -332,7 +297,6 @@
     color: var(--text-primary) !important;
 }
 
-/* Admin panel tables */
 .theme-dark .admin-dashboard .table td,
 .theme-dark .admin-dashboard .table th {
     color: var(--text-primary) !important;
@@ -344,7 +308,6 @@
     color: var(--text-primary) !important;
 }
 
-/* Table striped rows */
 .theme-dark .table-striped tbody tr:nth-of-type(odd) {
     background: rgba(255, 255, 255, 0.02);
 }
@@ -353,7 +316,6 @@
     background: rgba(0, 0, 0, 0.01);
 }
 
-/* Button visibility */
 .theme-dark .btn-outline-primary {
     color: #818cf8;
     border-color: #818cf8;
@@ -374,7 +336,6 @@
     color: white;
 }
 
-/* Fix navbar dropdown visibility */
 .theme-dark .dropdown-menu {
     background: var(--dropdown-bg);
     border-color: var(--border-color);
@@ -393,7 +354,6 @@
     color: var(--dropdown-text);
 }
 
-/* Clear cache button visibility */
 .theme-dark #clear-cache-btn {
     background: var(--primary);
     color: white;
@@ -404,7 +364,6 @@
     color: white;
 }
 
-/* Form control visibility */
 .theme-dark .form-control {
     background: var(--input-bg);
     color: var(--text-primary);
@@ -417,7 +376,6 @@
     border-color: var(--input-border);
 }
 
-/* Card visibility */
 .theme-dark .card {
     background: var(--card-bg);
     color: var(--text-primary);
@@ -428,7 +386,6 @@
     color: var(--text-primary);
 }
 
-/* Alert visibility */
 .theme-dark .alert-danger {
     background-color: rgba(239, 68, 68, 0.15);
     color: #fca5a5;
@@ -441,7 +398,6 @@
     border-color: rgba(239, 68, 68, 0.3);
 }
 
-/* Modal visibility */
 .theme-dark .modal-content {
     background: var(--card-bg);
     color: var(--text-primary);
@@ -452,7 +408,6 @@
     color: var(--text-primary);
 }
 
-/* Scrollbar for dark theme */
 .theme-dark ::-webkit-scrollbar {
     width: 12px;
     height: 12px;

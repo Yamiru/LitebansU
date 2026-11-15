@@ -1,24 +1,3 @@
-/**
- * ============================================================================
- * LiteBansU
- * ============================================================================
- *
- * Plugin Name:   LiteBansU
- * Description:   A modern, secure, and responsive web interface for LiteBans punishment management system.
- * Version:       3.1
- * Market URI:    https://builtbybit.com/resources/litebansu-litebans-website.69448/
- * Author URI:    https://yamiru.com
- * License:       MIT
- * License URI:   https://opensource.org/licenses/MIT
- * Repository:    https://github.com/Yamiru/LitebansU/
- * ============================================================================
- */
-
-/* ==========================================
-   Cross-browser & Mobile Optimizations
-   ========================================== */
-
-/* Prevent text size adjustment on orientation change */
 * {
     -webkit-text-size-adjust: 100%;
     -moz-text-size-adjust: 100%;
@@ -26,24 +5,21 @@
     text-size-adjust: 100%;
 }
 
-/* Opera and Mobile fixes */
 body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
 }
 
-/* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
-    /* Fix for iOS Safari viewport height with bottom bar */
+
     body {
         min-height: -webkit-fill-available;
     }
 }
 
-/* Touch device optimizations */
 @media (hover: none) and (pointer: coarse) {
-    /* Increase touch target sizes on touch devices */
+
     button,
     a,
     input,
@@ -52,402 +28,362 @@ body {
         min-height: 44px;
         min-width: 44px;
     }
-    
-    /* Remove hover effects on touch devices */
+
     .btn:hover,
     .card:hover {
         transform: none;
     }
 }
 
-/* Tablet - Medium devices */
 @media (max-width: 991px) {
-    /* Container adjustments */
+
     .container {
         padding: 0 var(--space-md);
     }
-    
-    /* Typography */
+
     h1 { font-size: 2rem; }
     h2 { font-size: 1.75rem; }
     h3 { font-size: 1.5rem; }
-    
-    /* Cards spacing */
+
     .card-body {
         padding: var(--space-md);
     }
-    
-    /* Table adjustments */
+
     .table th,
     .table td {
         padding: var(--space-sm);
         font-size: 0.875rem;
     }
-    
-    /* Stat cards grid */
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: var(--space-md);
     }
 }
 
-/* Mobile - Small devices */
 @media (max-width: 768px) {
-    /* Main content padding */
+
     main.main-content {
         padding-top: 1rem;
-        padding-bottom: 4rem; /* More space for fixed cache button */
+        padding-bottom: 4rem;
     }
-    
-    /* Container */
+
     .container {
         padding: 0 var(--space-sm);
     }
-    
-    /* Typography */
+
     h1 { font-size: 1.75rem; }
     h2 { font-size: 1.5rem; }
     h3 { font-size: 1.25rem; }
     h4 { font-size: 1.125rem; }
-    
-    /* Buttons */
+
     .btn {
         padding: var(--space-sm) var(--space-md);
         font-size: 0.875rem;
     }
-    
+
     .btn-lg {
         padding: var(--space-sm) var(--space-lg);
         font-size: 0.9375rem;
     }
-    
-    /* Forms */
+
     .form-control {
-        font-size: 16px; /* Prevent zoom on iOS */
+        font-size: 16px;
     }
-    
-    /* Cards */
+
     .card {
         border-radius: var(--radius-md);
     }
-    
+
     .card-header,
     .card-body {
         padding: var(--space-md);
     }
-    
-    /* Stats Grid - Single column on mobile */
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .stats-grid-2x2 {
         grid-template-columns: 1fr;
         gap: var(--space-md);
     }
-    
-    /* Stat cards compact */
+
     .stat-card-compact {
         padding: var(--space-md);
         min-height: 100px;
     }
-    
+
     .stat-icon-compact {
         width: 40px;
         height: 40px;
         font-size: 1.25rem;
     }
-    
+
     .stat-number-compact {
         font-size: 1.5rem;
     }
-    
+
     .stat-label-compact {
         font-size: 0.8125rem;
     }
-    
+
     .stat-total-compact {
         font-size: 0.7rem;
     }
-    
-    /* Table - Hide on mobile, show cards */
+
     .table-responsive {
         display: none;
     }
-    
+
     .mobile-punishment-list {
         display: block;
     }
-    
-    /* Mobile punishment cards */
+
     .mobile-punishment-card .card {
         margin-bottom: var(--space-sm);
     }
-    
-    /* Search form */
+
     .search-form .input-group-lg .form-control,
     .search-form .input-group-lg .input-group-text {
         padding: var(--space-sm) var(--space-sm);
-        font-size: 16px !important; /* Prevent zoom on iOS */
-        min-height: 44px; /* iOS touch target */
+        font-size: 16px !important;
+        min-height: 44px;
     }
-    
+
     .search-form .btn-lg {
         padding: var(--space-sm) var(--space-md);
         font-size: 0.9375rem;
-        min-height: 44px; /* iOS touch target */
+        min-height: 44px;
         white-space: nowrap;
     }
-    
+
     .search-form .row {
         margin: 0 -0.25rem;
     }
-    
+
     .search-form [class*="col-"] {
         padding: 0 0.25rem;
     }
-    
+
     .search-form .col-md-7,
     .search-form .col-md-2 {
         flex: 0 0 auto;
         min-width: 0;
     }
-    
+
     .search-form .col-md-7 {
         width: auto;
         flex-grow: 1;
         max-width: 100%;
     }
-    
+
     .search-form .col-md-2 {
         width: 100px;
     }
-    
+
     .search-form .col-md-3 {
         width: auto;
         flex-grow: 0;
         padding-left: 0.25rem;
     }
-    
+
     .search-form .d-flex.gap-2 {
         gap: 0.5rem !important;
         width: 100%;
     }
-    
+
     .search-form .d-flex.gap-2 .btn {
         padding: var(--space-sm) var(--space-sm);
         font-size: 0.875rem;
     }
-    
+
     #search-results {
         margin-top: var(--space-md);
     }
-    
-    /* Search results table on mobile */
+
     #search-results .table-responsive {
         margin: 0 -0.5rem;
         border-radius: 0;
         box-shadow: none;
     }
-    
+
     #search-results .table {
         font-size: 0.8125rem;
     }
-    
+
     #search-results .table td,
     #search-results .table th {
         padding: var(--space-xs);
     }
-    
-    /* Pagination */
+
     .pagination {
         flex-wrap: wrap;
         gap: var(--space-xs);
     }
-    
+
     .pagination-info {
         order: -1;
         width: 100%;
         text-align: center;
         margin-bottom: var(--space-sm);
     }
-    
-    /* Hero gradient adjustment */
+
     .hero-gradient {
         height: 30vh;
         opacity: 0.03;
     }
-    
+
     .theme-dark .hero-gradient {
         opacity: 0.05;
     }
-    
-    /* Hero section */
+
     .hero-section h1 {
         font-size: 2rem;
     }
-    
+
     .hero-section .lead {
         font-size: 1.1rem;
     }
-    
+
     .hero-section .card {
         padding: var(--space-lg) var(--space-md);
     }
-    
-    /* Detail page */
+
     .details-grid {
         grid-template-columns: 1fr;
         gap: var(--space-md);
     }
-    
+
     .detail-item {
         padding: var(--space-sm);
     }
-    
+
     .player-card {
         padding: var(--space-lg);
     }
-    
+
     .player-avatar {
         width: 96px;
         height: 96px;
     }
-    
-    /* Footer */
+
     .footer {
         padding: var(--space-lg) 0;
-        margin-bottom: 3rem; /* Space for fixed cache button */
+        margin-bottom: 3rem;
     }
-    
+
     .footer .row {
         text-align: center;
     }
-    
+
     .footer p {
         font-size: 0.875rem;
     }
-    
-    /* Modals */
+
     .modal-dialog {
         margin: var(--space-md);
     }
-    
-    /* Activity chart */
+
     .daily-activity-chart {
         height: 100px;
         overflow-x: auto;
         gap: 0.25rem;
     }
-    
+
     .day-bar {
         width: 30px;
         min-width: 30px;
     }
-    
+
     .day-count {
         font-size: 0.5rem;
     }
-    
+
     .day-label {
         font-size: 0.5rem;
     }
-    
-    /* Reason list */
+
     .reason-item {
         padding: var(--space-sm);
         font-size: 0.8125rem;
     }
-    
-    /* Activity summary */
+
     .activity-summary {
         grid-template-columns: 1fr;
     }
-    
-    /* Clear cache button */
+
     .clear-cache-wrapper {
         bottom: 1rem;
         right: 1rem;
     }
-    
+
     #clear-cache-btn {
         font-size: 0.75rem;
         padding: 0.375rem 0.75rem;
     }
 }
 
-/* Extra small devices */
 @media (max-width: 576px) {
-    /* Very small screens adjustments */
+
     .container {
         padding: 0 0.75rem;
     }
-    
-    /* Even smaller text */
+
     body {
         font-size: 0.9375rem;
     }
-    
-    /* Navbar brand */
+
     .navbar-brand {
         font-size: 1.125rem;
     }
-    
+
     .navbar-brand-icon {
         width: 36px;
         height: 36px;
         font-size: 1.125rem;
     }
-    
-    /* Smaller badges */
+
     .badge {
         font-size: 0.7rem;
         padding: 0.2rem 0.5rem;
     }
-    
-    /* Adjust table font size in modals */
+
     .modal .table {
         font-size: 0.8125rem;
     }
-    
-    /* Admin search results */
+
     .admin-search-result {
         font-size: 0.875rem;
         padding: var(--space-sm);
     }
 }
 
-/* Desktop only styles */
 @media (min-width: 992px) {
-    /* Show desktop table */
+
     .table-responsive {
         display: block;
     }
-    
-    /* Hide mobile cards */
+
     .mobile-punishment-list {
         display: none;
     }
-    
-    /* Navbar controls spacing */
+
     .navbar-controls {
         gap: var(--space-md);
     }
-    
-    /* Larger stat cards */
+
     .stat-card {
         padding: var(--space-2xl);
     }
-    
-    /* Detail page two column layout */
+
     .details-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* High resolution displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-    /* Sharper borders */
+
     .card,
     .btn,
     .form-control,
@@ -456,30 +392,28 @@ body {
     }
 }
 
-/* Landscape orientation adjustments */
 @media (max-height: 600px) and (orientation: landscape) {
-    /* Reduce vertical spacing */
+
     .navbar-modern {
         padding: 0.5rem 0;
     }
-    
+
     main.main-content {
         padding-top: 1rem;
         padding-bottom: 1rem;
     }
-    
+
     .hero-section {
         margin-bottom: var(--space-lg);
     }
-    
+
     .stats-overview {
         margin-bottom: var(--space-lg);
     }
 }
 
-/* Print styles */
 @media print {
-    /* Hide non-essential elements */
+
     .navbar-modern,
     .footer,
     .clear-cache-wrapper,
@@ -489,123 +423,117 @@ body {
     .dropdown {
         display: none !important;
     }
-    
-    /* Reset colors for print */
+
     body {
         color: black !important;
         background: white !important;
     }
-    
+
     .card {
         border: 1px solid #ddd !important;
         box-shadow: none !important;
     }
-    
-    /* Ensure tables are visible */
+
     .table-responsive {
         overflow: visible !important;
     }
-    
+
     .table {
         border: 1px solid #ddd !important;
     }
-    
+
     .table th,
     .table td {
         border: 1px solid #ddd !important;
     }
 }
 
-/* Extra small devices (phones < 480px) */
 @media (max-width: 480px) {
-    /* Search form optimization for small screens */
+
     .search-form {
         gap: 0.5rem;
     }
-    
+
     .search-form .row {
         margin: 0 -0.125rem;
         gap: 0.25rem !important;
     }
-    
+
     .search-form [class*="col-"] {
         padding: 0 0.125rem;
     }
-    
+
     .search-form .col-md-7 {
         flex: 1 1 100%;
         width: 100%;
         margin-bottom: 0.25rem;
     }
-    
+
     .search-form .col-md-2,
     .search-form .col-md-3 {
         flex: 0 0 auto;
         width: auto;
     }
-    
+
     .search-form .col-md-2 {
         width: 80px;
     }
-    
+
     .search-form .input-group-lg .form-control,
     .search-form .input-group-lg .input-group-text {
         padding: 0.5rem 0.375rem;
         font-size: 15px !important;
     }
-    
+
     .search-form .d-flex.gap-2 {
         flex-direction: row;
         width: 100%;
         gap: 0.25rem !important;
     }
-    
+
     .search-form .d-flex.gap-2 .btn {
         min-width: 44px;
         padding: 0.5rem 0.25rem;
     }
-    
-    /* Bans section mobile optimization */
+
     .punishments-page .mobile-punishment-card .card {
         margin: 0 0 var(--space-sm) 0;
         border-radius: var(--radius-md);
     }
-    
+
     .punishments-page .mobile-punishment-card .avatar {
         width: 40px;
         height: 40px;
     }
-    
+
     .punishments-page .mobile-punishment-card h6 {
         font-size: 0.9375rem;
     }
-    
+
     .punishments-page .mobile-punishment-card .badge {
         font-size: 0.65rem;
         padding: 0.35rem 0.5rem;
     }
-    
+
     .punishments-page .mobile-punishment-card .col-6 {
         padding-left: 0;
         padding-right: 0.25rem;
     }
-    
+
     .punishments-page .mobile-punishment-card .col-12 {
         padding: 0;
     }
-    
-    /* Smaller table text on tiny screens */
+
     .punishments-page .table {
         font-size: 0.75rem;
     }
-    
+
     .punishments-page .table th,
     .punishments-page .table td {
         padding: var(--space-xs);
         word-break: break-word;
     }
-    
-    /* Fix for long reasons on mobile - better wrapping and display */
+
     .mobile-punishment-card .reason-cell,
     .punishments-page .mobile-punishment-card [title] {
         white-space: normal !important;
@@ -616,8 +544,7 @@ body {
         display: block;
         line-height: 1.4;
     }
-    
-    /* Reason display in mobile cards - Allow full text display */
+
     .mobile-punishment-card .mt-1 {
         white-space: normal !important;
         text-overflow: clip !important;
@@ -628,12 +555,11 @@ body {
         word-break: break-word;
         overflow-wrap: break-word;
     }
-    
-    /* Improved spacing for details */
+
     .detail-page .details-grid {
         gap: var(--space-md);
     }
-    
+
     .detail-page .badge {
         display: inline-block;
         margin-bottom: 0.25rem;
